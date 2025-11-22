@@ -17,3 +17,7 @@
 
 # Keep custom model classes
 -keepclassmembers class com.jbselfcompany.tyr.data.** { *; }
+
+# Suppress warnings for missing JSR-305 annotations used by Tink
+-dontwarn javax.annotation.Nullable
+-dontwarn javax.annotation.concurrent.GuardedBy
