@@ -17,8 +17,8 @@ import androidx.core.app.NotificationCompat
 import com.jbselfcompany.tyr.R
 import com.jbselfcompany.tyr.TyrApplication
 import com.jbselfcompany.tyr.ui.MainActivity
-import com.jbselfcompany.tyr.mobile.LogCallback
-import com.jbselfcompany.tyr.mobile.YggmailService as MobileYggmailService
+import mobile.LogCallback
+import mobile.YggmailService as MobileYggmailService
 import java.io.File
 
 /**
@@ -217,7 +217,7 @@ class YggmailService : Service(), LogCallback {
             val imapAddr = "127.0.0.1:1143"
 
             // Create Yggmail service
-            yggmailService = MobileYggmailService(dbPath, smtpAddr, imapAddr).apply {
+            yggmailService = mobile.Mobile.newYggmailService(dbPath, smtpAddr, imapAddr).apply {
                 setLogCallback(this@YggmailService)
             }
 
@@ -230,8 +230,8 @@ class YggmailService : Service(), LogCallback {
             Log.d(TAG, "Password configured")
 
             // Save mail address for display
-            val mailAddress = yggmailService?.mailAddress ?: ""
-            val publicKey = yggmailService?.publicKey ?: ""
+            val mailAddress = yggmailService?.getMailAddress() ?: ""
+            val publicKey = yggmailService?.getPublicKey() ?: ""
             configRepository.saveMailAddress(mailAddress)
             configRepository.savePublicKey(publicKey)
             Log.i(TAG, "Mail address: $mailAddress")
@@ -366,11 +366,11 @@ class YggmailService : Service(), LogCallback {
     /**
      * LogCallback implementation for Yggmail logs
      */
-    override fun onLog(level: String?, tag: String?, message: String?) {
+    override fun onLog(level: String, tag: String, message: String) {
         val logTag = "YggmailService"
         val logMessage = "[$tag] $message"
 
-        when (level?.uppercase()) {
+        when (level.uppercase()) {
             "ERROR", "E" -> Log.e(logTag, logMessage)
             "WARN", "W" -> Log.w(logTag, logMessage)
             "INFO", "I" -> Log.i(logTag, logMessage)
