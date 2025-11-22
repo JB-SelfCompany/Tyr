@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Exclude sensitive data from backup -->
+    <exclude domain="sharedpref" path="tyr_config.xml" />
+    <exclude domain="database" path="yggmail.db" />
+</full-backup-content>

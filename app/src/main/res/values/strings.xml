@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tyr</string>
+
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="next">Next</string>
+    <string name="back">Back</string>
+    <string name="skip">Skip</string>
+    <string name="finish">Finish</string>
+    <string name="change">Change</string>
+    <string name="reset">Reset</string>
+    <string name="settings">Settings</string>
+    <string name="restart">Restart</string>
+    <string name="restart_now">Restart Now</string>
+    <string name="restart_later">Later</string>
+
+    <!-- Notification Channels -->
+    <string name="notification_channel_service">Yggmail Service</string>
+    <string name="notification_channel_service_desc">Ongoing notification for Yggmail service</string>
+    <string name="notification_channel_mail">Mail Notifications</string>
+    <string name="notification_channel_mail_desc">Notifications for new emails</string>
+
+    <!-- Service Status -->
+    <string name="service_status">Service Status</string>
+    <string name="service_starting">Starting…</string>
+    <string name="service_starting_desc">Initializing Yggmail service</string>
+    <string name="service_running">Running</string>
+    <string name="service_running_desc">Mail address: %s</string>
+    <string name="service_stopping">Stopping…</string>
+    <string name="service_stopping_desc">Shutting down Yggmail service</string>
+    <string name="service_stopped">Not Running</string>
+    <string name="service_stopped_desc">Service is not running</string>
+    <string name="service_error">Error</string>
+    <string name="service_error_desc">Failed to start service</string>
+
+    <!-- Notification Status -->
+    <string name="notification_status_starting">Initializing service</string>
+    <string name="notification_status_running">Service is running</string>
+    <string name="notification_status_stopping">Shutting down service</string>
+    <string name="notification_status_stopped">Service not running</string>
+    <string name="notification_status_error">Service error</string>
+
+    <!-- Status Display -->
+    <string name="status_starting">Starting…</string>
+    <string name="status_running">Running</string>
+    <string name="status_stopping">Stopping…</string>
+    <string name="status_stopped">Not Running</string>
+    <string name="status_error">Error: %s</string>
+
+    <!-- Main Activity -->
+    <string name="start_service">Start Service</string>
+    <string name="stop_service">Stop Service</string>
+    <string name="mail_configuration">Mail Configuration</string>
+    <string name="copy_address">Copy Address</string>
+    <string name="address_copied">Address copied to clipboard</string>
+    <string name="smtp_server">SMTP: %1$s:%2$s</string>
+    <string name="imap_server">IMAP: %1$s:%2$s</string>
+    <string name="deltachat_setup">DeltaChat Setup</string>
+    <string name="deltachat_setup_hint">Tap to view setup instructions</string>
+    <string name="deltachat_instructions">To configure DeltaChat:\n\n1. Install and open DeltaChat app\n2. Tap \"Add Account\"\n3. Tap \"Advanced\" (below the login fields)\n4. Enter your email address shown above\n5. Enter the password you set during onboarding\n6. In IMAP Server section:\n   • Replace \"automatic\" with: 127.0.0.1:1143\n   • Security: None/STARTTLS disabled\n7. In SMTP Server section:\n   • Replace \"automatic\" with: 127.0.0.1:1025\n   • Security: None/STARTTLS disabled\n8. Tap \"Login\" to start chatting\n\nMake sure Tyr service is running before using DeltaChat.</string>
+
+    <!-- Onboarding -->
+    <string name="welcome_to_tyr">Welcome to Tyr</string>
+    <string name="welcome_description">Tyr creates a local mail server using Yggdrasil Network, allowing you to use DeltaChat for secure, decentralized messaging.</string>
+    <string name="feature_decentralized">Decentralized</string>
+    <string name="feature_encrypted">End-to-End Encrypted</string>
+    <string name="feature_p2p">Peer-to-Peer</string>
+    <string name="setup_password">Setup Password</string>
+    <string name="password_description">This password will be used by DeltaChat to authenticate with the local mail server.</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="new_password">New Password</string>
+    <string name="password_security_info">Your password secures the connection between DeltaChat and the local mail server</string>
+    <string name="configure_peers">Configure Peers</string>
+    <string name="peers_description">Enter Yggdrasil network peers (one per line). Default peers are pre-filled.</string>
+    <string name="yggdrasil_peers">Yggdrasil Peers</string>
+    <string name="peers_list">Peers List</string>
+    <string name="enable_multicast">Enable Multicast Discovery</string>
+    <string name="multicast_description">Automatically discover peers on local network</string>
+    <string name="peers_info">Default peers are pre-filled. You can add more peers or keep the defaults to get started</string>
+
+    <!-- Settings -->
+    <string name="service_settings">Service Settings</string>
+    <string name="network_settings">Network</string>
+    <string name="security_settings">Security</string>
+    <string name="debug_settings">Debug</string>
+    <string name="about_settings">About</string>
+
+    <!-- Service Settings Items -->
+    <string name="auto_start_on_boot">Start on Boot</string>
+    <string name="auto_start_description">Automatically start service when device boots</string>
+    <string name="multicast_discovery">Multicast Discovery</string>
+    <string name="multicast_discovery_description">Automatically discover peers on local network</string>
+
+    <!-- Network Settings Items -->
+    <string name="configure_peers_title">Configure Peers</string>
+    <string name="configure_peers_description">Manage Yggdrasil network peer connections</string>
+    <string name="use_default_peers">Use default peers</string>
+    <string name="custom_peers">Custom Peers</string>
+    <string name="add_peer">Add Peer</string>
+    <string name="remove_peer">Remove peer</string>
+    <string name="peer_url">Peer URL</string>
+    <string name="peer_url_hint">tcp://example.peer.network:7743</string>
+    <string name="add">Add</string>
+
+    <!-- Security Settings Items -->
+    <string name="change_password">Change Password</string>
+    <string name="change_password_description">Update DeltaChat authentication password</string>
+    <string name="regenerate_keys">Regenerate Keys</string>
+    <string name="regenerate_keys_description">Generate new mail address and encryption keys</string>
+
+    <!-- Debug Settings Items -->
+    <string name="collect_logs">Collect Logs</string>
+    <string name="collect_logs_description">View and share application logs for debugging</string>
+
+    <!-- About Settings Items -->
+    <string name="about_app">About Tyr</string>
+    <string name="about_app_description">Version information and credits</string>
+
+    <!-- Settings Actions -->
+    <string name="password_changed">Password changed successfully</string>
+    <string name="peers_saved">Peers saved successfully</string>
+    <string name="peers_reset">Peers reset to defaults</string>
+    <string name="reset_to_defaults">Reset to Defaults</string>
+    <string name="reset_defaults">Reset Defaults</string>
+    <string name="reset_to_defaults_message">This will restore the default Yggdrasil peer list. Continue?</string>
+    <string name="restart_required">Restart Required</string>
+    <string name="restart_required_message">Changes will take effect after restarting the service.</string>
+    <string name="regenerate">Regenerate</string>
+    <string name="regenerate_keys_message">This will generate a new mail address. You will need to reconfigure DeltaChat with the new address. Continue?</string>
+    <string name="keys_regenerated">Keys regenerated successfully. Check your new mail address in the main screen.</string>
+    <string name="error_regenerate_keys">Failed to regenerate keys</string>
+
+    <!-- Logs -->
+    <string name="logs">Logs</string>
+    <string name="view_logs">View Logs</string>
+    <string name="share_logs">Share Logs</string>
+    <string name="tyr_logs">Tyr Logs</string>
+    <string name="no_logs_available">No logs available</string>
+    <string name="no_logs_to_share">No logs to share</string>
+    <string name="no_logs_to_copy">No logs to copy</string>
+    <string name="logs_copied">Logs copied to clipboard</string>
+    <string name="error_loading_logs">Error loading logs: %s</string>
+
+    <!-- Errors -->
+    <string name="error_password_empty">Password cannot be empty</string>
+    <string name="error_password_short">Password must be at least 6 characters</string>
+    <string name="error_password_mismatch">Passwords do not match</string>
+    <string name="error_peers_empty">Please enter at least one peer</string>
+
+    <!-- Permissions -->
+    <string name="permission_notification_title">Enable Notifications</string>
+    <string name="permission_notification_message">Tyr needs notification permission to show service status in the notification bar.</string>
+    <string name="permission_battery_title">Disable Battery Optimization</string>
+    <string name="permission_battery_message">To maintain stable connection in background, please disable battery optimization for Tyr.</string>
+    <string name="permission_allow">Allow</string>
+    <string name="permission_deny">Deny</string>
+    <string name="permission_settings">Open Settings</string>
+
+    <!-- Permission Warnings (Snackbar) -->
+    <string name="allow_notifications_snack">Notifications are disabled. Please allow them to receive service status updates.</string>
+    <string name="add_to_power_exceptions">Battery optimization is on. Add the app to power exceptions to allow background work.</string>
+    <string name="allow">Allow</string>
+
+    <!-- About -->
+    <string name="about_title">About Tyr</string>
+    <string name="version_and_build_title">Version: %1$s (Build %2$d)</string>
+    <string name="links_label">Links</string>
+    <string name="github">Tyr on GitHub</string>
+    <string name="website">Website</string>
+    <string name="libs_label">Used libraries</string>
+    <string name="libs_used">\n
+• Yggmail (Go)\n
+• Yggdrasil Network (LGPLv3)\n
+• AndroidX (Apache 2.0)\n
+• Material Components (Apache 2.0)\n
+• And others…
+</string>
+</resources>

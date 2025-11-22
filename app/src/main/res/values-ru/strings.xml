@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tyr</string>
+
+    <!-- Common -->
+    <string name="ok">ОК</string>
+    <string name="cancel">Отмена</string>
+    <string name="save">Сохранить</string>
+    <string name="next">Далее</string>
+    <string name="back">Назад</string>
+    <string name="skip">Пропустить</string>
+    <string name="finish">Завершить</string>
+    <string name="change">Изменить</string>
+    <string name="reset">Сбросить</string>
+    <string name="settings">Настройки</string>
+    <string name="restart">Перезапуск</string>
+    <string name="restart_now">Перезапустить сейчас</string>
+    <string name="restart_later">Позже</string>
+
+    <!-- Notification Channels -->
+    <string name="notification_channel_service">Служба Yggmail</string>
+    <string name="notification_channel_service_desc">Постоянное уведомление службы Yggmail</string>
+    <string name="notification_channel_mail">Уведомления почты</string>
+    <string name="notification_channel_mail_desc">Уведомления о новых письмах</string>
+
+    <!-- Service Status -->
+    <string name="service_status">Статус службы</string>
+    <string name="service_starting">Запуск…</string>
+    <string name="service_starting_desc">Инициализация службы Yggmail</string>
+    <string name="service_running">Работает</string>
+    <string name="service_running_desc">Почтовый адрес: %s</string>
+    <string name="service_stopping">Остановка…</string>
+    <string name="service_stopping_desc">Выключение службы Yggmail</string>
+    <string name="service_stopped">Не запущена</string>
+    <string name="service_stopped_desc">Служба не запущена</string>
+    <string name="service_error">Ошибка</string>
+    <string name="service_error_desc">Не удалось запустить службу</string>
+
+    <!-- Notification Status -->
+    <string name="notification_status_starting">Инициализация службы</string>
+    <string name="notification_status_running">Служба работает</string>
+    <string name="notification_status_stopping">Остановка службы</string>
+    <string name="notification_status_stopped">Служба не запущена</string>
+    <string name="notification_status_error">Ошибка службы</string>
+
+    <!-- Status Display -->
+    <string name="status_starting">Запуск…</string>
+    <string name="status_running">Работает</string>
+    <string name="status_stopping">Остановка…</string>
+    <string name="status_stopped">Не запущена</string>
+    <string name="status_error">Ошибка: %s</string>
+
+    <!-- Main Activity -->
+    <string name="start_service">Запустить службу</string>
+    <string name="stop_service">Остановить службу</string>
+    <string name="mail_configuration">Настройка почты</string>
+    <string name="copy_address">Копировать адрес</string>
+    <string name="address_copied">Адрес скопирован в буфер обмена</string>
+    <string name="smtp_server">SMTP: %1$s:%2$s</string>
+    <string name="imap_server">IMAP: %1$s:%2$s</string>
+    <string name="deltachat_setup">Настройка DeltaChat</string>
+    <string name="deltachat_setup_hint">Нажмите для просмотра инструкций</string>
+    <string name="deltachat_instructions">Настройка DeltaChat:\n\n1. Установите и откройте приложение DeltaChat\n2. Нажмите \"Добавить профиль\"\n3. Нажмите \"Дополнительно\" (под полями входа)\n4. Введите ваш email-адрес, указанный выше\n5. Введите пароль, установленный при первоначальной настройке\n6. В разделе IMAP-сервер:\n   • Замените \"автоматически\" на: 127.0.0.1:1143\n   • Безопасность: Нет/STARTTLS отключен\n7. В разделе SMTP-сервер:\n   • Замените \"автоматически\" на: 127.0.0.1:1025\n   • Безопасность: Нет/STARTTLS отключен\n8. Нажмите \"Войти\" для начала общения\n\nУбедитесь, что служба Tyr запущена перед использованием DeltaChat.</string>
+
+    <!-- Onboarding -->
+    <string name="welcome_to_tyr">Добро пожаловать в Tyr</string>
+    <string name="welcome_description">Tyr создает локальный почтовый сервер через сеть Yggdrasil, позволяя использовать DeltaChat для безопасного децентрализованного обмена сообщениями.</string>
+    <string name="feature_decentralized">Децентрализованный</string>
+    <string name="feature_encrypted">Сквозное шифрование</string>
+    <string name="feature_p2p">Peer-to-Peer</string>
+    <string name="setup_password">Установка пароля</string>
+    <string name="password_description">Этот пароль будет использоваться DeltaChat для аутентификации с локальным почтовым сервером.</string>
+    <string name="password">Пароль</string>
+    <string name="confirm_password">Подтверждение пароля</string>
+    <string name="new_password">Новый пароль</string>
+    <string name="password_security_info">Ваш пароль защищает соединение между DeltaChat и локальным почтовым сервером</string>
+    <string name="configure_peers">Настройка пиров</string>
+    <string name="peers_description">Введите пиры сети Yggdrasil (по одному на строку). По умолчанию заполнены стандартные пиры.</string>
+    <string name="yggdrasil_peers">Пиры Yggdrasil</string>
+    <string name="peers_list">Список пиров</string>
+    <string name="enable_multicast">Включить Multicast-обнаружение</string>
+    <string name="multicast_description">Автоматическое обнаружение пиров в локальной сети</string>
+    <string name="peers_info">Пиры по умолчанию уже заполнены. Вы можете добавить дополнительные пиры или оставить значения по умолчанию</string>
+
+    <!-- Settings -->
+    <string name="service_settings">Настройки службы</string>
+    <string name="network_settings">Сеть</string>
+    <string name="security_settings">Безопасность</string>
+    <string name="debug_settings">Отладка</string>
+    <string name="about_settings">О программе</string>
+
+    <!-- Service Settings Items -->
+    <string name="auto_start_on_boot">Запуск при загрузке</string>
+    <string name="auto_start_description">Автоматически запускать службу при загрузке устройства</string>
+    <string name="multicast_discovery">Multicast-обнаружение</string>
+    <string name="multicast_discovery_description">Автоматическое обнаружение пиров в локальной сети</string>
+
+    <!-- Network Settings Items -->
+    <string name="configure_peers_title">Настроить пиры</string>
+    <string name="configure_peers_description">Управление подключениями к пирам сети Yggdrasil</string>
+    <string name="use_default_peers">Использовать пиры по умолчанию</string>
+    <string name="custom_peers">Пользовательские пиры</string>
+    <string name="add_peer">Добавить пир</string>
+    <string name="remove_peer">Удалить пир</string>
+    <string name="peer_url">URL пира</string>
+    <string name="peer_url_hint">tcp://example.peer.network:7743</string>
+    <string name="add">Добавить</string>
+
+    <!-- Security Settings Items -->
+    <string name="change_password">Изменить пароль</string>
+    <string name="change_password_description">Обновить пароль аутентификации DeltaChat</string>
+    <string name="regenerate_keys">Перегенерировать ключи</string>
+    <string name="regenerate_keys_description">Создать новый почтовый адрес и ключи шифрования</string>
+
+    <!-- Debug Settings Items -->
+    <string name="collect_logs">Сбор логов</string>
+    <string name="collect_logs_description">Просмотр и отправка логов приложения для отладки</string>
+
+    <!-- About Settings Items -->
+    <string name="about_app">О программе Tyr</string>
+    <string name="about_app_description">Информация о версии и авторские права</string>
+
+    <!-- Settings Actions -->
+    <string name="password_changed">Пароль успешно изменен</string>
+    <string name="peers_saved">Пиры успешно сохранены</string>
+    <string name="peers_reset">Пиры сброшены к значениям по умолчанию</string>
+    <string name="reset_to_defaults">Сбросить к значениям по умолчанию</string>
+    <string name="reset_defaults">Сброс к умолчанию</string>
+    <string name="reset_to_defaults_message">Это восстановит список пиров Yggdrasil по умолчанию. Продолжить?</string>
+    <string name="restart_required">Требуется перезапуск</string>
+    <string name="restart_required_message">Изменения вступят в силу после перезапуска службы.</string>
+    <string name="regenerate">Перегенерировать</string>
+    <string name="regenerate_keys_message">Это создаст новый почтовый адрес. Вам потребуется перенастроить DeltaChat с новым адресом. Продолжить?</string>
+    <string name="keys_regenerated">Ключи успешно перегенерированы. Проверьте новый почтовый адрес на главном экране.</string>
+    <string name="error_regenerate_keys">Не удалось перегенерировать ключи</string>
+
+    <!-- Logs -->
+    <string name="logs">Логи</string>
+    <string name="view_logs">Просмотр логов</string>
+    <string name="share_logs">Поделиться логами</string>
+    <string name="tyr_logs">Логи Tyr</string>
+    <string name="no_logs_available">Логи отсутствуют</string>
+    <string name="no_logs_to_share">Нет логов для отправки</string>
+    <string name="no_logs_to_copy">Нет логов для копирования</string>
+    <string name="logs_copied">Логи скопированы в буфер обмена</string>
+    <string name="error_loading_logs">Ошибка загрузки логов: %s</string>
+
+    <!-- Errors -->
+    <string name="error_password_empty">Пароль не может быть пустым</string>
+    <string name="error_password_short">Пароль должен быть не менее 6 символов</string>
+    <string name="error_password_mismatch">Пароли не совпадают</string>
+    <string name="error_peers_empty">Пожалуйста, введите хотя бы один пир</string>
+
+    <!-- Permissions -->
+    <string name="permission_notification_title">Включить уведомления</string>
+    <string name="permission_notification_message">Tyr требуется разрешение на уведомления для отображения статуса сервиса в панели уведомлений.</string>
+    <string name="permission_battery_title">Отключить оптимизацию батареи</string>
+    <string name="permission_battery_message">Для поддержания стабильного соединения в фоновом режиме отключите оптимизацию батареи для Tyr.</string>
+    <string name="permission_allow">Разрешить</string>
+    <string name="permission_deny">Отклонить</string>
+    <string name="permission_settings">Открыть настройки</string>
+
+    <!-- About -->
+    <string name="about_title">О программе Tyr</string>
+    <string name="links_label">Ссылки</string>
+    <string name="github">Tyr на GitHub</string>
+    <string name="website">Веб-сайт</string>
+    <string name="libs_label">Использованные библиотеки</string>
+</resources>
