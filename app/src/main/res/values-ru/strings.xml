@@ -160,10 +160,23 @@
     <string name="permission_deny">Отклонить</string>
     <string name="permission_settings">Открыть настройки</string>
 
+    <!-- Permission Warnings (Snackbar) -->
+    <string name="allow_notifications_snack">Уведомления отключены. Пожалуйста, разрешите их для получения обновлений статуса службы.</string>
+    <string name="add_to_power_exceptions">Оптимизация батареи включена. Добавьте приложение в исключения для работы в фоновом режиме.</string>
+    <string name="allow">Разрешить</string>
+
     <!-- About -->
     <string name="about_title">О программе Tyr</string>
+    <string name="version_and_build_title">Версия: %1$s (Сборка %2$d)</string>
     <string name="links_label">Ссылки</string>
     <string name="github">Tyr на GitHub</string>
     <string name="website">Веб-сайт</string>
     <string name="libs_label">Использованные библиотеки</string>
+    <string name="libs_used">\n
+• Yggmail (Go)\n
+• Yggdrasil Network (LGPLv3)\n
+• AndroidX (Apache 2.0)\n
+• Material Components (Apache 2.0)\n
+• И другие…
+</string>
 </resources>
