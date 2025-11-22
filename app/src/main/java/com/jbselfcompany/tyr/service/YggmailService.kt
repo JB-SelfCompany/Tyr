@@ -354,9 +354,8 @@ class YggmailService : Service(), LogCallback {
         }
 
         return NotificationCompat.Builder(this, TyrApplication.CHANNEL_ID_SERVICE)
-            .setContentTitle(getString(R.string.service_status))
-            .setContentText(statusText)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle(statusText)
+            .setSmallIcon(R.drawable.ic_notification_icon)
             .setContentIntent(pendingIntent)
             .setOngoing(status == ServiceStatus.RUNNING || status == ServiceStatus.STARTING)
             .setPriority(NotificationCompat.PRIORITY_LOW)
