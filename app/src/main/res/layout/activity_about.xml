@@ -50,13 +50,13 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent" />
 
-    <LinearLayout
+    <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/links_buttons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:gravity="center"
-        android:weightSum="2"
+        android:weightSum="1"
         app:layout_constraintTop_toBottomOf="@id/links_title"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent">
@@ -70,15 +70,7 @@
             android:contentDescription="@string/github"
             android:src="@drawable/ic_github" />
 
-        <androidx.appcompat.widget.AppCompatImageButton
-            android:id="@+id/button_website"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:padding="16dp"
-            android:contentDescription="@string/website"
-            android:src="@drawable/ic_link" />
-    </LinearLayout>
+    </androidx.appcompat.widget.LinearLayoutCompat>
 
     <TextView
         android:id="@+id/libs_title"

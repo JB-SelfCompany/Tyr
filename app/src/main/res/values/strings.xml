@@ -36,13 +36,6 @@
     <string name="service_error">Error</string>
     <string name="service_error_desc">Failed to start service</string>
 
-    <!-- Notification Status -->
-    <string name="notification_status_starting">Initializing service</string>
-    <string name="notification_status_running">Service is running</string>
-    <string name="notification_status_stopping">Shutting down service</string>
-    <string name="notification_status_stopped">Service not running</string>
-    <string name="notification_status_error">Service error</string>
-
     <!-- Status Display -->
     <string name="status_starting">Starting…</string>
     <string name="status_running">Running</string>
@@ -56,11 +49,17 @@
     <string name="mail_configuration">Mail Configuration</string>
     <string name="copy_address">Copy Address</string>
     <string name="address_copied">Address copied to clipboard</string>
+    <string name="setup_deltachat">Setup DeltaChat</string>
+    <string name="dcaccount_opened">Opening DeltaChat with autoconfig…</string>
+    <string name="dcaccount_copied">DCACCOUNT link copied! Open DeltaChat and paste it in the setup screen</string>
+    <string name="dcaccount_error">Failed to generate autoconfig link. Make sure the service is running.</string>
+    <string name="deltachat_not_installed_title">DeltaChat Not Installed</string>
+    <string name="deltachat_not_installed_message">DeltaChat is not installed on this device.\n\nIf you have DeltaChat installed, please use the manual setup instructions shown below to configure it.</string>
     <string name="smtp_server">SMTP: %1$s:%2$s</string>
     <string name="imap_server">IMAP: %1$s:%2$s</string>
     <string name="deltachat_setup">DeltaChat Setup</string>
     <string name="deltachat_setup_hint">Tap to view setup instructions</string>
-    <string name="deltachat_instructions">To configure DeltaChat:\n\n1. Install and open DeltaChat app\n2. Tap \"Add Account\"\n3. Tap \"Advanced\" (below the login fields)\n4. Enter your email address shown above\n5. Enter the password you set during onboarding\n6. In IMAP Server section:\n   • Replace \"automatic\" with: 127.0.0.1:1143\n   • Security: None/STARTTLS disabled\n7. In SMTP Server section:\n   • Replace \"automatic\" with: 127.0.0.1:1025\n   • Security: None/STARTTLS disabled\n8. Tap \"Login\" to start chatting\n\nMake sure Tyr service is running before using DeltaChat.</string>
+    <string name="deltachat_instructions">DeltaChat setup:\n\n1. Install and open the DeltaChat app\n2. Click on "Create a new profile"\n3. Enter a name and select an avatar at the top of the screen if necessary\n4. Click on "Use a different server" (below the login fields)\n5. Enter your email address from above\n6. Enter the password set during the initial setup\n7. Click "✓" in the top right corner to start chatting. Make sure the Tyr service is running before using DeltaChat.</string>
 
     <!-- Onboarding -->
     <string name="welcome_to_tyr">Welcome to Tyr</string>

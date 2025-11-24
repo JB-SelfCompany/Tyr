@@ -346,11 +346,11 @@ class YggmailService : Service(), LogCallback {
         )
 
         val statusText = when (status) {
-            ServiceStatus.STARTING -> getString(R.string.notification_status_starting)
-            ServiceStatus.RUNNING -> getString(R.string.notification_status_running)
-            ServiceStatus.STOPPING -> getString(R.string.notification_status_stopping)
-            ServiceStatus.STOPPED -> getString(R.string.notification_status_stopped)
-            ServiceStatus.ERROR -> lastError ?: getString(R.string.notification_status_error)
+            ServiceStatus.STARTING -> getString(R.string.service_starting)
+            ServiceStatus.RUNNING -> getString(R.string.service_running)
+            ServiceStatus.STOPPING -> getString(R.string.service_stopping)
+            ServiceStatus.STOPPED -> getString(R.string.service_stopped)
+            ServiceStatus.ERROR -> lastError ?: getString(R.string.service_error)
         }
 
         return NotificationCompat.Builder(this, TyrApplication.CHANNEL_ID_SERVICE)

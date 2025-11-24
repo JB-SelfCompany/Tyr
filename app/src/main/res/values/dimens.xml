@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Text sizes for different screen sizes -->
+    <!-- Default values for normal/large screens -->
+
+    <!-- Onboarding text sizes -->
+    <dimen name="text_size_onboarding_title">32sp</dimen>
+    <dimen name="text_size_onboarding_description">16sp</dimen>
+
+    <!-- Card content spacing -->
+    <dimen name="card_content_padding">16dp</dimen>
+    <dimen name="screen_horizontal_padding">16dp</dimen>
+    <dimen name="screen_vertical_padding">16dp</dimen>
+
+    <!-- Onboarding specific spacing -->
+    <dimen name="onboarding_horizontal_padding">32dp</dimen>
+    <dimen name="onboarding_hero_size">140dp</dimen>
+    <dimen name="onboarding_hero_icon_size">80dp</dimen>
+    <dimen name="onboarding_title_margin_top">40dp</dimen>
+    <dimen name="onboarding_description_margin_top">20dp</dimen>
+</resources>

@@ -33,10 +33,6 @@ class AboutActivity : AppCompatActivity() {
         findViewById<AppCompatImageButton>(R.id.button_github).setOnClickListener {
             openLink("https://github.com/JB-SelfCompany/Tyr")
         }
-
-        findViewById<AppCompatImageButton>(R.id.button_website).setOnClickListener {
-            openLink("https://business.shd.company")
-        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Text sizes for very small screens (320dp width) -->
+
+    <!-- Onboarding text sizes - further reduced for very small screens -->
+    <dimen name="text_size_onboarding_title">20sp</dimen>
+    <dimen name="text_size_onboarding_description">13sp</dimen>
+
+    <!-- Minimal spacing for very compact screens -->
+    <dimen name="onboarding_horizontal_padding">16dp</dimen>
+    <dimen name="onboarding_hero_size">80dp</dimen>
+    <dimen name="onboarding_hero_icon_size">48dp</dimen>
+    <dimen name="onboarding_title_margin_top">16dp</dimen>
+    <dimen name="onboarding_description_margin_top">12dp</dimen>
+</resources>

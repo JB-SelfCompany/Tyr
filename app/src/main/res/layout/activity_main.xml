@@ -107,30 +107,44 @@
                         tools:text="abcd1234@yggmail"
                         tools:visibility="visible" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/button_copy_address"
-                        style="@style/Widget.Material3.Button.TextButton"
+                    <!-- Server Info -->
+                    <TextView
+                        android:id="@+id/text_imap_server"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/copy_address"
-                        android:visibility="gone"
-                        tools:visibility="visible" />
+                        android:layout_marginTop="8dp"
+                        android:textAppearance="?attr/textAppearanceBody2"
+                        tools:text="IMAP: 127.0.0.1:1143" />
 
                     <TextView
                         android:id="@+id/text_smtp_server"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="4dp"
                         android:textAppearance="?attr/textAppearanceBody2"
                         tools:text="SMTP: 127.0.0.1:1025" />
 
-                    <TextView
-                        android:id="@+id/text_imap_server"
+                    <!-- Action Buttons -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/button_setup_deltachat"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:textAppearance="?attr/textAppearanceBody2"
-                        tools:text="IMAP: 127.0.0.1:1143" />
+                        android:layout_marginTop="16dp"
+                        android:text="@string/setup_deltachat"
+                        android:visibility="gone"
+                        app:icon="@drawable/ic_play_arrow"
+                        tools:visibility="visible" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/button_copy_address"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/copy_address"
+                        android:visibility="gone"
+                        app:icon="@drawable/ic_play_arrow"
+                        tools:visibility="visible" />
 
                 </LinearLayout>
 

@@ -8,7 +8,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="32dp">
+        android:padding="@dimen/onboarding_horizontal_padding">
 
         <!-- Header Section -->
         <TextView
@@ -18,7 +18,7 @@
             android:layout_marginTop="32dp"
             android:letterSpacing="0.01"
             android:text="@string/configure_peers"
-            android:textAppearance="?attr/textAppearanceHeadline4"
+            android:textSize="@dimen/text_size_onboarding_title"
             android:textColor="?attr/colorOnSurface"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
@@ -33,7 +33,7 @@
             android:alpha="0.87"
             android:lineSpacingExtra="2dp"
             android:text="@string/peers_description"
-            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textSize="@dimen/text_size_onboarding_description"
             android:textColor="?attr/colorOnSurfaceVariant"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -96,7 +96,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/enable_multicast"
-                    android:textAppearance="?attr/textAppearanceBodyLarge"
+                    android:textSize="16sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -106,7 +106,7 @@
                     android:layout_marginTop="4dp"
                     android:alpha="0.87"
                     android:text="@string/multicast_description"
-                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textSize="14sp"
                     android:textColor="?attr/colorOnSurfaceVariant" />
 
             </LinearLayout>
@@ -130,7 +130,7 @@
                 android:layout_height="wrap_content"
                 android:padding="16dp"
                 android:text="@string/peers_info"
-                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textSize="14sp"
                 android:textColor="?attr/colorOnTertiaryContainer" />
 
         </com.google.android.material.card.MaterialCardView>

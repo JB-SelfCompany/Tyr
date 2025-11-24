@@ -36,13 +36,6 @@
     <string name="service_error">Ошибка</string>
     <string name="service_error_desc">Не удалось запустить службу</string>
 
-    <!-- Notification Status -->
-    <string name="notification_status_starting">Инициализация службы</string>
-    <string name="notification_status_running">Служба работает</string>
-    <string name="notification_status_stopping">Остановка службы</string>
-    <string name="notification_status_stopped">Служба не запущена</string>
-    <string name="notification_status_error">Ошибка службы</string>
-
     <!-- Status Display -->
     <string name="status_starting">Запуск…</string>
     <string name="status_running">Работает</string>
@@ -56,11 +49,17 @@
     <string name="mail_configuration">Настройка почты</string>
     <string name="copy_address">Копировать адрес</string>
     <string name="address_copied">Адрес скопирован в буфер обмена</string>
+    <string name="setup_deltachat">Настроить DeltaChat</string>
+    <string name="dcaccount_opened">Открываю DeltaChat с автоконфигурацией…</string>
+    <string name="dcaccount_copied">Ссылка DCACCOUNT скопирована! Откройте DeltaChat и вставьте её в экран настройки</string>
+    <string name="dcaccount_error">Не удалось создать ссылку автоконфигурации. Убедитесь, что служба запущена.</string>
+    <string name="deltachat_not_installed_title">DeltaChat не установлен</string>
+    <string name="deltachat_not_installed_message">DeltaChat не установлен на этом устройстве.\n\nЕсли у вас всё же установлен DeltaChat, воспользуйтесь инструкцией ниже для ручной настройки.</string>
     <string name="smtp_server">SMTP: %1$s:%2$s</string>
     <string name="imap_server">IMAP: %1$s:%2$s</string>
     <string name="deltachat_setup">Настройка DeltaChat</string>
     <string name="deltachat_setup_hint">Нажмите для просмотра инструкций</string>
-    <string name="deltachat_instructions">Настройка DeltaChat:\n\n1. Установите и откройте приложение DeltaChat\n2. Нажмите \"Добавить профиль\"\n3. Нажмите \"Дополнительно\" (под полями входа)\n4. Введите ваш email-адрес, указанный выше\n5. Введите пароль, установленный при первоначальной настройке\n6. В разделе IMAP-сервер:\n   • Замените \"автоматически\" на: 127.0.0.1:1143\n   • Безопасность: Нет/STARTTLS отключен\n7. В разделе SMTP-сервер:\n   • Замените \"автоматически\" на: 127.0.0.1:1025\n   • Безопасность: Нет/STARTTLS отключен\n8. Нажмите \"Войти\" для начала общения\n\nУбедитесь, что служба Tyr запущена перед использованием DeltaChat.</string>
+    <string name="deltachat_instructions">Настройка DeltaChat:\n\n1. Установите и откройте приложение DeltaChat\n2. Нажмите \"Создать новый профиль\"\n3. Введите имя, при необходимости выберите аватар в верхней части экрана\n4. Нажмите \"Использовать другой сервер\" (под полями входа)\n5. Введите ваш email-адрес, указанный выше\n6. Введите пароль, установленный при первоначальной настройке\n7. Нажмите \"✓\" в правом верхнем углу для начала общения\n\nУбедитесь, что служба Tyr запущена перед использованием DeltaChat.</string>
 
     <!-- Onboarding -->
     <string name="welcome_to_tyr">Добро пожаловать в Tyr</string>

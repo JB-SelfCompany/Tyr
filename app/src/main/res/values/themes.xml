@@ -2,6 +2,8 @@
 <resources>
     <!-- Base application theme (Light) -->
     <style name="Base.Theme.Tyr" parent="Theme.Material3.Light.NoActionBar">
+        <!-- Support system font scaling -->
+        <item name="android:adjustViewBounds">true</item>
         <item name="colorPrimary">@color/md_theme_light_primary</item>
         <item name="colorOnPrimary">@color/md_theme_light_onPrimary</item>
         <item name="colorPrimaryContainer">@color/md_theme_light_primaryContainer</item>

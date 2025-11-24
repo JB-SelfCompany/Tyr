@@ -3,13 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="32dp">
+    android:padding="@dimen/onboarding_horizontal_padding">
 
     <!-- Modern Hero Section -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/hero_card"
-        android:layout_width="140dp"
-        android:layout_height="140dp"
+        android:layout_width="@dimen/onboarding_hero_size"
+        android:layout_height="@dimen/onboarding_hero_size"
         android:layout_marginTop="48dp"
         app:cardBackgroundColor="?attr/colorPrimaryContainer"
         app:cardCornerRadius="32dp"
@@ -19,8 +19,8 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:layout_width="@dimen/onboarding_hero_icon_size"
+            android:layout_height="@dimen/onboarding_hero_icon_size"
             android:layout_gravity="center"
             android:contentDescription="@string/app_name"
             android:src="@mipmap/ic_launcher" />
@@ -32,11 +32,11 @@
         android:id="@+id/title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="@dimen/onboarding_title_margin_top"
         android:gravity="center"
         android:letterSpacing="0.02"
         android:text="@string/welcome_to_tyr"
-        android:textAppearance="?attr/textAppearanceHeadline3"
+        android:textSize="@dimen/text_size_onboarding_title"
         android:textColor="?attr/colorOnSurface"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
@@ -48,13 +48,13 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="@dimen/onboarding_description_margin_top"
         android:layout_marginEnd="16dp"
         android:alpha="0.87"
         android:gravity="center"
         android:lineSpacingExtra="4dp"
         android:text="@string/welcome_description"
-        android:textAppearance="?attr/textAppearanceBodyLarge"
+        android:textSize="@dimen/text_size_onboarding_description"
         android:textColor="?attr/colorOnSurfaceVariant"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -76,7 +76,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
             android:text="@string/feature_decentralized"
-            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textSize="14sp"
             app:chipBackgroundColor="?attr/colorSecondaryContainer"
             app:chipStrokeWidth="0dp" />
 
@@ -85,7 +85,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
             android:text="@string/feature_encrypted"
-            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textSize="14sp"
             app:chipBackgroundColor="?attr/colorTertiaryContainer"
             app:chipStrokeWidth="0dp" />
 
@@ -93,7 +93,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/feature_p2p"
-            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textSize="14sp"
             app:chipBackgroundColor="?attr/colorPrimaryContainer"
             app:chipStrokeWidth="0dp" />
 

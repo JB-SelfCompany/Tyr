@@ -26,7 +26,9 @@ import com.jbselfcompany.tyr.service.ServiceStatusListener
 import com.jbselfcompany.tyr.service.YggmailService
 import com.jbselfcompany.tyr.ui.onboarding.OnboardingActivity
 import com.jbselfcompany.tyr.ui.settings.SettingsActivity
+import com.jbselfcompany.tyr.utils.AutoconfigServer
 import com.jbselfcompany.tyr.utils.PermissionManager
+import android.util.Log
 
 /**
  * Main activity displaying service status and mail configuration.
@@ -36,22 +38,10 @@ class MainActivity : AppCompatActivity(), ServiceStatusListener {
 
     private lateinit var binding: ActivityMainBinding
     private val configRepository by lazy { TyrApplication.instance.configRepository }
+    private val autoconfigServer by lazy { AutoconfigServer(this) }
 
     private var yggmailService: YggmailService? = null
     private var serviceBound = false
-
-    // Permission launcher for notification permission (Android 13+)
-    private val notificationPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            // After notification permission, request battery optimization exclusion
-            requestBatteryOptimizationIfNeeded()
-        } else {
-            // Still request battery optimization even if notification was denied
-            requestBatteryOptimizationIfNeeded()
-        }
-    }
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
@@ -87,8 +77,8 @@ class MainActivity : AppCompatActivity(), ServiceStatusListener {
         setupUI()
         bindService()
 
-        // Request permissions if needed (only on first launch)
-        requestPermissionsIfNeeded()
+        // Don't request permissions automatically on first launch
+        // They will be shown as Snackbars in onResume() instead
     }
 
     override fun onResume() {
@@ -100,6 +90,8 @@ class MainActivity : AppCompatActivity(), ServiceStatusListener {
     override fun onDestroy() {
         super.onDestroy()
         unbindService()
+        // Stop autoconfig server when activity is destroyed
+        autoconfigServer.stop()
     }
 
     private fun setupUI() {
@@ -112,7 +104,12 @@ class MainActivity : AppCompatActivity(), ServiceStatusListener {
             }
         }
 
-        // Copy mail address button
+        // Setup DeltaChat button with DCACCOUNT link
+        binding.buttonSetupDeltachat.setOnClickListener {
+            setupDeltaChat()
+        }
+
+        // Copy mail address button (legacy support)
         binding.buttonCopyAddress.setOnClickListener {
             val address = configRepository.getMailAddress()
             if (!address.isNullOrEmpty()) {
@@ -156,9 +153,11 @@ class MainActivity : AppCompatActivity(), ServiceStatusListener {
         if (!mailAddress.isNullOrEmpty()) {
             binding.textMailAddress.text = mailAddress
             binding.textMailAddress.visibility = View.VISIBLE
+            binding.buttonSetupDeltachat.visibility = View.VISIBLE
             binding.buttonCopyAddress.visibility = View.VISIBLE
         } else {
             binding.textMailAddress.visibility = View.GONE
+            binding.buttonSetupDeltachat.visibility = View.GONE
             binding.buttonCopyAddress.visibility = View.GONE
         }
 
@@ -174,6 +173,101 @@ class MainActivity : AppCompatActivity(), ServiceStatusListener {
             binding.buttonToggleService.text = getString(R.string.start_service)
             binding.buttonToggleService.setIconResource(R.drawable.ic_play_arrow)
         }
+    }
+
+    private fun setupDeltaChat() {
+        try {
+            // Get credentials
+            val email = configRepository.getMailAddress()
+            val password = configRepository.getPassword()
+
+            if (email.isNullOrEmpty() || password.isNullOrEmpty()) {
+                Snackbar.make(
+                    binding.root,
+                    R.string.dcaccount_error,
+                    Snackbar.LENGTH_LONG
+                ).show()
+                return
+            }
+
+            // Generate DCLOGIN URL (simpler, doesn't require HTTPS)
+            // DCLOGIN embeds credentials directly in the URI
+            val dcloginUrl = autoconfigServer.generateDcloginUrl(email, password)
+            Log.d("MainActivity", "Generated DCLOGIN URL: $dcloginUrl")
+
+            // Check if DeltaChat is installed
+            val isDeltaChatInstalled = try {
+                packageManager.getPackageInfo("com.b44t.messenger", 0)
+                true
+            } catch (e: Exception) {
+                false
+            }
+
+            if (isDeltaChatInstalled) {
+                // DeltaChat is installed, try to open it with DCLOGIN URL
+                try {
+                    // First, try with package specified
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        data = Uri.parse(dcloginUrl)
+                        setPackage("com.b44t.messenger")
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    startActivity(intent)
+
+                    Snackbar.make(
+                        binding.root,
+                        R.string.dcaccount_opened,
+                        Snackbar.LENGTH_SHORT
+                    ).show()
+                } catch (e: Exception) {
+                    Log.w("MainActivity", "Failed to open with package, trying without", e)
+                    // Try without package specification
+                    try {
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            data = Uri.parse(dcloginUrl)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        startActivity(intent)
+
+                        Snackbar.make(
+                            binding.root,
+                            R.string.dcaccount_opened,
+                            Snackbar.LENGTH_SHORT
+                        ).show()
+                    } catch (e2: Exception) {
+                        Log.e("MainActivity", "Failed to open DCLOGIN URL", e2)
+                        // Fallback: copy to clipboard
+                        copyDcloginToClipboard(dcloginUrl)
+                    }
+                }
+            } else {
+                // DeltaChat not installed - just show message, no clipboard copy
+                MaterialAlertDialogBuilder(this)
+                    .setTitle(R.string.deltachat_not_installed_title)
+                    .setMessage(R.string.deltachat_not_installed_message)
+                    .setPositiveButton(R.string.ok, null)
+                    .show()
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error setting up DeltaChat", e)
+            Snackbar.make(
+                binding.root,
+                R.string.dcaccount_error,
+                Snackbar.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    private fun copyDcloginToClipboard(dcloginUrl: String) {
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        val clip = android.content.ClipData.newPlainText("DCLOGIN", dcloginUrl)
+        clipboard.setPrimaryClip(clip)
+
+        Snackbar.make(
+            binding.root,
+            R.string.dcaccount_copied,
+            Snackbar.LENGTH_LONG
+        ).show()
     }
 
     private fun showInstructionsDialog() {
@@ -234,36 +328,8 @@ class MainActivity : AppCompatActivity(), ServiceStatusListener {
         }
     }
 
-    /**
-     * Request permissions if needed (first launch only)
-     */
-    private fun requestPermissionsIfNeeded() {
-        // Check if this is the first time requesting permissions
-        val prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        val permissionsRequested = prefs.getBoolean("permissions_requested", false)
-
-        if (!permissionsRequested) {
-            // Mark as requested
-            prefs.edit().putBoolean("permissions_requested", true).apply()
-
-            // Request notification permission first (Android 13+)
-            if (!PermissionManager.hasNotificationPermission(this)) {
-                PermissionManager.requestNotificationPermission(this, notificationPermissionLauncher)
-            } else {
-                // If notification permission is already granted, request battery optimization
-                requestBatteryOptimizationIfNeeded()
-            }
-        }
-    }
-
-    /**
-     * Request battery optimization exclusion if needed
-     */
-    private fun requestBatteryOptimizationIfNeeded() {
-        if (!PermissionManager.isBatteryOptimizationDisabled(this)) {
-            PermissionManager.requestBatteryOptimizationExclusion(this)
-        }
-    }
+    // Removed automatic permission requests on first launch
+    // Permissions are now only shown as Snackbar warnings in onResume()
 
     /**
      * Show Snackbar warnings for missing permissions (like in Mimir app)
