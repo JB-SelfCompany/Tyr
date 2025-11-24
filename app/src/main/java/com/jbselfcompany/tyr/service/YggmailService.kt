@@ -24,12 +24,19 @@ import java.io.File
 /**
  * Foreground service that runs Yggmail server.
  * Manages lifecycle of Yggmail service and provides status updates.
+ *
+ * Battery optimization: Uses timed WakeLock with periodic renewal
+ * to balance connectivity and power consumption.
  */
 class YggmailService : Service(), LogCallback {
 
     companion object {
         private const val TAG = "YggmailService"
         private const val NOTIFICATION_ID = 1001
+
+        // WakeLock constants for battery optimization
+        private const val WAKELOCK_TIMEOUT_MS = 10 * 60 * 1000L // 10 minutes
+        private const val WAKELOCK_RENEWAL_MS = 9 * 60 * 1000L  // Renew every 9 minutes
 
         const val ACTION_START = "com.jbselfcompany.tyr.START"
         const val ACTION_STOP = "com.jbselfcompany.tyr.STOP"
@@ -90,6 +97,9 @@ class YggmailService : Service(), LogCallback {
     private var serviceStatus = ServiceStatus.STOPPED
     private var lastError: String? = null
     private val statusListeners = mutableListOf<ServiceStatusListener>()
+
+    // WakeLock renewal
+    private var wakeLockRenewalRunnable: Runnable? = null
 
     // Binder for local service binding
     private val binder = LocalBinder()
@@ -152,15 +162,15 @@ class YggmailService : Service(), LogCallback {
 
     override fun onDestroy() {
         Log.d(TAG, "Service onDestroy")
+
+        // Cancel WakeLock renewal
+        wakeLockRenewalRunnable?.let { serviceHandler.removeCallbacks(it) }
+
         stopYggmail()
 
         serviceThread.quitSafely()
 
-        wakeLock?.let {
-            if (it.isHeld) {
-                it.release()
-            }
-        }
+        releaseWakeLock()
 
         // Ensure notification is removed
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
@@ -240,8 +250,9 @@ class YggmailService : Service(), LogCallback {
             yggmailService?.start(peers, multicastEnabled, ".*")
             Log.i(TAG, "Yggmail service started successfully")
 
-            // Acquire wake lock
-            wakeLock?.acquire()
+            // Acquire wake lock with timeout and start periodic renewal
+            acquireWakeLockWithTimeout()
+            scheduleWakeLockRenewal()
 
             isRunning = true
             updateStatus(ServiceStatus.RUNNING)
@@ -273,6 +284,9 @@ class YggmailService : Service(), LogCallback {
             Log.i(TAG, "Stopping Yggmail service...")
             updateStatus(ServiceStatus.STOPPING)
 
+            // Cancel WakeLock renewal
+            wakeLockRenewalRunnable?.let { serviceHandler.removeCallbacks(it) }
+
             // Stop and close service
             yggmailService?.stop()
             Thread.sleep(500) // Give time for stop to process
@@ -289,11 +303,7 @@ class YggmailService : Service(), LogCallback {
             // Wait for ports to be fully released (increased to 3000ms)
             Thread.sleep(3000)
 
-            wakeLock?.let {
-                if (it.isHeld) {
-                    it.release()
-                }
-            }
+            releaseWakeLock()
 
             isRunning = false
             updateStatus(ServiceStatus.STOPPED)
@@ -318,6 +328,56 @@ class YggmailService : Service(), LogCallback {
     }
 
     /**
+     * Acquire WakeLock with timeout for battery optimization
+     */
+    private fun acquireWakeLockWithTimeout() {
+        try {
+            wakeLock?.let { lock ->
+                if (lock.isHeld) {
+                    lock.release()
+                }
+                lock.acquire(WAKELOCK_TIMEOUT_MS)
+                Log.d(TAG, "WakeLock acquired with ${WAKELOCK_TIMEOUT_MS / 1000}s timeout")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error acquiring WakeLock", e)
+        }
+    }
+
+    /**
+     * Release WakeLock safely
+     */
+    private fun releaseWakeLock() {
+        try {
+            wakeLock?.let { lock ->
+                if (lock.isHeld) {
+                    lock.release()
+                    Log.d(TAG, "WakeLock released")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error releasing WakeLock", e)
+        }
+    }
+
+    /**
+     * Schedule periodic WakeLock renewal to maintain service while optimizing battery
+     */
+    private fun scheduleWakeLockRenewal() {
+        wakeLockRenewalRunnable = Runnable {
+            if (isRunning) {
+                Log.d(TAG, "Renewing WakeLock")
+                acquireWakeLockWithTimeout()
+                scheduleWakeLockRenewal() // Schedule next renewal
+            }
+        }
+
+        wakeLockRenewalRunnable?.let {
+            serviceHandler.postDelayed(it, WAKELOCK_RENEWAL_MS)
+        }
+    }
+
+    /**
      * Update service status and notification
      */
     private fun updateStatus(status: ServiceStatus) {
@@ -335,6 +395,7 @@ class YggmailService : Service(), LogCallback {
 
     /**
      * Create notification for current service status
+     * Optimized for low battery usage with PRIORITY_MIN
      */
     private fun createNotification(status: ServiceStatus): Notification {
         val intent = Intent(this, MainActivity::class.java).apply {
@@ -358,8 +419,9 @@ class YggmailService : Service(), LogCallback {
             .setSmallIcon(R.drawable.ic_notification_icon)
             .setContentIntent(pendingIntent)
             .setOngoing(status == ServiceStatus.RUNNING || status == ServiceStatus.STARTING)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setPriority(NotificationCompat.PRIORITY_MIN) // Optimized: was PRIORITY_LOW
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setShowWhen(false) // Hide timestamp for cleaner notification
             .build()
     }
 

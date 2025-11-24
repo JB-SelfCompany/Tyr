@@ -195,21 +195,28 @@ class MainActivity : AppCompatActivity(), ServiceStatusListener {
             val dcloginUrl = autoconfigServer.generateDcloginUrl(email, password)
             Log.d("MainActivity", "Generated DCLOGIN URL: $dcloginUrl")
 
-            // Check if DeltaChat is installed
-            val isDeltaChatInstalled = try {
-                packageManager.getPackageInfo("com.b44t.messenger", 0)
-                true
-            } catch (e: Exception) {
-                false
+            // Check if DeltaChat is installed (try multiple package names)
+            val deltaChatPackages = listOf(
+                "com.b44t.messenger",
+                "chat.delta"
+            )
+
+            val installedPackage = deltaChatPackages.firstOrNull { packageName ->
+                try {
+                    packageManager.getPackageInfo(packageName, 0)
+                    true
+                } catch (e: Exception) {
+                    false
+                }
             }
 
-            if (isDeltaChatInstalled) {
+            if (installedPackage != null) {
                 // DeltaChat is installed, try to open it with DCLOGIN URL
                 try {
                     // First, try with package specified
                     val intent = Intent(Intent.ACTION_VIEW).apply {
                         data = Uri.parse(dcloginUrl)
-                        setPackage("com.b44t.messenger")
+                        setPackage(installedPackage)
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
                     startActivity(intent)
@@ -220,7 +227,7 @@ class MainActivity : AppCompatActivity(), ServiceStatusListener {
                         Snackbar.LENGTH_SHORT
                     ).show()
                 } catch (e: Exception) {
-                    Log.w("MainActivity", "Failed to open with package, trying without", e)
+                    Log.w("MainActivity", "Failed to open with package $installedPackage, trying without", e)
                     // Try without package specification
                     try {
                         val intent = Intent(Intent.ACTION_VIEW).apply {

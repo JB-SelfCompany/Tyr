@@ -4,11 +4,17 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import com.jbselfcompany.tyr.data.ConfigRepository
+import com.jbselfcompany.tyr.receiver.NetworkChangeReceiver
 
 /**
  * Application class for Tyr.
  * Initializes global application state and notification channels.
+ *
+ * Battery optimization: Registers NetworkCallback with 15-second delay
+ * to avoid unnecessary network monitoring during app startup
  */
 class TyrApplication : Application() {
 
@@ -23,6 +29,8 @@ class TyrApplication : Application() {
     lateinit var configRepository: ConfigRepository
         private set
 
+    private var networkCallback: NetworkChangeReceiver? = null
+
     override fun onCreate() {
         super.onCreate()
         instance = this
@@ -32,6 +40,19 @@ class TyrApplication : Application() {
 
         // Create notification channels
         createNotificationChannels()
+
+        // Register network callback after 15-second delay (battery optimization)
+        val handler = Handler(Looper.getMainLooper())
+        handler.postDelayed({
+            networkCallback = NetworkChangeReceiver(this)
+            networkCallback?.register()
+        }, 15000) // 15 seconds delay
+    }
+
+    override fun onTerminate() {
+        // Unregister network callback
+        networkCallback?.unregister()
+        super.onTerminate()
     }
 
     /**
@@ -41,11 +62,11 @@ class TyrApplication : Application() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationManager = getSystemService(NotificationManager::class.java)
 
-            // Service notification channel
+            // Service notification channel (battery optimized with IMPORTANCE_MIN)
             val serviceChannel = NotificationChannel(
                 CHANNEL_ID_SERVICE,
                 getString(R.string.notification_channel_service),
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_MIN
             ).apply {
                 description = getString(R.string.notification_channel_service_desc)
                 setShowBadge(false)
