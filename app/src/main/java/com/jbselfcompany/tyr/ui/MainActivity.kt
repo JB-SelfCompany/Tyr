@@ -197,18 +197,22 @@ class MainActivity : AppCompatActivity(), ServiceStatusListener {
 
             // Check if DeltaChat is installed (try multiple package names)
             val deltaChatPackages = listOf(
-                "com.b44t.messenger",
-                "chat.delta"
+                "com.b44t.messenger",  // Official DeltaChat
+                "chat.delta"            // F-Droid version
             )
 
             val installedPackage = deltaChatPackages.firstOrNull { packageName ->
                 try {
                     packageManager.getPackageInfo(packageName, 0)
+                    Log.d("MainActivity", "Found DeltaChat package: $packageName")
                     true
                 } catch (e: Exception) {
+                    Log.d("MainActivity", "Package not found: $packageName")
                     false
                 }
             }
+
+            Log.d("MainActivity", "Installed DeltaChat package: $installedPackage")
 
             if (installedPackage != null) {
                 // DeltaChat is installed, try to open it with DCLOGIN URL

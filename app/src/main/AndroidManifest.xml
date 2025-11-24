@@ -10,6 +10,11 @@
     <!-- Query installed packages (Android 11+) -->
     <queries>
         <package android:name="com.b44t.messenger" />
+        <package android:name="chat.delta" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="dclogin" />
+        </intent>
     </queries>
 
     <!-- Foreground service permissions -->
