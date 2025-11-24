@@ -1,14 +1,17 @@
 package com.jbselfcompany.tyr.ui.settings
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.MenuItem
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.jbselfcompany.tyr.R
@@ -17,13 +20,16 @@ import com.jbselfcompany.tyr.databinding.ActivitySettingsBinding
 import com.jbselfcompany.tyr.service.YggmailService
 import com.jbselfcompany.tyr.ui.SettingsAdapter
 import com.jbselfcompany.tyr.ui.AboutActivity
+import com.jbselfcompany.tyr.ui.BaseActivity
 import com.jbselfcompany.tyr.ui.logs.LogsActivity
+import com.jbselfcompany.tyr.utils.BackupManager
+import com.jbselfcompany.tyr.data.ConfigRepository
 
 /**
  * Settings activity for managing Yggdrasil peers and service configuration
  * Redesigned with RecyclerView adapter pattern inspired by Mimir
  */
-class SettingsActivity : AppCompatActivity(), SettingsAdapter.Listener {
+class SettingsActivity : BaseActivity(), SettingsAdapter.Listener {
 
     private lateinit var binding: ActivitySettingsBinding
     private val configRepository by lazy { TyrApplication.instance.configRepository }
@@ -40,10 +46,26 @@ class SettingsActivity : AppCompatActivity(), SettingsAdapter.Listener {
         private const val ID_HEADER_SECURITY = 6
         private const val ID_CHANGE_PASSWORD = 7
         private const val ID_REGENERATE_KEYS = 8
-        private const val ID_HEADER_DEBUG = 9
-        private const val ID_COLLECT_LOGS = 10
-        private const val ID_HEADER_ABOUT = 11
-        private const val ID_ABOUT_APP = 12
+        private const val ID_BACKUP_RESTORE = 9
+        private const val ID_HEADER_APPEARANCE = 10
+        private const val ID_LANGUAGE = 11
+        private const val ID_THEME = 12
+        private const val ID_HEADER_DEBUG = 13
+        private const val ID_COLLECT_LOGS = 14
+        private const val ID_HEADER_ABOUT = 15
+        private const val ID_ABOUT_APP = 16
+    }
+
+    private val createBackupLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/octet-stream")
+    ) { uri: Uri? ->
+        uri?.let { performBackup(it) }
+    }
+
+    private val restoreBackupLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let { showRestoreBackupDialog(it) }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -137,6 +159,39 @@ class SettingsActivity : AppCompatActivity(), SettingsAdapter.Listener {
                 type = SettingsAdapter.ItemType.PLAIN
             )
         )
+        settingsItems.add(
+            SettingsAdapter.Item(
+                id = ID_BACKUP_RESTORE,
+                titleRes = R.string.backup_restore,
+                descriptionRes = R.string.backup_restore_description,
+                type = SettingsAdapter.ItemType.PLAIN
+            )
+        )
+
+        // Appearance Settings Section
+        settingsItems.add(
+            SettingsAdapter.Item(
+                id = ID_HEADER_APPEARANCE,
+                titleRes = R.string.appearance_settings,
+                type = SettingsAdapter.ItemType.HEADER
+            )
+        )
+        settingsItems.add(
+            SettingsAdapter.Item(
+                id = ID_LANGUAGE,
+                titleRes = R.string.language,
+                descriptionRes = R.string.language_description,
+                type = SettingsAdapter.ItemType.PLAIN
+            )
+        )
+        settingsItems.add(
+            SettingsAdapter.Item(
+                id = ID_THEME,
+                titleRes = R.string.theme,
+                descriptionRes = R.string.theme_description,
+                type = SettingsAdapter.ItemType.PLAIN
+            )
+        )
 
         // Debug Settings Section
         settingsItems.add(
@@ -196,6 +251,9 @@ class SettingsActivity : AppCompatActivity(), SettingsAdapter.Listener {
             ID_CONFIGURE_PEERS -> startActivity(Intent(this, com.jbselfcompany.tyr.ui.PeersActivity::class.java))
             ID_CHANGE_PASSWORD -> showChangePasswordDialog()
             ID_REGENERATE_KEYS -> showRegenerateKeysDialog()
+            ID_BACKUP_RESTORE -> showBackupRestoreOptions()
+            ID_LANGUAGE -> showLanguageDialog()
+            ID_THEME -> showThemeDialog()
             ID_COLLECT_LOGS -> startActivity(Intent(this, LogsActivity::class.java))
             ID_ABOUT_APP -> startActivity(Intent(this, AboutActivity::class.java))
         }
@@ -303,5 +361,211 @@ class SettingsActivity : AppCompatActivity(), SettingsAdapter.Listener {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun showBackupRestoreOptions() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.backup_restore)
+            .setItems(arrayOf(
+                getString(R.string.create_backup),
+                getString(R.string.restore_backup)
+            )) { _, which ->
+                when (which) {
+                    0 -> showCreateBackupDialog()
+                    1 -> selectBackupFile()
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun showCreateBackupDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_create_backup, null)
+        val editPassword = dialogView.findViewById<TextInputEditText>(R.id.edit_backup_password)
+        val editConfirmPassword = dialogView.findViewById<TextInputEditText>(R.id.edit_confirm_backup_password)
+        val checkboxIncludeDb = dialogView.findViewById<MaterialCheckBox>(R.id.checkbox_include_database)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.create_backup)
+            .setView(dialogView)
+            .setPositiveButton(R.string.create_backup) { _, _ ->
+                val password = editPassword.text.toString()
+                val confirmPassword = editConfirmPassword.text.toString()
+                val includeDatabase = checkboxIncludeDb.isChecked
+
+                when {
+                    password.isEmpty() -> {
+                        Toast.makeText(this, R.string.error_backup_password_empty, Toast.LENGTH_SHORT).show()
+                    }
+                    password.length < 8 -> {
+                        Toast.makeText(this, R.string.error_backup_password_short, Toast.LENGTH_SHORT).show()
+                    }
+                    password != confirmPassword -> {
+                        Toast.makeText(this, R.string.error_backup_password_mismatch, Toast.LENGTH_SHORT).show()
+                    }
+                    else -> {
+                        backupPassword = password
+                        backupIncludeDatabase = includeDatabase
+                        createBackupLauncher.launch(BackupManager.generateBackupFilename())
+                    }
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private var backupPassword: String = ""
+    private var backupIncludeDatabase: Boolean = true
+
+    private fun performBackup(uri: Uri) {
+        try {
+            contentResolver.openOutputStream(uri)?.use { outputStream ->
+                val success = BackupManager.createBackup(
+                    context = this,
+                    outputStream = outputStream,
+                    backupPassword = backupPassword,
+                    includeDatabase = backupIncludeDatabase
+                )
+
+                if (success) {
+                    Toast.makeText(this, R.string.backup_created, Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(this, R.string.backup_failed, Toast.LENGTH_SHORT).show()
+                }
+            }
+        } catch (e: Exception) {
+            Toast.makeText(this, R.string.backup_failed, Toast.LENGTH_SHORT).show()
+        } finally {
+            backupPassword = ""
+        }
+    }
+
+    private fun selectBackupFile() {
+        restoreBackupLauncher.launch(arrayOf("*/*"))
+    }
+
+    private fun showRestoreBackupDialog(uri: Uri) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_restore_backup, null)
+        val editPassword = dialogView.findViewById<TextInputEditText>(R.id.edit_restore_password)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.restore_warning_title)
+            .setMessage(R.string.restore_warning)
+            .setView(dialogView)
+            .setPositiveButton(R.string.restore_backup) { _, _ ->
+                val password = editPassword.text.toString()
+
+                if (password.isEmpty()) {
+                    Toast.makeText(this, R.string.error_backup_password_empty, Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
+                performRestore(uri, password)
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun performRestore(uri: Uri, password: String) {
+        try {
+            contentResolver.openInputStream(uri)?.use { inputStream ->
+                val success = BackupManager.restoreBackup(
+                    context = this,
+                    inputStream = inputStream,
+                    backupPassword = password
+                )
+
+                if (success) {
+                    Toast.makeText(this, R.string.backup_restored, Toast.LENGTH_LONG).show()
+
+                    if (YggmailService.isRunning) {
+                        showRestartDialog()
+                    }
+                } else {
+                    Toast.makeText(this, R.string.error_invalid_backup_password, Toast.LENGTH_SHORT).show()
+                }
+            }
+        } catch (e: Exception) {
+            Toast.makeText(this, R.string.restore_failed, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showLanguageDialog() {
+        val languages = arrayOf(
+            ConfigRepository.LANGUAGE_SYSTEM,
+            ConfigRepository.LANGUAGE_ENGLISH,
+            ConfigRepository.LANGUAGE_RUSSIAN
+        )
+
+        val languageNames = languages.map { lang ->
+            when (lang) {
+                ConfigRepository.LANGUAGE_SYSTEM -> getString(R.string.language_system)
+                ConfigRepository.LANGUAGE_ENGLISH -> getString(R.string.language_english)
+                ConfigRepository.LANGUAGE_RUSSIAN -> getString(R.string.language_russian)
+                else -> lang
+            }
+        }.toTypedArray()
+
+        val currentLanguage = configRepository.getLanguage()
+        val selectedIndex = languages.indexOf(currentLanguage).takeIf { it >= 0 } ?: 0
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.select_language)
+            .setSingleChoiceItems(languageNames, selectedIndex) { dialog, which ->
+                val selectedLanguage = languages[which]
+                if (selectedLanguage != currentLanguage) {
+                    configRepository.setLanguage(selectedLanguage)
+                    Toast.makeText(this, R.string.restart_app_required, Toast.LENGTH_LONG).show()
+
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        recreate()
+                    }, 500)
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun showThemeDialog() {
+        val themes = arrayOf(
+            ConfigRepository.THEME_SYSTEM,
+            ConfigRepository.THEME_LIGHT,
+            ConfigRepository.THEME_DARK
+        )
+
+        val themeNames = themes.map { theme ->
+            when (theme) {
+                ConfigRepository.THEME_SYSTEM -> getString(R.string.theme_system)
+                ConfigRepository.THEME_LIGHT -> getString(R.string.theme_light)
+                ConfigRepository.THEME_DARK -> getString(R.string.theme_dark)
+                else -> theme
+            }
+        }.toTypedArray()
+
+        val currentTheme = configRepository.getTheme()
+        val selectedIndex = themes.indexOf(currentTheme).takeIf { it >= 0 } ?: 0
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.select_theme)
+            .setSingleChoiceItems(themeNames, selectedIndex) { dialog, which ->
+                val selectedTheme = themes[which]
+                if (selectedTheme != currentTheme) {
+                    configRepository.setTheme(selectedTheme)
+                    applyTheme(selectedTheme)
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun applyTheme(theme: String) {
+        val mode = when (theme) {
+            ConfigRepository.THEME_LIGHT -> AppCompatDelegate.MODE_NIGHT_NO
+            ConfigRepository.THEME_DARK -> AppCompatDelegate.MODE_NIGHT_YES
+            else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        }
+        AppCompatDelegate.setDefaultNightMode(mode)
     }
 }

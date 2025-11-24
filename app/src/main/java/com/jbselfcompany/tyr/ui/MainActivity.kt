@@ -14,7 +14,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -34,7 +33,7 @@ import android.util.Log
  * Main activity displaying service status and mail configuration.
  * Shows SMTP/IMAP connection information for DeltaChat.
  */
-class MainActivity : AppCompatActivity(), ServiceStatusListener {
+class MainActivity : BaseActivity(), ServiceStatusListener {
 
     private lateinit var binding: ActivityMainBinding
     private val configRepository by lazy { TyrApplication.instance.configRepository }

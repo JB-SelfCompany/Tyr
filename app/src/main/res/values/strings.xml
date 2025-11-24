@@ -85,6 +85,7 @@
     <string name="service_settings">Service Settings</string>
     <string name="network_settings">Network</string>
     <string name="security_settings">Security</string>
+    <string name="appearance_settings">Appearance</string>
     <string name="debug_settings">Debug</string>
     <string name="about_settings">About</string>
 
@@ -110,6 +111,25 @@
     <string name="change_password_description">Update DeltaChat authentication password</string>
     <string name="regenerate_keys">Regenerate Keys</string>
     <string name="regenerate_keys_description">Generate new mail address and encryption keys</string>
+    <string name="backup_restore">Backup &amp; Restore</string>
+    <string name="backup_restore_description">Export or import configuration</string>
+    <string name="create_backup">Create Backup</string>
+    <string name="restore_backup">Restore Backup</string>
+
+    <!-- Appearance Settings Items -->
+    <string name="language">Language</string>
+    <string name="language_description">Change application language</string>
+    <string name="theme">Theme</string>
+    <string name="theme_description">Change application theme</string>
+    <string name="language_system">System</string>
+    <string name="language_english">English</string>
+    <string name="language_russian">Русский</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="select_language">Select Language</string>
+    <string name="select_theme">Select Theme</string>
+    <string name="restart_app_required">Restart app to apply changes</string>
 
     <!-- Debug Settings Items -->
     <string name="collect_logs">Collect Logs</string>
@@ -143,6 +163,25 @@
     <string name="no_logs_to_copy">No logs to copy</string>
     <string name="logs_copied">Logs copied to clipboard</string>
     <string name="error_loading_logs">Error loading logs: %s</string>
+
+    <!-- Backup & Restore -->
+    <string name="backup_password">Backup Password</string>
+    <string name="backup_password_hint">Password to encrypt backup (min 8 chars)</string>
+    <string name="confirm_backup_password">Confirm Password</string>
+    <string name="include_keys_database">Include Yggdrasil keys</string>
+    <string name="include_keys_description">Include yggmail.db to preserve your email address</string>
+    <string name="backup_created">Backup created successfully</string>
+    <string name="backup_restored">Backup restored successfully</string>
+    <string name="backup_failed">Failed to create backup</string>
+    <string name="restore_failed">Failed to restore backup</string>
+    <string name="restore_warning">Restore will overwrite current configuration. Continue?</string>
+    <string name="restore_warning_title">Restore Backup</string>
+    <string name="restore_service_warning">Service will be restarted after restore</string>
+    <string name="error_backup_password_short">Backup password must be at least 8 characters</string>
+    <string name="error_backup_password_empty">Backup password cannot be empty</string>
+    <string name="error_backup_password_mismatch">Backup passwords do not match</string>
+    <string name="error_invalid_backup_password">Invalid backup password or corrupted file</string>
+    <string name="select_backup_file">Select Backup File</string>
 
     <!-- Errors -->
     <string name="error_password_empty">Password cannot be empty</string>

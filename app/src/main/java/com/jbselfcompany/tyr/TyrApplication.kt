@@ -3,11 +3,13 @@ package com.jbselfcompany.tyr
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Context
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import com.jbselfcompany.tyr.data.ConfigRepository
 import com.jbselfcompany.tyr.receiver.NetworkChangeReceiver
+import com.jbselfcompany.tyr.utils.LocaleHelper
 
 /**
  * Application class for Tyr.
@@ -38,6 +40,9 @@ class TyrApplication : Application() {
         // Initialize configuration repository
         configRepository = ConfigRepository(this)
 
+        // Apply theme preference
+        LocaleHelper.applyTheme(this)
+
         // Create notification channels
         createNotificationChannels()
 
@@ -47,6 +52,11 @@ class TyrApplication : Application() {
             networkCallback = NetworkChangeReceiver(this)
             networkCallback?.register()
         }, 15000) // 15 seconds delay
+    }
+
+    override fun attachBaseContext(base: Context) {
+        // Apply language preference before attaching base context
+        super.attachBaseContext(LocaleHelper.applyLanguage(base))
     }
 
     override fun onTerminate() {

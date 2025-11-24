@@ -4,11 +4,11 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.viewpager2.widget.ViewPager2
 import com.jbselfcompany.tyr.R
 import com.jbselfcompany.tyr.TyrApplication
 import com.jbselfcompany.tyr.databinding.ActivityOnboardingBinding
+import com.jbselfcompany.tyr.ui.BaseActivity
 import com.jbselfcompany.tyr.ui.MainActivity
 
 /**
@@ -16,7 +16,7 @@ import com.jbselfcompany.tyr.ui.MainActivity
  * 1. Welcome screen
  * 2. Password setup
  */
-class OnboardingActivity : AppCompatActivity() {
+class OnboardingActivity : BaseActivity() {
 
     private lateinit var binding: ActivityOnboardingBinding
     private lateinit var adapter: OnboardingPagerAdapter

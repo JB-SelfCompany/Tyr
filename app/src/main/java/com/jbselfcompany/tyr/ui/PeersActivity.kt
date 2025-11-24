@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -14,7 +13,7 @@ import com.jbselfcompany.tyr.TyrApplication
 import com.jbselfcompany.tyr.data.ConfigRepository
 import com.jbselfcompany.tyr.databinding.ActivityPeersBinding
 
-class PeersActivity : AppCompatActivity() {
+class PeersActivity : BaseActivity() {
 
     private lateinit var binding: ActivityPeersBinding
     private val configRepository by lazy { TyrApplication.instance.configRepository }

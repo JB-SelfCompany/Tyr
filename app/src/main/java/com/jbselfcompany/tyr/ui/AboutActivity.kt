@@ -5,13 +5,12 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatImageButton
 import androidx.appcompat.widget.Toolbar
 import com.jbselfcompany.tyr.BuildConfig
 import com.jbselfcompany.tyr.R
 
-class AboutActivity : AppCompatActivity() {
+class AboutActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

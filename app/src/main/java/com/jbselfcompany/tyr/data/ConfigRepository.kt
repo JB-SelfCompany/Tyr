@@ -25,6 +25,8 @@ class ConfigRepository(private val context: Context) {
         private const val KEY_MULTICAST_ENABLED = "multicast_enabled"
         private const val KEY_MAIL_ADDRESS = "mail_address"
         private const val KEY_PUBLIC_KEY = "public_key"
+        private const val KEY_LANGUAGE = "language"
+        private const val KEY_THEME = "theme"
 
         // Default Yggdrasil peers
         val DEFAULT_PEERS = listOf(
@@ -33,6 +35,16 @@ class ConfigRepository(private val context: Context) {
             "tcp://mgrid.zbin.eu:7743",
             "tcp://bra-vps.zbin.eu:7743"
         )
+
+        // Language options
+        const val LANGUAGE_SYSTEM = "system"
+        const val LANGUAGE_ENGLISH = "en"
+        const val LANGUAGE_RUSSIAN = "ru"
+
+        // Theme options
+        const val THEME_SYSTEM = "system"
+        const val THEME_LIGHT = "light"
+        const val THEME_DARK = "dark"
     }
 
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -272,5 +284,35 @@ class ConfigRepository(private val context: Context) {
         } catch (e: Exception) {
             Log.e(TAG, "Error clearing secure storage", e)
         }
+    }
+
+    /**
+     * Get saved language preference
+     * Returns LANGUAGE_SYSTEM by default
+     */
+    fun getLanguage(): String {
+        return prefs.getString(KEY_LANGUAGE, LANGUAGE_SYSTEM) ?: LANGUAGE_SYSTEM
+    }
+
+    /**
+     * Set language preference
+     */
+    fun setLanguage(language: String) {
+        prefs.edit { putString(KEY_LANGUAGE, language) }
+    }
+
+    /**
+     * Get saved theme preference
+     * Returns THEME_SYSTEM by default
+     */
+    fun getTheme(): String {
+        return prefs.getString(KEY_THEME, THEME_SYSTEM) ?: THEME_SYSTEM
+    }
+
+    /**
+     * Set theme preference
+     */
+    fun setTheme(theme: String) {
+        prefs.edit { putString(KEY_THEME, theme) }
     }
 }

@@ -7,16 +7,16 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import com.jbselfcompany.tyr.R
 import com.jbselfcompany.tyr.databinding.ActivityLogsBinding
+import com.jbselfcompany.tyr.ui.BaseActivity
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
 /**
  * Activity for viewing and sharing application logs
  */
-class LogsActivity : AppCompatActivity() {
+class LogsActivity : BaseActivity() {
 
     private lateinit var binding: ActivityLogsBinding
     private var logsText = ""

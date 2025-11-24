@@ -85,6 +85,7 @@
     <string name="service_settings">Настройки службы</string>
     <string name="network_settings">Сеть</string>
     <string name="security_settings">Безопасность</string>
+    <string name="appearance_settings">Внешний вид</string>
     <string name="debug_settings">Отладка</string>
     <string name="about_settings">О программе</string>
 
@@ -110,6 +111,25 @@
     <string name="change_password_description">Обновить пароль аутентификации DeltaChat</string>
     <string name="regenerate_keys">Перегенерировать ключи</string>
     <string name="regenerate_keys_description">Создать новый почтовый адрес и ключи шифрования</string>
+    <string name="backup_restore">Резервное копирование</string>
+    <string name="backup_restore_description">Экспорт или импорт конфигурации</string>
+    <string name="create_backup">Создать резервную копию</string>
+    <string name="restore_backup">Восстановить резервную копию</string>
+
+    <!-- Appearance Settings Items -->
+    <string name="language">Язык</string>
+    <string name="language_description">Изменить язык приложения</string>
+    <string name="theme">Тема</string>
+    <string name="theme_description">Изменить тему приложения</string>
+    <string name="language_system">Системный</string>
+    <string name="language_english">English</string>
+    <string name="language_russian">Русский</string>
+    <string name="theme_system">Системная</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_dark">Темная</string>
+    <string name="select_language">Выберите язык</string>
+    <string name="select_theme">Выберите тему</string>
+    <string name="restart_app_required">Перезапустите приложение для применения изменений</string>
 
     <!-- Debug Settings Items -->
     <string name="collect_logs">Сбор логов</string>
@@ -143,6 +163,25 @@
     <string name="no_logs_to_copy">Нет логов для копирования</string>
     <string name="logs_copied">Логи скопированы в буфер обмена</string>
     <string name="error_loading_logs">Ошибка загрузки логов: %s</string>
+
+    <!-- Backup & Restore -->
+    <string name="backup_password">Пароль резервной копии</string>
+    <string name="backup_password_hint">Пароль для шифрования резервной копии (мин. 8 символов)</string>
+    <string name="confirm_backup_password">Подтвердите пароль</string>
+    <string name="include_keys_database">Включить ключи Yggdrasil</string>
+    <string name="include_keys_description">Включить yggmail.db для сохранения email-адреса</string>
+    <string name="backup_created">Резервная копия успешно создана</string>
+    <string name="backup_restored">Резервная копия успешно восстановлена</string>
+    <string name="backup_failed">Не удалось создать резервную копию</string>
+    <string name="restore_failed">Не удалось восстановить резервную копию</string>
+    <string name="restore_warning">Восстановление перезапишет текущую конфигурацию. Продолжить?</string>
+    <string name="restore_warning_title">Восстановить резервную копию</string>
+    <string name="restore_service_warning">Сервис будет перезапущен после восстановления</string>
+    <string name="error_backup_password_short">Пароль резервной копии должен быть не менее 8 символов</string>
+    <string name="error_backup_password_empty">Пароль резервной копии не может быть пустым</string>
+    <string name="error_backup_password_mismatch">Пароли резервной копии не совпадают</string>
+    <string name="error_invalid_backup_password">Неверный пароль резервной копии или поврежденный файл</string>
+    <string name="select_backup_file">Выберите файл резервной копии</string>
 
     <!-- Errors -->
     <string name="error_password_empty">Пароль не может быть пустым</string>
