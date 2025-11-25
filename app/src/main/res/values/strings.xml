@@ -16,6 +16,7 @@
     <string name="restart">Restart</string>
     <string name="restart_now">Restart Now</string>
     <string name="restart_later">Later</string>
+    <string name="or">OR</string>
 
     <!-- Notification Channels -->
     <string name="notification_channel_service">Yggmail Service</string>
@@ -182,6 +183,9 @@
     <string name="error_backup_password_mismatch">Backup passwords do not match</string>
     <string name="error_invalid_backup_password">Invalid backup password or corrupted file</string>
     <string name="select_backup_file">Select Backup File</string>
+    <string name="restore_from_backup">Restore from Backup</string>
+    <string name="restore_from_backup_description">Import existing configuration instead of creating new</string>
+    <string name="restoring_backup">Restoring backup…</string>
 
     <!-- Errors -->
     <string name="error_password_empty">Password cannot be empty</string>

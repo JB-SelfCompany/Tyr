@@ -16,7 +16,7 @@ import com.jbselfcompany.tyr.ui.MainActivity
  * 1. Welcome screen
  * 2. Password setup
  */
-class OnboardingActivity : BaseActivity() {
+class OnboardingActivity : BaseActivity(), OnRestoreCompletedListener {
 
     private lateinit var binding: ActivityOnboardingBinding
     private lateinit var adapter: OnboardingPagerAdapter
@@ -53,6 +53,11 @@ class OnboardingActivity : BaseActivity() {
                 updateProgressIndicator(position)
             }
         })
+    }
+
+    override fun onRestoreCompleted() {
+        // After restore, mark onboarding as completed and go to main activity
+        completeOnboarding()
     }
 
     private fun updateProgressIndicator(position: Int) {

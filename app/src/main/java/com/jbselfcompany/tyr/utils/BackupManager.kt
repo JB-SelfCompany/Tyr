@@ -55,7 +55,8 @@ object BackupManager {
         val mailAddress: String?,
         val publicKey: String?,
         val includesDatabase: Boolean,
-        val databaseData: String? = null
+        val databaseData: String? = null,
+        val onboardingCompleted: Boolean = true
     )
 
     /**
@@ -100,7 +101,8 @@ object BackupManager {
                 mailAddress = configRepo.getMailAddress(),
                 publicKey = configRepo.getPublicKey(),
                 includesDatabase = includeDatabase,
-                databaseData = databaseData
+                databaseData = databaseData,
+                onboardingCompleted = configRepo.isOnboardingCompleted()
             )
 
             // Convert to JSON
@@ -115,6 +117,7 @@ object BackupManager {
                 put("mailAddress", backupData.mailAddress ?: "")
                 put("publicKey", backupData.publicKey ?: "")
                 put("includesDatabase", backupData.includesDatabase)
+                put("onboardingCompleted", backupData.onboardingCompleted)
                 if (backupData.databaseData != null) {
                     put("databaseData", backupData.databaseData)
                 }
@@ -217,7 +220,8 @@ object BackupManager {
                 mailAddress = jsonObject.optString("mailAddress").takeIf { it.isNotEmpty() },
                 publicKey = jsonObject.optString("publicKey").takeIf { it.isNotEmpty() },
                 includesDatabase = jsonObject.optBoolean("includesDatabase", false),
-                databaseData = jsonObject.optString("databaseData").takeIf { it.isNotEmpty() }
+                databaseData = jsonObject.optString("databaseData").takeIf { it.isNotEmpty() },
+                onboardingCompleted = jsonObject.optBoolean("onboardingCompleted", true)
             )
 
             // Restore configuration
@@ -240,6 +244,9 @@ object BackupManager {
             if (backupData.publicKey != null) {
                 configRepo.savePublicKey(backupData.publicKey)
             }
+
+            // Restore onboarding completed flag
+            configRepo.setOnboardingCompleted(backupData.onboardingCompleted)
 
             // Restore database if included
             if (backupData.includesDatabase && backupData.databaseData != null) {

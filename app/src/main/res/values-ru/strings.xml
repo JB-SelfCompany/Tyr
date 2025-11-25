@@ -16,6 +16,7 @@
     <string name="restart">Перезапуск</string>
     <string name="restart_now">Перезапустить сейчас</string>
     <string name="restart_later">Позже</string>
+    <string name="or">ИЛИ</string>
 
     <!-- Notification Channels -->
     <string name="notification_channel_service">Служба Yggmail</string>
@@ -182,6 +183,9 @@
     <string name="error_backup_password_mismatch">Пароли резервной копии не совпадают</string>
     <string name="error_invalid_backup_password">Неверный пароль резервной копии или поврежденный файл</string>
     <string name="select_backup_file">Выберите файл резервной копии</string>
+    <string name="restore_from_backup">Восстановить из резервной копии</string>
+    <string name="restore_from_backup_description">Импортировать существующую конфигурацию вместо создания новой</string>
+    <string name="restoring_backup">Восстановление резервной копии…</string>
 
     <!-- Errors -->
     <string name="error_password_empty">Пароль не может быть пустым</string>
