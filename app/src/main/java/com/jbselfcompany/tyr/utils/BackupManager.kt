@@ -228,7 +228,12 @@ object BackupManager {
             val configRepo = ConfigRepository(context)
 
             if (backupData.password != null) {
-                configRepo.savePassword(backupData.password)
+                try {
+                    configRepo.savePassword(backupData.password)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to save password during restore", e)
+                    return false
+                }
             }
 
             if (backupData.peers.isNotEmpty()) {

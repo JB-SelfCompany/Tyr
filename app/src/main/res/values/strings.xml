@@ -50,30 +50,31 @@
     <string name="mail_configuration">Mail Configuration</string>
     <string name="copy_address">Copy Address</string>
     <string name="address_copied">Address copied to clipboard</string>
-    <string name="setup_deltachat">Setup DeltaChat</string>
-    <string name="dcaccount_opened">Opening DeltaChat with autoconfig…</string>
-    <string name="dcaccount_copied">DCACCOUNT link copied! Open DeltaChat and paste it in the setup screen</string>
+    <string name="setup_deltachat">Setup DeltaChat/ArcaneChat</string>
+    <string name="dcaccount_opened">Opening app with autoconfig…</string>
+    <string name="dcaccount_copied">DCACCOUNT link copied! Open DeltaChat/ArcaneChat and paste it in the setup screen</string>
     <string name="dcaccount_error">Failed to generate autoconfig link. Make sure the service is running.</string>
-    <string name="deltachat_not_installed_title">DeltaChat Not Installed</string>
-    <string name="deltachat_not_installed_message">DeltaChat is not installed on this device.\n\nIf you have DeltaChat installed, please use the manual setup instructions shown below to configure it.</string>
+    <string name="deltachat_not_installed_title">DeltaChat/ArcaneChat Not Installed</string>
+    <string name="deltachat_not_installed_message">DeltaChat/ArcaneChat is not installed on this device.\n\nIf you have DeltaChat/ArcaneChat installed, please use the manual setup instructions shown below to configure it.</string>
+    <string name="select_email_client_title">Select Email Client</string>
     <string name="smtp_server">SMTP: %1$s:%2$s</string>
     <string name="imap_server">IMAP: %1$s:%2$s</string>
-    <string name="deltachat_setup">DeltaChat Setup</string>
+    <string name="deltachat_setup">DeltaChat/ArcaneChat Setup</string>
     <string name="deltachat_setup_hint">Tap to view setup instructions</string>
-    <string name="deltachat_instructions">DeltaChat setup:\n\n1. Install and open the DeltaChat app\n2. Click on "Create a new profile"\n3. Enter a name and select an avatar at the top of the screen if necessary\n4. Click on "Use a different server" (below the login fields)\n5. Enter your email address from above\n6. Enter the password set during the initial setup\n7. Click "✓" in the top right corner to start chatting. Make sure the Tyr service is running before using DeltaChat.</string>
+    <string name="deltachat_instructions">DeltaChat/ArcaneChat setup:\n\n1. Install and open the DeltaChat/ArcaneChat app\n2. Click on "Create a new profile"\n3. Enter a name and select an avatar at the top of the screen if necessary\n4. Click on "Use a different server" (below the login fields)\n5. Enter your email address from above\n6. Enter the password set during the initial setup\n7. Click "✓" in the top right corner to start chatting. Make sure the Tyr service is running before using DeltaChat/ArcaneChat.</string>
 
     <!-- Onboarding -->
     <string name="welcome_to_tyr">Welcome to Tyr</string>
-    <string name="welcome_description">Tyr creates a local mail server using Yggdrasil Network, allowing you to use DeltaChat for secure, decentralized messaging.</string>
+    <string name="welcome_description">Tyr creates a local mail server using Yggdrasil Network, allowing you to use DeltaChat/ArcaneChat for secure, decentralized messaging.</string>
     <string name="feature_decentralized">Decentralized</string>
     <string name="feature_encrypted">End-to-End Encrypted</string>
     <string name="feature_p2p">Peer-to-Peer</string>
     <string name="setup_password">Setup Password</string>
-    <string name="password_description">This password will be used by DeltaChat to authenticate with the local mail server.</string>
+    <string name="password_description">This password will be used by DeltaChat/ArcaneChat to authenticate with the local mail server.</string>
     <string name="password">Password</string>
     <string name="confirm_password">Confirm Password</string>
     <string name="new_password">New Password</string>
-    <string name="password_security_info">Your password secures the connection between DeltaChat and the local mail server</string>
+    <string name="password_security_info">Your password secures the connection between DeltaChat/ArcaneChat and the local mail server</string>
     <string name="configure_peers">Configure Peers</string>
     <string name="peers_description">Enter Yggdrasil network peers (one per line). Default peers are pre-filled.</string>
     <string name="yggdrasil_peers">Yggdrasil Peers</string>
@@ -109,7 +110,7 @@
 
     <!-- Security Settings Items -->
     <string name="change_password">Change Password</string>
-    <string name="change_password_description">Update DeltaChat authentication password</string>
+    <string name="change_password_description">Update DeltaChat/ArcaneChat authentication password</string>
     <string name="regenerate_keys">Regenerate Keys</string>
     <string name="regenerate_keys_description">Generate new mail address and encryption keys</string>
     <string name="backup_restore">Backup &amp; Restore</string>
@@ -150,7 +151,7 @@
     <string name="restart_required">Restart Required</string>
     <string name="restart_required_message">Changes will take effect after restarting the service.</string>
     <string name="regenerate">Regenerate</string>
-    <string name="regenerate_keys_message">This will generate a new mail address. You will need to reconfigure DeltaChat with the new address. Continue?</string>
+    <string name="regenerate_keys_message">This will generate a new mail address. You will need to reconfigure DeltaChat/ArcaneChat with the new address. Continue?</string>
     <string name="keys_regenerated">Keys regenerated successfully. Check your new mail address in the main screen.</string>
     <string name="error_regenerate_keys">Failed to regenerate keys</string>
 
@@ -191,6 +192,7 @@
     <string name="error_password_empty">Password cannot be empty</string>
     <string name="error_password_short">Password must be at least 6 characters</string>
     <string name="error_password_mismatch">Passwords do not match</string>
+    <string name="error_save_password">Failed to save password. Please try again or contact support if the issue persists.</string>
     <string name="error_peers_empty">Please enter at least one peer</string>
 
     <!-- Permissions -->

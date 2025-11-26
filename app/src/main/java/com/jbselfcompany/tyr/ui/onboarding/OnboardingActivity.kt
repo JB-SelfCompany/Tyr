@@ -130,8 +130,13 @@ class OnboardingActivity : BaseActivity(), OnRestoreCompletedListener {
                         false
                     }
                     else -> {
-                        configRepository.savePassword(password)
-                        true
+                        try {
+                            configRepository.savePassword(password)
+                            true
+                        } catch (e: Exception) {
+                            Toast.makeText(this, R.string.error_save_password, Toast.LENGTH_LONG).show()
+                            false
+                        }
                     }
                 }
             }

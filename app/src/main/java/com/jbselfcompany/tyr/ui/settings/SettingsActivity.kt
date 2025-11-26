@@ -298,11 +298,15 @@ class SettingsActivity : BaseActivity(), SettingsAdapter.Listener {
                         Toast.makeText(this, R.string.error_password_mismatch, Toast.LENGTH_SHORT).show()
                     }
                     else -> {
-                        configRepository.savePassword(newPassword)
-                        Toast.makeText(this, R.string.password_changed, Toast.LENGTH_SHORT).show()
+                        try {
+                            configRepository.savePassword(newPassword)
+                            Toast.makeText(this, R.string.password_changed, Toast.LENGTH_SHORT).show()
 
-                        if (YggmailService.isRunning) {
-                            showRestartDialog()
+                            if (YggmailService.isRunning) {
+                                showRestartDialog()
+                            }
+                        } catch (e: Exception) {
+                            Toast.makeText(this, R.string.error_save_password, Toast.LENGTH_LONG).show()
                         }
                     }
                 }

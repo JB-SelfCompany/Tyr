@@ -10,7 +10,9 @@
     <!-- Query installed packages (Android 11+) -->
     <queries>
         <package android:name="com.b44t.messenger" />
+        <package android:name="com.github.arcanechat" />        
         <package android:name="chat.delta" />
+        <package android:name="chat.delta.lite" />
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="dclogin" />

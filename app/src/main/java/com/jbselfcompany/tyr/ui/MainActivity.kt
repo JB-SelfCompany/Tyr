@@ -194,16 +194,19 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
             val dcloginUrl = autoconfigServer.generateDcloginUrl(email, password)
             Log.d("MainActivity", "Generated DCLOGIN URL: $dcloginUrl")
 
-            // Check if DeltaChat is installed (try multiple package names)
-            val deltaChatPackages = listOf(
-                "com.b44t.messenger",  // Official DeltaChat
-                "chat.delta"            // F-Droid version
+            // Check if DeltaChat/ArcaneChat is installed (try multiple package names)
+            val deltaChatPackages = mapOf(
+                "com.b44t.messenger" to "DeltaChat",
+                "chat.delta" to "DeltaChat",
+                "chat.delta.lite" to "ArcaneChat",
+                "com.github.arcanechat" to "ArcaneChat"
             )
 
-            val installedPackage = deltaChatPackages.firstOrNull { packageName ->
+            // Find all installed packages
+            val installedApps = deltaChatPackages.filter { (packageName, _) ->
                 try {
                     packageManager.getPackageInfo(packageName, 0)
-                    Log.d("MainActivity", "Found DeltaChat package: $packageName")
+                    Log.d("MainActivity", "Found package: $packageName")
                     true
                 } catch (e: Exception) {
                     Log.d("MainActivity", "Package not found: $packageName")
@@ -211,52 +214,26 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
                 }
             }
 
-            Log.d("MainActivity", "Installed DeltaChat package: $installedPackage")
+            Log.d("MainActivity", "Installed apps: ${installedApps.keys}")
 
-            if (installedPackage != null) {
-                // DeltaChat is installed, try to open it with DCLOGIN URL
-                try {
-                    // First, try with package specified
-                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                        data = Uri.parse(dcloginUrl)
-                        setPackage(installedPackage)
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
-                    startActivity(intent)
-
-                    Snackbar.make(
-                        binding.root,
-                        R.string.dcaccount_opened,
-                        Snackbar.LENGTH_SHORT
-                    ).show()
-                } catch (e: Exception) {
-                    Log.w("MainActivity", "Failed to open with package $installedPackage, trying without", e)
-                    // Try without package specification
-                    try {
-                        val intent = Intent(Intent.ACTION_VIEW).apply {
-                            data = Uri.parse(dcloginUrl)
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
-                        startActivity(intent)
-
-                        Snackbar.make(
-                            binding.root,
-                            R.string.dcaccount_opened,
-                            Snackbar.LENGTH_SHORT
-                        ).show()
-                    } catch (e2: Exception) {
-                        Log.e("MainActivity", "Failed to open DCLOGIN URL", e2)
-                        // Fallback: copy to clipboard
-                        copyDcloginToClipboard(dcloginUrl)
-                    }
+            when {
+                installedApps.isEmpty() -> {
+                    // No apps installed - show message
+                    MaterialAlertDialogBuilder(this)
+                        .setTitle(R.string.deltachat_not_installed_title)
+                        .setMessage(R.string.deltachat_not_installed_message)
+                        .setPositiveButton(R.string.ok, null)
+                        .show()
                 }
-            } else {
-                // DeltaChat not installed - just show message, no clipboard copy
-                MaterialAlertDialogBuilder(this)
-                    .setTitle(R.string.deltachat_not_installed_title)
-                    .setMessage(R.string.deltachat_not_installed_message)
-                    .setPositiveButton(R.string.ok, null)
-                    .show()
+                installedApps.size == 1 -> {
+                    // Only one app installed - open it directly
+                    val packageName = installedApps.keys.first()
+                    openEmailClient(packageName, dcloginUrl)
+                }
+                else -> {
+                    // Multiple apps installed - show selection dialog
+                    showAppSelectionDialog(installedApps, dcloginUrl)
+                }
             }
         } catch (e: Exception) {
             Log.e("MainActivity", "Error setting up DeltaChat", e)
@@ -265,6 +242,58 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
                 R.string.dcaccount_error,
                 Snackbar.LENGTH_LONG
             ).show()
+        }
+    }
+
+    private fun showAppSelectionDialog(apps: Map<String, String>, dcloginUrl: String) {
+        val appNames = apps.values.toTypedArray()
+        val packageNames = apps.keys.toTypedArray()
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.select_email_client_title)
+            .setItems(appNames) { _, which ->
+                val selectedPackage = packageNames[which]
+                openEmailClient(selectedPackage, dcloginUrl)
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun openEmailClient(packageName: String, dcloginUrl: String) {
+        try {
+            // First, try with package specified
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                data = Uri.parse(dcloginUrl)
+                setPackage(packageName)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(intent)
+
+            Snackbar.make(
+                binding.root,
+                R.string.dcaccount_opened,
+                Snackbar.LENGTH_SHORT
+            ).show()
+        } catch (e: Exception) {
+            Log.w("MainActivity", "Failed to open with package $packageName, trying without", e)
+            // Try without package specification
+            try {
+                val intent = Intent(Intent.ACTION_VIEW).apply {
+                    data = Uri.parse(dcloginUrl)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                startActivity(intent)
+
+                Snackbar.make(
+                    binding.root,
+                    R.string.dcaccount_opened,
+                    Snackbar.LENGTH_SHORT
+                ).show()
+            } catch (e2: Exception) {
+                Log.e("MainActivity", "Failed to open DCLOGIN URL", e2)
+                // Fallback: copy to clipboard
+                copyDcloginToClipboard(dcloginUrl)
+            }
         }
     }
 

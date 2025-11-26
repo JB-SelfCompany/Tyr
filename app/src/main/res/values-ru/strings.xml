@@ -50,30 +50,31 @@
     <string name="mail_configuration">Настройка почты</string>
     <string name="copy_address">Копировать адрес</string>
     <string name="address_copied">Адрес скопирован в буфер обмена</string>
-    <string name="setup_deltachat">Настроить DeltaChat</string>
-    <string name="dcaccount_opened">Открываю DeltaChat с автоконфигурацией…</string>
-    <string name="dcaccount_copied">Ссылка DCACCOUNT скопирована! Откройте DeltaChat и вставьте её в экран настройки</string>
+    <string name="setup_deltachat">Настроить DeltaChat/ArcaneChat</string>
+    <string name="dcaccount_opened">Открываю приложение с автоконфигурацией…</string>
+    <string name="dcaccount_copied">Ссылка DCACCOUNT скопирована! Откройте DeltaChat/ArcaneChat и вставьте её в экран настройки</string>
     <string name="dcaccount_error">Не удалось создать ссылку автоконфигурации. Убедитесь, что служба запущена.</string>
-    <string name="deltachat_not_installed_title">DeltaChat не установлен</string>
-    <string name="deltachat_not_installed_message">DeltaChat не установлен на этом устройстве.\n\nЕсли у вас всё же установлен DeltaChat, воспользуйтесь инструкцией ниже для ручной настройки.</string>
+    <string name="deltachat_not_installed_title">DeltaChat/ArcaneChat не установлен</string>
+    <string name="deltachat_not_installed_message">DeltaChat/ArcaneChat не установлен на этом устройстве.\n\nЕсли у вас всё же установлен DeltaChat/ArcaneChat, воспользуйтесь инструкцией ниже для ручной настройки.</string>
+    <string name="select_email_client_title">Выберите почтовый клиент</string>
     <string name="smtp_server">SMTP: %1$s:%2$s</string>
     <string name="imap_server">IMAP: %1$s:%2$s</string>
-    <string name="deltachat_setup">Настройка DeltaChat</string>
+    <string name="deltachat_setup">Настройка DeltaChat/ArcaneChat</string>
     <string name="deltachat_setup_hint">Нажмите для просмотра инструкций</string>
-    <string name="deltachat_instructions">Настройка DeltaChat:\n\n1. Установите и откройте приложение DeltaChat\n2. Нажмите \"Создать новый профиль\"\n3. Введите имя, при необходимости выберите аватар в верхней части экрана\n4. Нажмите \"Использовать другой сервер\" (под полями входа)\n5. Введите ваш email-адрес, указанный выше\n6. Введите пароль, установленный при первоначальной настройке\n7. Нажмите \"✓\" в правом верхнем углу для начала общения\n\nУбедитесь, что служба Tyr запущена перед использованием DeltaChat.</string>
+    <string name="deltachat_instructions">Настройка DeltaChat/ArcaneChat:\n\n1. Установите и откройте приложение DeltaChat/ArcaneChat\n2. Нажмите \"Создать новый профиль\"\n3. Введите имя, при необходимости выберите аватар в верхней части экрана\n4. Нажмите \"Использовать другой сервер\" (под полями входа)\n5. Введите ваш email-адрес, указанный выше\n6. Введите пароль, установленный при первоначальной настройке\n7. Нажмите \"✓\" в правом верхнем углу для начала общения\n\nУбедитесь, что служба Tyr запущена перед использованием DeltaChat/ArcaneChat.</string>
 
     <!-- Onboarding -->
     <string name="welcome_to_tyr">Добро пожаловать в Tyr</string>
-    <string name="welcome_description">Tyr создает локальный почтовый сервер через сеть Yggdrasil, позволяя использовать DeltaChat для безопасного децентрализованного обмена сообщениями.</string>
+    <string name="welcome_description">Tyr создает локальный почтовый сервер через сеть Yggdrasil, позволяя использовать DeltaChat/ArcaneChat для безопасного децентрализованного обмена сообщениями.</string>
     <string name="feature_decentralized">Децентрализованный</string>
     <string name="feature_encrypted">Сквозное шифрование</string>
     <string name="feature_p2p">Peer-to-Peer</string>
     <string name="setup_password">Установка пароля</string>
-    <string name="password_description">Этот пароль будет использоваться DeltaChat для аутентификации с локальным почтовым сервером.</string>
+    <string name="password_description">Этот пароль будет использоваться DeltaChat/ArcaneChat для аутентификации с локальным почтовым сервером.</string>
     <string name="password">Пароль</string>
     <string name="confirm_password">Подтверждение пароля</string>
     <string name="new_password">Новый пароль</string>
-    <string name="password_security_info">Ваш пароль защищает соединение между DeltaChat и локальным почтовым сервером</string>
+    <string name="password_security_info">Ваш пароль защищает соединение между DeltaChat/ArcaneChat и локальным почтовым сервером</string>
     <string name="configure_peers">Настройка пиров</string>
     <string name="peers_description">Введите пиры сети Yggdrasil (по одному на строку). По умолчанию заполнены стандартные пиры.</string>
     <string name="yggdrasil_peers">Пиры Yggdrasil</string>
@@ -109,7 +110,7 @@
 
     <!-- Security Settings Items -->
     <string name="change_password">Изменить пароль</string>
-    <string name="change_password_description">Обновить пароль аутентификации DeltaChat</string>
+    <string name="change_password_description">Обновить пароль аутентификации DeltaChat/ArcaneChat</string>
     <string name="regenerate_keys">Перегенерировать ключи</string>
     <string name="regenerate_keys_description">Создать новый почтовый адрес и ключи шифрования</string>
     <string name="backup_restore">Резервное копирование</string>
@@ -150,7 +151,7 @@
     <string name="restart_required">Требуется перезапуск</string>
     <string name="restart_required_message">Изменения вступят в силу после перезапуска службы.</string>
     <string name="regenerate">Перегенерировать</string>
-    <string name="regenerate_keys_message">Это создаст новый почтовый адрес. Вам потребуется перенастроить DeltaChat с новым адресом. Продолжить?</string>
+    <string name="regenerate_keys_message">Это создаст новый почтовый адрес. Вам потребуется перенастроить DeltaChat/ArcaneChat с новым адресом. Продолжить?</string>
     <string name="keys_regenerated">Ключи успешно перегенерированы. Проверьте новый почтовый адрес на главном экране.</string>
     <string name="error_regenerate_keys">Не удалось перегенерировать ключи</string>
 
@@ -191,6 +192,7 @@
     <string name="error_password_empty">Пароль не может быть пустым</string>
     <string name="error_password_short">Пароль должен быть не менее 6 символов</string>
     <string name="error_password_mismatch">Пароли не совпадают</string>
+    <string name="error_save_password">Не удалось сохранить пароль. Попробуйте снова или свяжитесь с поддержкой, если проблема сохраняется.</string>
     <string name="error_peers_empty">Пожалуйста, введите хотя бы один пир</string>
 
     <!-- Permissions -->

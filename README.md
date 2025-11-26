@@ -20,11 +20,13 @@ So, Tyr brings true peer-to-peer email to your Android device using these unusua
 
 ### What does Tyr already have?
 
-1. Full integration with DeltaChat - the best decentralized messenger
+1. Full integration with DeltaChat and ArcaneChat - the best decentralized messengers
 2. Local SMTP/IMAP server running on your device
 3. Automatic Ed25519 key generation for your mail identity
 4. Connection to the Yggdrasil Network with configurable peers
 5. Auto-start on boot for always-on availability
+6. Encrypted backup & restore with password protection
+7. Automatic recovery from Android Keystore issues (Samsung devices)
 
 One of Tyr's strong points is censorship circumvention: you can connect to any of hundreds of available Yggdrasil nodes, host your own, or even build a private network. Email freedom is literally in your hands.
 
@@ -32,34 +34,46 @@ One of Tyr's strong points is censorship circumvention: you can connect to any o
 
 Tyr runs a complete email server right on your Android device, using the Yggdrasil network for transport. The [Yggmail](https://github.com/JB-SelfCompany/yggmail-android) mail server (built in Go) is embedded as a library inside the app and runs as a foreground service.
 
-On top of Yggdrasil, it provides standard SMTP and IMAP protocols on localhost (127.0.0.1:1025 and 127.0.0.1:1143). Any email client can connect to these ports - but we recommend DeltaChat for the best P2P messaging experience.
+On top of Yggdrasil, it provides standard SMTP and IMAP protocols on localhost (127.0.0.1:1025 and 127.0.0.1:1143). Any email client can connect to these ports - but we recommend DeltaChat or ArcaneChat for the best P2P messaging experience.
 
 Every Tyr installation generates unique Ed25519 cryptographic keys. Your mail address is derived from your public key, making it: `<64-hex-characters>@yggmail`. This means your identity is cryptographically verifiable and cannot be spoofed.
 
-### DeltaChat Integration
+### DeltaChat/ArcaneChat Integration
 
-DeltaChat is the perfect companion for Tyr. It's a messenger that uses email protocols but provides a modern chat interface. When you configure DeltaChat to use Tyr's local server:
+DeltaChat and ArcaneChat are perfect companions for Tyr. These are messengers that use email protocols but provide modern chat interfaces. When you configure DeltaChat/ArcaneChat to use Tyr's local server:
 
-1. DeltaChat sends messages via SMTP to Tyr
+1. DeltaChat/ArcaneChat sends messages via SMTP to Tyr
 2. Tyr wraps them in Yggmail protocol and sends through Yggdrasil
 3. The recipient's Tyr receives the message via Yggdrasil
-4. Their DeltaChat fetches it via IMAP from their local Tyr
+4. Their DeltaChat/ArcaneChat fetches it via IMAP from their local Tyr
 5. All this happens peer-to-peer, with no central servers
 
-## Setting up DeltaChat with Tyr
+## Setting up DeltaChat/ArcaneChat with Tyr
+
+### Option 1: Automatic Setup (Recommended)
+
+1. Install Tyr and complete the onboarding (set password, configure peers)
+2. Start the Yggmail service in Tyr
+3. Install DeltaChat or ArcaneChat from F-Droid or Google Play
+4. In Tyr's main screen, tap **"Setup DeltaChat/ArcaneChat"**
+5. Tyr will automatically open DeltaChat/ArcaneChat with pre-configured settings
+6. Complete the setup and start chatting!
+
+### Option 2: Manual Setup
+
+If automatic setup doesn't work:
 
 1. Install Tyr and complete the onboarding (set password, configure peers)
 2. Start the Yggmail service in Tyr
 3. Copy your mail address from the main screen (looks like `abc123...@yggmail`)
-4. Install DeltaChat from F-Droid or Google Play
-5. In DeltaChat, choose "Advanced Setup"
-6. Enter your Yggmail address and password
-7. Configure servers manually:
-   - **IMAP**: Server `127.0.0.1`, Port `1143`, Security: `None`
-   - **SMTP**: Server `127.0.0.1`, Port `1025`, Security: `None`
-8. Complete setup and start chatting!
+4. Install DeltaChat or ArcaneChat from F-Droid or Google Play
+5. In DeltaChat/ArcaneChat, tap **"Create a new profile"**
+6. Enter a name and optionally select an avatar
+7. Tap **"Use a different server"** (below the login fields)
+8. Enter your Yggmail address and the password you set in Tyr
+9. Tap "✓" in the top right corner to complete setup
 
-**Important**: Tyr must be running for DeltaChat to send and receive messages. Enable auto-start in Tyr settings for seamless experience.
+**Important**: Tyr must be running for DeltaChat/ArcaneChat to send and receive messages. Enable auto-start in Tyr settings for seamless experience.
 
 ## Building from source
 
@@ -118,16 +132,19 @@ Then copy `yggmail.aar` to `Tyr/app/libs/`
 🔒 **Security implementation**:
 
 - **Passwords are encrypted** using Android Keystore System (AES256-GCM encryption)
+- **Automatic Keystore recovery**: Handles Android Keystore issues on Samsung and other devices automatically
 - **Network encryption** provided by Yggdrasil Network for all peer-to-peer communications
 - **Local-only access**: SMTP/IMAP ports (1025/1143) are bound to localhost only, not accessible from network
 - **Cryptographic identity**: Ed25519 keys ensure your mail address cannot be spoofed
+- **Encrypted backups**: Configuration and keys can be backed up with password protection
 
 ## Related Projects
 
 - [Yggmail](https://github.com/JB-SelfCompany/yggmail-android): The mail transfer agent that powers Tyr
 - [Mimir](https://github.com/Revertron/Mimir): P2P messenger on Yggdrasil (sister project)
 - [Yggdrasil Network](https://yggdrasil-network.github.io/): The mesh network infrastructure
-- [DeltaChat](https://delta.chat/): The recommended email-based messenger client
+- [DeltaChat](https://delta.chat/): Recommended email-based messenger client
+- [ArcaneChat](https://github.com/ArcaneChat/android): Alternative email-based messenger client
 
 ## License
 
