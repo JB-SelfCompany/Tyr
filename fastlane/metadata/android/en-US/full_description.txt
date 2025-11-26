@@ -1,0 +1,42 @@
+Tyr is a revolutionary Android application that provides true peer-to-peer email communication using the Yggdrasil mesh network. Unlike traditional email systems that rely on centralized servers, Tyr runs a complete email server directly on your device.
+
+<b>Key Features:</b>
+
+• <b>True P2P Email</b> - No central servers, no cloud infrastructure. Your device IS the email server.
+
+• <b>Yggdrasil Integration</b> - Built on the Yggdrasil overlay mesh network providing secure, end-to-end encrypted connections.
+
+• <b>Standard Protocols</b> - Exposes SMTP/IMAP protocols on localhost, compatible with standard email clients like DeltaChat.
+
+• <b>Privacy First</b> - All data stays on your device. Encrypted configuration backup with AES-256-GCM encryption.
+
+• <b>DeltaChat Ready</b> - Seamless integration with DeltaChat for instant messaging over email.
+
+• <b>Cryptographic Identity</b> - Your email address is derived from your Ed25519 public key, ensuring authenticity.
+
+• <b>Mesh Networking</b> - Connect via public Yggdrasil peers or configure your own custom peers.
+
+• <b>Battery Optimized</b> - Sophisticated power management with timed wake locks and network monitoring.
+
+• <b>Secure by Design</b> - Password protection using Android Keystore with EncryptedSharedPreferences.
+
+• <b>Backup & Restore</b> - Export and import all settings with optional inclusion of your cryptographic keys.
+
+<b>Technical Details:</b>
+
+The app runs a foreground service that manages the native Yggmail library (Go-based), providing SMTP on port 1025 and IMAP on port 1143 (localhost only). Your mail address format is: &lt;64-hex-characters&gt;@yggmail, cryptographically derived from your Ed25519 key pair.
+
+<b>Perfect For:</b>
+
+• Privacy enthusiasts who want control over their communications
+• Users seeking decentralized alternatives to traditional email
+• DeltaChat users wanting P2P messaging infrastructure
+• Anyone interested in mesh networking technology
+
+<b>Requirements:</b>
+
+• Android 6.0 (API 23) or higher
+• Internet connection for initial Yggdrasil peer connections
+• Battery optimization exemption recommended for best performance
+
+Join the peer-to-peer email revolution with Tyr.
