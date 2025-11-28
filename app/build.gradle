@@ -7,12 +7,17 @@ android {
     namespace 'com.jbselfcompany.tyr'
     compileSdk 36
 
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
     defaultConfig {
         applicationId "com.jbselfcompany.tyr"
         minSdk 23
         targetSdk 33
-        versionCode 10
-        versionName "1.4.0"
+        versionCode 11
+        versionName "1.4.1"
         resourceConfigurations += ['en', 'ru']
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
