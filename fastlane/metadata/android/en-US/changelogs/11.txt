@@ -1,0 +1,1 @@
+• Fixing the display of the github icon on the About page
