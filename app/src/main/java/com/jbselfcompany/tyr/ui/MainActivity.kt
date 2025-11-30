@@ -84,6 +84,14 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
         super.onResume()
         // Show permission warnings if any permissions are missing
         showPermissionWarnings()
+        // Notify service that app is active for optimized heartbeat
+        yggmailService?.setAppActive(true)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Notify service that app went to background
+        yggmailService?.setAppActive(false)
     }
 
     override fun onDestroy() {

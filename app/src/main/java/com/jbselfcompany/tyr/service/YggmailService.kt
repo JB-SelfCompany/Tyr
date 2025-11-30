@@ -101,6 +101,10 @@ class YggmailService : Service(), LogCallback {
     // WakeLock renewal
     private var wakeLockRenewalRunnable: Runnable? = null
 
+    // IMAP polling for immediate message delivery (disabled - using adaptive heartbeat in yggmail instead)
+    private var imapPollingRunnable: Runnable? = null
+    private val IMAP_POLL_INTERVAL_MS = 60000L // Reduced to 60 seconds for battery saving
+
     // Binder for local service binding
     private val binder = LocalBinder()
 
@@ -165,6 +169,9 @@ class YggmailService : Service(), LogCallback {
 
         // Cancel WakeLock renewal
         wakeLockRenewalRunnable?.let { serviceHandler.removeCallbacks(it) }
+
+        // Cancel IMAP polling
+        imapPollingRunnable?.let { serviceHandler.removeCallbacks(it) }
 
         stopYggmail()
 
@@ -254,6 +261,9 @@ class YggmailService : Service(), LogCallback {
             acquireWakeLockWithTimeout()
             scheduleWakeLockRenewal()
 
+            // Start IMAP polling for immediate message delivery
+            scheduleImapPolling()
+
             isRunning = true
             updateStatus(ServiceStatus.RUNNING)
 
@@ -286,6 +296,9 @@ class YggmailService : Service(), LogCallback {
 
             // Cancel WakeLock renewal
             wakeLockRenewalRunnable?.let { serviceHandler.removeCallbacks(it) }
+
+            // Cancel IMAP polling
+            imapPollingRunnable?.let { serviceHandler.removeCallbacks(it) }
 
             // Stop and close service
             yggmailService?.stop()
@@ -374,6 +387,29 @@ class YggmailService : Service(), LogCallback {
 
         wakeLockRenewalRunnable?.let {
             serviceHandler.postDelayed(it, WAKELOCK_RENEWAL_MS)
+        }
+    }
+
+    /**
+     * Schedule periodic IMAP polling to trigger immediate message delivery
+     * Uses conservative 60-second interval since yggmail has adaptive heartbeat
+     */
+    private fun scheduleImapPolling() {
+        imapPollingRunnable = Runnable {
+            if (isRunning) {
+                // Light check - yggmail adaptive heartbeat handles aggressive polling
+                // This is just a fallback safety mechanism
+                try {
+                    yggmailService?.recordActivity()
+                } catch (e: Exception) {
+                    Log.w(TAG, "Error during IMAP polling: ${e.message}")
+                }
+                scheduleImapPolling() // Schedule next poll
+            }
+        }
+
+        imapPollingRunnable?.let {
+            serviceHandler.postDelayed(it, IMAP_POLL_INTERVAL_MS)
         }
     }
 
@@ -467,6 +503,32 @@ class YggmailService : Service(), LogCallback {
      * Get last error message
      */
     fun getLastError(): String? = lastError
+
+    /**
+     * Notify service that app is in foreground (active)
+     * This enables more aggressive heartbeat for better responsiveness
+     */
+    fun setAppActive(active: Boolean) {
+        try {
+            yggmailService?.setActive(active)
+            Log.d(TAG, "App activity state set to: $active")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error setting app activity state", e)
+        }
+    }
+
+    /**
+     * Notify service about mail activity (sending/receiving)
+     * This triggers aggressive mode for immediate delivery
+     */
+    fun notifyMailActivity() {
+        try {
+            yggmailService?.recordMailActivity()
+            Log.d(TAG, "Mail activity recorded")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error recording mail activity", e)
+        }
+    }
 }
 
 /**
