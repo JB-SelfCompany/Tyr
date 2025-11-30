@@ -1,0 +1,2 @@
+• Updated the library, Yggmail now uses yggquick as its basis
+• Improved connection stability, increased message delivery speed to 10+- seconds
