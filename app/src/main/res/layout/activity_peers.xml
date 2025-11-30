@@ -76,6 +76,15 @@
                     android:layout_marginTop="8dp"
                     android:minHeight="200dp" />
 
+                <!-- Apply changes button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_apply_changes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/apply_changes"
+                    app:icon="@android:drawable/ic_menu_save" />
+
             </LinearLayout>
 
         </LinearLayout>

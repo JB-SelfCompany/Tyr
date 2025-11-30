@@ -529,6 +529,29 @@ class YggmailService : Service(), LogCallback {
             Log.e(TAG, "Error recording mail activity", e)
         }
     }
+
+    /**
+     * Hot reload peers without restarting the entire service
+     * This closes old transport connections and creates new ones with updated peer list
+     */
+    fun hotReloadPeers() {
+        serviceHandler.post {
+            try {
+                Log.i(TAG, "Hot reloading peers...")
+
+                // Get updated configuration
+                val peers = configRepository.getPeersString()
+                val multicastEnabled = configRepository.isMulticastEnabled()
+
+                // Call native UpdatePeers method
+                yggmailService?.updatePeers(peers, multicastEnabled, ".*")
+
+                Log.i(TAG, "Peers reloaded successfully")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error hot reloading peers", e)
+            }
+        }
+    }
 }
 
 /**

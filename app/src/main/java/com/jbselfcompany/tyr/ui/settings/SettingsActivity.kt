@@ -52,8 +52,9 @@ class SettingsActivity : BaseActivity(), SettingsAdapter.Listener {
         private const val ID_THEME = 12
         private const val ID_HEADER_DEBUG = 13
         private const val ID_COLLECT_LOGS = 14
-        private const val ID_HEADER_ABOUT = 15
-        private const val ID_ABOUT_APP = 16
+        private const val ID_CLEAR_LOGS = 15
+        private const val ID_HEADER_ABOUT = 16
+        private const val ID_ABOUT_APP = 17
     }
 
     private val createBackupLauncher = registerForActivityResult(
@@ -209,6 +210,14 @@ class SettingsActivity : BaseActivity(), SettingsAdapter.Listener {
                 type = SettingsAdapter.ItemType.PLAIN
             )
         )
+        settingsItems.add(
+            SettingsAdapter.Item(
+                id = ID_CLEAR_LOGS,
+                titleRes = R.string.clear_logs,
+                descriptionRes = R.string.clear_logs_description,
+                type = SettingsAdapter.ItemType.PLAIN
+            )
+        )
 
         // About Settings Section
         settingsItems.add(
@@ -255,6 +264,7 @@ class SettingsActivity : BaseActivity(), SettingsAdapter.Listener {
             ID_LANGUAGE -> showLanguageDialog()
             ID_THEME -> showThemeDialog()
             ID_COLLECT_LOGS -> startActivity(Intent(this, LogsActivity::class.java))
+            ID_CLEAR_LOGS -> showClearLogsDialog()
             ID_ABOUT_APP -> startActivity(Intent(this, AboutActivity::class.java))
         }
     }
@@ -571,5 +581,26 @@ class SettingsActivity : BaseActivity(), SettingsAdapter.Listener {
             else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
         }
         AppCompatDelegate.setDefaultNightMode(mode)
+    }
+
+    private fun showClearLogsDialog() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.clear_logs)
+            .setMessage(R.string.clear_logs_confirmation)
+            .setPositiveButton(R.string.ok) { _, _ ->
+                clearLogs()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun clearLogs() {
+        try {
+            // Clear the logcat buffer
+            Runtime.getRuntime().exec("logcat -c")
+            Toast.makeText(this, R.string.logs_cleared, Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, R.string.error_clearing_logs, Toast.LENGTH_SHORT).show()
+        }
     }
 }

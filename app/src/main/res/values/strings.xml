@@ -150,6 +150,10 @@
     <string name="reset_to_defaults_message">This will restore the default Yggdrasil peer list. Continue?</string>
     <string name="restart_required">Restart Required</string>
     <string name="restart_required_message">Changes will take effect after restarting the service.</string>
+    <string name="apply_changes">Apply Changes</string>
+    <string name="peers_applied">Peer changes applied successfully</string>
+    <string name="peers_applied_description">New peer configuration is active</string>
+    <string name="error_applying_peers">Failed to apply peer changes</string>
     <string name="regenerate">Regenerate</string>
     <string name="regenerate_keys_message">This will generate a new mail address. You will need to reconfigure DeltaChat/ArcaneChat with the new address. Continue?</string>
     <string name="keys_regenerated">Keys regenerated successfully. Check your new mail address in the main screen.</string>
@@ -159,12 +163,17 @@
     <string name="logs">Logs</string>
     <string name="view_logs">View Logs</string>
     <string name="share_logs">Share Logs</string>
+    <string name="clear_logs">Clear Logs</string>
+    <string name="clear_logs_description">Clear accumulated logs and start fresh</string>
     <string name="tyr_logs">Tyr Logs</string>
     <string name="no_logs_available">No logs available</string>
     <string name="no_logs_to_share">No logs to share</string>
     <string name="no_logs_to_copy">No logs to copy</string>
     <string name="logs_copied">Logs copied to clipboard</string>
+    <string name="logs_cleared">Logs cleared successfully</string>
+    <string name="clear_logs_confirmation">Clear all accumulated logs?</string>
     <string name="error_loading_logs">Error loading logs: %s</string>
+    <string name="error_clearing_logs">Failed to clear logs</string>
 
     <!-- Backup & Restore -->
     <string name="backup_password">Backup Password</string>

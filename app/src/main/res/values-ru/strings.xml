@@ -150,6 +150,10 @@
     <string name="reset_to_defaults_message">Это восстановит список пиров Yggdrasil по умолчанию. Продолжить?</string>
     <string name="restart_required">Требуется перезапуск</string>
     <string name="restart_required_message">Изменения вступят в силу после перезапуска службы.</string>
+    <string name="apply_changes">Применить изменения</string>
+    <string name="peers_applied">Изменения пиров успешно примененены</string>
+    <string name="peers_applied_description">Новая конфигурация пиров активна</string>
+    <string name="error_applying_peers">Не удалось применить конфигурацию пиров</string>
     <string name="regenerate">Перегенерировать</string>
     <string name="regenerate_keys_message">Это создаст новый почтовый адрес. Вам потребуется перенастроить DeltaChat/ArcaneChat с новым адресом. Продолжить?</string>
     <string name="keys_regenerated">Ключи успешно перегенерированы. Проверьте новый почтовый адрес на главном экране.</string>
@@ -159,12 +163,17 @@
     <string name="logs">Логи</string>
     <string name="view_logs">Просмотр логов</string>
     <string name="share_logs">Поделиться логами</string>
+    <string name="clear_logs">Очистить логи</string>
+    <string name="clear_logs_description">Очистить накопленные логи и начать получать свежие</string>
     <string name="tyr_logs">Логи Tyr</string>
     <string name="no_logs_available">Логи отсутствуют</string>
     <string name="no_logs_to_share">Нет логов для отправки</string>
     <string name="no_logs_to_copy">Нет логов для копирования</string>
     <string name="logs_copied">Логи скопированы в буфер обмена</string>
+    <string name="logs_cleared">Логи успешно очищены</string>
+    <string name="clear_logs_confirmation">Очистить все накопленные логи?</string>
     <string name="error_loading_logs">Ошибка загрузки логов: %s</string>
+    <string name="error_clearing_logs">Не удалось очистить логи</string>
 
     <!-- Backup & Restore -->
     <string name="backup_password">Пароль резервной копии</string>
