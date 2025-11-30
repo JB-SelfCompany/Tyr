@@ -1,0 +1,3 @@
+• Improved stability
+• Added the option to use other peers "on the fly", without restarting the application
+• Added the functionality to clear logs and receive new ones
