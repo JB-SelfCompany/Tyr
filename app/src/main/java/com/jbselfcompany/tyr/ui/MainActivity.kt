@@ -26,6 +26,7 @@ import com.jbselfcompany.tyr.service.YggmailService
 import com.jbselfcompany.tyr.ui.onboarding.OnboardingActivity
 import com.jbselfcompany.tyr.ui.settings.SettingsActivity
 import com.jbselfcompany.tyr.utils.AutoconfigServer
+import com.jbselfcompany.tyr.utils.NetworkStatsMonitor
 import com.jbselfcompany.tyr.utils.PermissionManager
 import android.util.Log
 
@@ -38,6 +39,7 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
     private lateinit var binding: ActivityMainBinding
     private val configRepository by lazy { TyrApplication.instance.configRepository }
     private val autoconfigServer by lazy { AutoconfigServer(this) }
+    private val networkStatsMonitor by lazy { NetworkStatsMonitor(this) }
 
     private var yggmailService: YggmailService? = null
     private var serviceBound = false
@@ -48,6 +50,9 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
             yggmailService = binder.getService()
             serviceBound = true
 
+            // Store binder in TyrApplication for global access
+            TyrApplication.instance.yggmailServiceBinder = binder
+
             yggmailService?.addStatusListener(this@MainActivity)
         }
 
@@ -55,6 +60,7 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
             yggmailService?.removeStatusListener(this@MainActivity)
             yggmailService = null
             serviceBound = false
+            TyrApplication.instance.yggmailServiceBinder = null
         }
     }
 
@@ -86,12 +92,16 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
         showPermissionWarnings()
         // Notify service that app is active for optimized heartbeat
         yggmailService?.setAppActive(true)
+        // Start network monitoring
+        startNetworkMonitoring()
     }
 
     override fun onPause() {
         super.onPause()
         // Notify service that app went to background
         yggmailService?.setAppActive(false)
+        // Stop network monitoring to save battery
+        stopNetworkMonitoring()
     }
 
     override fun onDestroy() {
@@ -444,5 +454,137 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
         } else {
             true // Battery optimization doesn't exist on Android 5 and below
         }
+    }
+
+    /**
+     * Start network statistics monitoring
+     * Only runs when app is in foreground to save battery
+     * Latency measurements are enabled since user is actively viewing the app
+     */
+    private fun startNetworkMonitoring() {
+        networkStatsMonitor.start(object : NetworkStatsMonitor.NetworkStatsListener {
+            override fun onStatsUpdated(stats: NetworkStatsMonitor.NetworkStats) {
+                updateNetworkStatsUI(stats)
+            }
+        }, enableLatencyMeasurement = true) // Enable latency checks only when app is active
+    }
+
+    /**
+     * Stop network statistics monitoring
+     */
+    private fun stopNetworkMonitoring() {
+        networkStatsMonitor.stop()
+    }
+
+    /**
+     * Update UI with network statistics
+     */
+    private fun updateNetworkStatsUI(stats: NetworkStatsMonitor.NetworkStats) {
+        // Connection type
+        binding.textConnectionType.text = stats.connectionType
+
+        // Update peers list
+        updatePeersList(stats.peers)
+    }
+
+    /**
+     * Update the list of peers with latency information
+     */
+    private fun updatePeersList(peers: List<NetworkStatsMonitor.PeerInfo>) {
+        // Clear existing views
+        binding.peersContainer.removeAllViews()
+
+        if (peers.isEmpty()) {
+            // Show "no peers" message
+            val noPeersText = android.widget.TextView(this).apply {
+                text = getString(R.string.no_active_peer)
+                setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall)
+                setTextColor(getColor(android.R.color.darker_gray))
+            }
+            binding.peersContainer.addView(noPeersText)
+        } else {
+            // Add peer info views
+            for (peer in peers) {
+                val peerView = android.widget.LinearLayout(this).apply {
+                    orientation = android.widget.LinearLayout.VERTICAL
+                    layoutParams = android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        topMargin = 8.dpToPx()
+                        bottomMargin = 8.dpToPx()
+                    }
+                    setPadding(12.dpToPx(), 12.dpToPx(), 12.dpToPx(), 12.dpToPx())
+                    setBackgroundResource(R.drawable.peer_item_background)
+                }
+
+                // First row: Peer address and status
+                val firstRow = android.widget.LinearLayout(this).apply {
+                    orientation = android.widget.LinearLayout.HORIZONTAL
+                    layoutParams = android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+                }
+
+                // Peer host:port
+                val peerNameText = android.widget.TextView(this).apply {
+                    text = "${peer.host}:${peer.port}"
+                    layoutParams = android.widget.LinearLayout.LayoutParams(
+                        0,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                        1f
+                    )
+                    setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium)
+                    setTypeface(null, android.graphics.Typeface.BOLD)
+                }
+
+                // Connection status
+                val statusText = android.widget.TextView(this).apply {
+                    text = if (peer.connected) getString(R.string.peer_connected) else getString(R.string.peer_disconnected)
+                    setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall)
+
+                    // Color code status
+                    setTextColor(
+                        if (peer.connected)
+                            getColor(R.color.status_running)
+                        else
+                            getColor(R.color.status_error)
+                    )
+                }
+
+                firstRow.addView(peerNameText)
+                firstRow.addView(statusText)
+
+                // Second row: Latency
+                val latencyText = android.widget.TextView(this).apply {
+                    text = if (peer.latencyMs >= 0) {
+                        getString(R.string.peer_latency_format, peer.latencyMs)
+                    } else {
+                        getString(R.string.peer_latency_unknown)
+                    }
+                    layoutParams = android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        topMargin = 4.dpToPx()
+                    }
+                    setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall)
+                    setTextColor(getColor(android.R.color.darker_gray))
+                }
+
+                peerView.addView(firstRow)
+                peerView.addView(latencyText)
+
+                binding.peersContainer.addView(peerView)
+            }
+        }
+    }
+
+    /**
+     * Convert dp to pixels
+     */
+    private fun Int.dpToPx(): Int {
+        return (this * resources.displayMetrics.density).toInt()
     }
 }

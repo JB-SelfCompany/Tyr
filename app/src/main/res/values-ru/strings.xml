@@ -48,6 +48,20 @@
     <string name="start_service">Запустить службу</string>
     <string name="stop_service">Остановить службу</string>
     <string name="mail_configuration">Настройка почты</string>
+
+    <!-- Network Statistics -->
+    <string name="network_statistics">Статус соединения</string>
+    <string name="connection_type">Тип соединения</string>
+    <string name="configured_peers">Настроенные пиры</string>
+    <string name="active_peer">Активный пир</string>
+    <string name="peer_status">Статус</string>
+    <string name="no_active_peer">Пиры не настроены</string>
+    <string name="peer_connected">Подключен</string>
+    <string name="peer_disconnected">Отключен</string>
+    <string name="peer_latency_format">Задержка: %d мс</string>
+    <string name="peer_latency_unknown">Задержка: измеряется…</string>
+    <string name="yggdrasil_peers">Yggdrasil пиры</string>
+
     <string name="copy_address">Копировать адрес</string>
     <string name="address_copied">Адрес скопирован в буфер обмена</string>
     <string name="setup_deltachat">Настроить DeltaChat/ArcaneChat</string>
@@ -77,7 +91,6 @@
     <string name="password_security_info">Ваш пароль защищает соединение между DeltaChat/ArcaneChat и локальным почтовым сервером</string>
     <string name="configure_peers">Настройка пиров</string>
     <string name="peers_description">Введите пиры сети Yggdrasil (по одному на строку). По умолчанию заполнены стандартные пиры.</string>
-    <string name="yggdrasil_peers">Пиры Yggdrasil</string>
     <string name="peers_list">Список пиров</string>
     <string name="enable_multicast">Включить Multicast-обнаружение</string>
     <string name="multicast_description">Автоматическое обнаружение пиров в локальной сети</string>

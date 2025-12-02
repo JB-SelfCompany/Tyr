@@ -35,8 +35,10 @@ class YggmailService : Service(), LogCallback {
         private const val NOTIFICATION_ID = 1001
 
         // WakeLock constants for battery optimization
-        private const val WAKELOCK_TIMEOUT_MS = 10 * 60 * 1000L // 10 minutes
-        private const val WAKELOCK_RENEWAL_MS = 9 * 60 * 1000L  // Renew every 9 minutes
+        // Increased timeout to 30 minutes with 25-minute renewal for better battery efficiency
+        // Yggmail's adaptive heartbeat handles connection maintenance
+        private const val WAKELOCK_TIMEOUT_MS = 30 * 60 * 1000L // 30 minutes
+        private const val WAKELOCK_RENEWAL_MS = 25 * 60 * 1000L  // Renew every 25 minutes
 
         const val ACTION_START = "com.jbselfcompany.tyr.START"
         const val ACTION_STOP = "com.jbselfcompany.tyr.STOP"
@@ -100,10 +102,11 @@ class YggmailService : Service(), LogCallback {
 
     // WakeLock renewal
     private var wakeLockRenewalRunnable: Runnable? = null
+    private var isAppActive = false // Track if app is in foreground
 
-    // IMAP polling for immediate message delivery (disabled - using adaptive heartbeat in yggmail instead)
-    private var imapPollingRunnable: Runnable? = null
-    private val IMAP_POLL_INTERVAL_MS = 60000L // Reduced to 60 seconds for battery saving
+    // Mail activity monitoring for adaptive heartbeat
+    // No periodic polling needed - yggmail library handles adaptive heartbeat internally
+    // We only notify on actual SMTP/IMAP activity via setAppActive() and notifyMailActivity()
 
     // Binder for local service binding
     private val binder = LocalBinder()
@@ -169,9 +172,6 @@ class YggmailService : Service(), LogCallback {
 
         // Cancel WakeLock renewal
         wakeLockRenewalRunnable?.let { serviceHandler.removeCallbacks(it) }
-
-        // Cancel IMAP polling
-        imapPollingRunnable?.let { serviceHandler.removeCallbacks(it) }
 
         stopYggmail()
 
@@ -261,9 +261,6 @@ class YggmailService : Service(), LogCallback {
             acquireWakeLockWithTimeout()
             scheduleWakeLockRenewal()
 
-            // Start IMAP polling for immediate message delivery
-            scheduleImapPolling()
-
             isRunning = true
             updateStatus(ServiceStatus.RUNNING)
 
@@ -296,9 +293,6 @@ class YggmailService : Service(), LogCallback {
 
             // Cancel WakeLock renewal
             wakeLockRenewalRunnable?.let { serviceHandler.removeCallbacks(it) }
-
-            // Cancel IMAP polling
-            imapPollingRunnable?.let { serviceHandler.removeCallbacks(it) }
 
             // Stop and close service
             yggmailService?.stop()
@@ -387,29 +381,6 @@ class YggmailService : Service(), LogCallback {
 
         wakeLockRenewalRunnable?.let {
             serviceHandler.postDelayed(it, WAKELOCK_RENEWAL_MS)
-        }
-    }
-
-    /**
-     * Schedule periodic IMAP polling to trigger immediate message delivery
-     * Uses conservative 60-second interval since yggmail has adaptive heartbeat
-     */
-    private fun scheduleImapPolling() {
-        imapPollingRunnable = Runnable {
-            if (isRunning) {
-                // Light check - yggmail adaptive heartbeat handles aggressive polling
-                // This is just a fallback safety mechanism
-                try {
-                    yggmailService?.recordActivity()
-                } catch (e: Exception) {
-                    Log.w(TAG, "Error during IMAP polling: ${e.message}")
-                }
-                scheduleImapPolling() // Schedule next poll
-            }
-        }
-
-        imapPollingRunnable?.let {
-            serviceHandler.postDelayed(it, IMAP_POLL_INTERVAL_MS)
         }
     }
 
@@ -505,13 +476,98 @@ class YggmailService : Service(), LogCallback {
     fun getLastError(): String? = lastError
 
     /**
+     * Get peer connection information from native Yggmail service
+     */
+    fun getPeerConnections(): List<PeerConnectionInfo>? {
+        return try {
+            val jsonString = yggmailService?.getPeerConnectionsJSON() ?: return null
+            parsePeerConnectionsJSON(jsonString)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting peer connections", e)
+            null
+        }
+    }
+
+    /**
+     * Parse JSON string to list of PeerConnectionInfo
+     */
+    private fun parsePeerConnectionsJSON(json: String): List<PeerConnectionInfo> {
+        if (json.isEmpty() || json == "[]") {
+            return emptyList()
+        }
+
+        val peers = mutableListOf<PeerConnectionInfo>()
+        try {
+            // Simple JSON parsing without external library
+            // Format: [{"peerURL":"...","host":"...","port":7743,"connected":true},...]
+            val jsonArray = json.trim().removeSurrounding("[", "]")
+            if (jsonArray.isEmpty()) return emptyList()
+
+            // Split by },{
+            val peerObjects = jsonArray.split("},")
+            for (peerStr in peerObjects) {
+                var obj = peerStr.trim()
+                if (!obj.startsWith("{")) obj = "{$obj"
+                if (!obj.endsWith("}")) obj = "$obj}"
+
+                // Extract fields
+                val peerURL = extractJSONString(obj, "peerURL")
+                val host = extractJSONString(obj, "host")
+                val port = extractJSONInt(obj, "port")
+                val connected = extractJSONBoolean(obj, "connected")
+
+                if (host.isNotEmpty() && port > 0) {
+                    peers.add(PeerConnectionInfo(peerURL, host, port, connected))
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing peer connections JSON: $json", e)
+        }
+        return peers
+    }
+
+    private fun extractJSONString(json: String, key: String): String {
+        val pattern = """"$key":"([^"]*)"""".toRegex()
+        return pattern.find(json)?.groupValues?.get(1) ?: ""
+    }
+
+    private fun extractJSONInt(json: String, key: String): Int {
+        val pattern = """"$key":(\d+)""".toRegex()
+        return pattern.find(json)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+    }
+
+    private fun extractJSONBoolean(json: String, key: String): Boolean {
+        val pattern = """"$key":(true|false)""".toRegex()
+        return pattern.find(json)?.groupValues?.get(1) == "true"
+    }
+
+    /**
+     * Data class for peer connection information
+     */
+    data class PeerConnectionInfo(
+        val peerURL: String,
+        val host: String,
+        val port: Int,
+        val connected: Boolean
+    )
+
+    /**
      * Notify service that app is in foreground (active)
      * This enables more aggressive heartbeat for better responsiveness
+     * When app is active, we acquire WakeLock more aggressively
      */
     fun setAppActive(active: Boolean) {
         try {
+            isAppActive = active
             yggmailService?.setActive(active)
             Log.d(TAG, "App activity state set to: $active")
+
+            // When app becomes active, immediately acquire WakeLock for better responsiveness
+            if (active && isRunning) {
+                serviceHandler.post {
+                    acquireWakeLockWithTimeout()
+                }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error setting app activity state", e)
         }
@@ -532,7 +588,8 @@ class YggmailService : Service(), LogCallback {
 
     /**
      * Hot reload peers without restarting the entire service
-     * This closes old transport connections and creates new ones with updated peer list
+     * Updates peer configuration gracefully without closing transport connections
+     * This prevents ErrClosed errors that occurred with the old approach
      */
     fun hotReloadPeers() {
         serviceHandler.post {
@@ -543,12 +600,13 @@ class YggmailService : Service(), LogCallback {
                 val peers = configRepository.getPeersString()
                 val multicastEnabled = configRepository.isMulticastEnabled()
 
-                // Call native UpdatePeers method
+                // Call native UpdatePeers method (non-destructive)
+                // This only updates the configuration without closing transport
                 yggmailService?.updatePeers(peers, multicastEnabled, ".*")
 
-                Log.i(TAG, "Peers reloaded successfully")
+                Log.i(TAG, "Peers configuration updated successfully")
             } catch (e: Exception) {
-                Log.e(TAG, "Error hot reloading peers", e)
+                Log.e(TAG, "Error updating peers configuration", e)
             }
         }
     }

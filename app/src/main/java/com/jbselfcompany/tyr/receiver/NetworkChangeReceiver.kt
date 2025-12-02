@@ -41,9 +41,9 @@ class NetworkChangeReceiver(private val context: Context) : ConnectivityManager.
             Thread.sleep(DEBOUNCE_DELAY_MS)
 
             if (YggmailService.isRunning) {
-                Log.i(TAG, "Network became available, notifying service")
-                // Service will handle reconnection internally
-                // The yggmail-android library automatically reconnects on network changes
+                Log.i(TAG, "Network became available - Yggdrasil will auto-reconnect")
+                // Note: Yggdrasil core handles peer reconnection automatically
+                // We don't need to manually restart transport (prevents ErrClosed errors)
             }
         }.start()
     }

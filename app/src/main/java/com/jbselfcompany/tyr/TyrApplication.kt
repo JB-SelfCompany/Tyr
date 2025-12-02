@@ -31,6 +31,8 @@ class TyrApplication : Application() {
     lateinit var configRepository: ConfigRepository
         private set
 
+    var yggmailServiceBinder: com.jbselfcompany.tyr.service.YggmailService.LocalBinder? = null
+
     private var networkCallback: NetworkChangeReceiver? = null
 
     override fun onCreate() {

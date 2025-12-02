@@ -48,6 +48,19 @@
     <string name="start_service">Start Service</string>
     <string name="stop_service">Stop Service</string>
     <string name="mail_configuration">Mail Configuration</string>
+
+    <!-- Network Statistics -->
+    <string name="network_statistics">Connection status</string>
+    <string name="connection_type">Connection Type</string>
+    <string name="configured_peers">Configured Peers</string>
+    <string name="active_peer">Active Peer</string>
+    <string name="peer_status">Status</string>
+    <string name="no_active_peer">No peers configured</string>
+    <string name="peer_connected">Connected</string>
+    <string name="peer_disconnected">Disconnected</string>
+    <string name="peer_latency_format">Latency: %d ms</string>
+    <string name="peer_latency_unknown">Latency: measuring…</string>
+    <string name="yggdrasil_peers">Yggdrasil Peers</string>
     <string name="copy_address">Copy Address</string>
     <string name="address_copied">Address copied to clipboard</string>
     <string name="setup_deltachat">Setup DeltaChat/ArcaneChat</string>
@@ -77,7 +90,6 @@
     <string name="password_security_info">Your password secures the connection between DeltaChat/ArcaneChat and the local mail server</string>
     <string name="configure_peers">Configure Peers</string>
     <string name="peers_description">Enter Yggdrasil network peers (one per line). Default peers are pre-filled.</string>
-    <string name="yggdrasil_peers">Yggdrasil Peers</string>
     <string name="peers_list">Peers List</string>
     <string name="enable_multicast">Enable Multicast Discovery</string>
     <string name="multicast_description">Automatically discover peers on local network</string>

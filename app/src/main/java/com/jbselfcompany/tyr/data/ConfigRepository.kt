@@ -30,10 +30,7 @@ class ConfigRepository(private val context: Context) {
 
         // Default Yggdrasil peers
         val DEFAULT_PEERS = listOf(
-            "tcp://bra.zbin.eu:7743",
-            "tcp://dasabo.zbin.eu:7743",
-            "tcp://mgrid.zbin.eu:7743",
-            "tcp://bra-vps.zbin.eu:7743"
+            "tcp://bra.zbin.eu:7743"
         )
 
         // Language options
