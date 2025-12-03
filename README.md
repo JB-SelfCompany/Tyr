@@ -7,10 +7,23 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Android](https://img.shields.io/badge/Android-6.0%2B-green.svg)](https://www.android.com)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.2.20-purple.svg)](https://kotlinlang.org)
+![Version](https://img.shields.io/f-droid/v/com.jbselfcompany.tyr?baseUrl=https://apt.izzysoft.de/fdroid&label=IzzyOnDroid)
 
 [<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroidButtonGreyBorder_nofont.png" height="80" alt="Get it at IzzyOnDroid">](https://apt.izzysoft.de/packages/com.jbselfcompany.tyr)
 
 **[English](#) | [Русский](README.ru.md)**
+
+</div>
+
+---
+
+## 📸 Screenshots
+
+<div align="center">
+
+| | | | |
+| --- | --- | --- | --- |
+| <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/01.png" width="220"> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/02.png" width="220"> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/04.png" width="220"> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/05.png" width="220"> |
 
 </div>
 
