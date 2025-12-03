@@ -228,49 +228,18 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
             return
         }
 
-        // Show loading overlay
-        showLoadingOverlay(true)
+        // Use hot reload instead of stop/start to prevent connection errors
+        // This updates peer configuration without closing transport connections
+        yggmailService?.hotReloadPeers()
 
-        // Stop the service first
-        YggmailService.stop(this)
+        hasUnsavedChanges = false
+        updateApplyButtonVisibility()
 
-        // Wait for service to stop, then restart
-        mainHandler.postDelayed({
-            if (!YggmailService.isRunning) {
-                // Service stopped, now restart
-                YggmailService.start(this)
-
-                // Wait for service to start and stabilize
-                mainHandler.postDelayed({
-                    checkServiceRestarted()
-                }, 2000)
-            } else {
-                // Service still running, retry
-                mainHandler.postDelayed({
-                    applyPeerChanges()
-                }, 1000)
-            }
-        }, 2000)
-    }
-
-    private fun checkServiceRestarted() {
-        if (YggmailService.isRunning) {
-            // Service restarted successfully
-            showLoadingOverlay(false)
-            hasUnsavedChanges = false
-            updateApplyButtonVisibility()
-
-            Snackbar.make(
-                binding.root,
-                R.string.peers_applied,
-                Snackbar.LENGTH_LONG
-            ).show()
-        } else {
-            // Wait a bit more
-            mainHandler.postDelayed({
-                checkServiceRestarted()
-            }, 1000)
-        }
+        Snackbar.make(
+            binding.root,
+            R.string.peers_applied,
+            Snackbar.LENGTH_LONG
+        ).show()
     }
 
     private fun showLoadingOverlay(show: Boolean) {
