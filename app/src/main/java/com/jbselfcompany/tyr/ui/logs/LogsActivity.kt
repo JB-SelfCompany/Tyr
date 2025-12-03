@@ -5,11 +5,16 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
 import com.jbselfcompany.tyr.R
+import com.jbselfcompany.tyr.TyrApplication
 import com.jbselfcompany.tyr.databinding.ActivityLogsBinding
+import com.jbselfcompany.tyr.service.YggmailService
 import com.jbselfcompany.tyr.ui.BaseActivity
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -21,6 +26,7 @@ class LogsActivity : BaseActivity() {
 
     private lateinit var binding: ActivityLogsBinding
     private var logsText = ""
+    private val configRepository by lazy { TyrApplication.instance.configRepository }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,6 +42,13 @@ class LogsActivity : BaseActivity() {
     }
 
     private fun loadLogs() {
+        // Check if log collection is enabled
+        if (!configRepository.isLogCollectionEnabled()) {
+            binding.textLogs.text = getString(R.string.log_collection_disabled)
+            logsText = ""
+            return
+        }
+
         try {
             // Read logcat output filtered by Tyr and Yggmail
             val process = Runtime.getRuntime().exec("logcat -d -v time")
@@ -121,11 +134,70 @@ class LogsActivity : BaseActivity() {
                 true
             }
             R.id.action_refresh -> {
-                loadLogs()
-                Toast.makeText(this, R.string.restart, Toast.LENGTH_SHORT).show()
+                restartServiceAndRefreshLogs()
                 true
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun restartServiceAndRefreshLogs() {
+        if (!YggmailService.isRunning) {
+            // Service not running, just reload logs
+            loadLogs()
+            Toast.makeText(this, R.string.logs_refreshed, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Show loading overlay with correct text
+        showLoadingOverlay(true, getString(R.string.restarting_service_logs))
+
+        // Stop service
+        YggmailService.stop(this)
+
+        // Wait for service to stop, then restart (6 seconds delay)
+        Handler(Looper.getMainLooper()).postDelayed({
+            if (!YggmailService.isRunning) {
+                // Service stopped successfully, now start it
+                YggmailService.start(this)
+
+                // Wait for service to start
+                Handler(Looper.getMainLooper()).postDelayed({
+                    checkServiceRestarted()
+                }, 2000)
+            } else {
+                // Service still running, retry
+                Handler(Looper.getMainLooper()).postDelayed({
+                    restartServiceAndRefreshLogs()
+                }, 1000)
+            }
+        }, 6000)
+    }
+
+    private fun checkServiceRestarted() {
+        if (YggmailService.isRunning) {
+            // Service restarted successfully
+            showLoadingOverlay(false)
+
+            // Reload logs
+            loadLogs()
+            Toast.makeText(this, R.string.service_restarted, Toast.LENGTH_SHORT).show()
+        } else {
+            // Wait a bit more
+            Handler(Looper.getMainLooper()).postDelayed({
+                checkServiceRestarted()
+            }, 1000)
+        }
+    }
+
+    private fun showLoadingOverlay(show: Boolean, text: String? = null) {
+        binding.loadingOverlay.visibility = if (show) View.VISIBLE else View.GONE
+
+        if (show && text != null) {
+            binding.loadingText.text = text
+        }
+
+        // Disable interaction while loading
+        binding.fabShare.isEnabled = !show
     }
 }

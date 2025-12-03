@@ -1,0 +1,16 @@
+• Optimized battery usage
+• Added peer connection status to the home screen
+• Removed unnecessary default peers
+• Optimized the Yggmail library
+• Added "Apply Changes" button for peer configuration with automatic service restart
+• Added loading overlay with progress indicator during service restart operations
+• Implemented automatic service restart after key regeneration with loading feedback
+• Added "Enable Log Collection" toggle in Debug Settings (disabled by default)
+• Log collection now respects the setting - no logs collected when disabled
+• LogsActivity shows informational message when log collection is disabled
+• Automatic service start after completing first-time setup/onboarding
+• Added loading overlay with progress indicator for service restart when toggling multicast
+• Added app restart confirmation dialog when changing theme with loading overlay
+• Added app restart confirmation dialog when changing language with loading overlay
+• Added loading overlay for service restart button in logs activity
+• Fixed app not reopening after theme/language change - now properly restarts with new settings

@@ -8,6 +8,7 @@ import androidx.viewpager2.widget.ViewPager2
 import com.jbselfcompany.tyr.R
 import com.jbselfcompany.tyr.TyrApplication
 import com.jbselfcompany.tyr.databinding.ActivityOnboardingBinding
+import com.jbselfcompany.tyr.service.YggmailService
 import com.jbselfcompany.tyr.ui.BaseActivity
 import com.jbselfcompany.tyr.ui.MainActivity
 
@@ -147,6 +148,11 @@ class OnboardingActivity : BaseActivity(), OnRestoreCompletedListener {
     private fun completeOnboarding() {
         // Mark onboarding as completed
         configRepository.setOnboardingCompleted(true)
+
+        // Automatically start the Yggmail service after first setup
+        if (!YggmailService.isRunning) {
+            YggmailService.start(this)
+        }
 
         // Navigate to main activity
         navigateToMain()

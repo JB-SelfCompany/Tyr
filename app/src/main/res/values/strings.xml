@@ -146,6 +146,8 @@
     <string name="restart_app_required">Restart app to apply changes</string>
 
     <!-- Debug Settings Items -->
+    <string name="enable_log_collection">Enable Log Collection</string>
+    <string name="enable_log_collection_description">Collect logs from Yggmail service for debugging</string>
     <string name="collect_logs">Collect Logs</string>
     <string name="collect_logs_description">View and share application logs for debugging</string>
 
@@ -163,13 +165,17 @@
     <string name="restart_required">Restart Required</string>
     <string name="restart_required_message">Changes will take effect after restarting the service.</string>
     <string name="apply_changes">Apply Changes</string>
+    <string name="applying_changes">Applying changes…</string>
     <string name="peers_applied">Peer changes applied successfully</string>
     <string name="peers_applied_description">New peer configuration is active</string>
     <string name="error_applying_peers">Failed to apply peer changes</string>
+    <string name="restarting_service">Restarting service to apply changes…</string>
+    <string name="restarting_service_logs">Restarting service…</string>
     <string name="regenerate">Regenerate</string>
     <string name="regenerate_keys_message">This will generate a new mail address. You will need to reconfigure DeltaChat/ArcaneChat with the new address. Continue?</string>
     <string name="keys_regenerated">Keys regenerated successfully. Check your new mail address in the main screen.</string>
     <string name="error_regenerate_keys">Failed to regenerate keys</string>
+    <string name="regenerating_keys">Regenerating keys…</string>
 
     <!-- Logs -->
     <string name="logs">Logs</string>
@@ -182,10 +188,13 @@
     <string name="no_logs_to_share">No logs to share</string>
     <string name="no_logs_to_copy">No logs to copy</string>
     <string name="logs_copied">Logs copied to clipboard</string>
+    <string name="logs_refreshed">Logs refreshed</string>
+    <string name="service_restarted">Service restarted successfully</string>
     <string name="logs_cleared">Logs cleared successfully</string>
     <string name="clear_logs_confirmation">Clear all accumulated logs?</string>
     <string name="error_loading_logs">Error loading logs: %s</string>
     <string name="error_clearing_logs">Failed to clear logs</string>
+    <string name="log_collection_disabled">Log collection is disabled.\n\nTo view logs, enable log collection in:\nSettings → Debug Settings → Enable Log Collection</string>
 
     <!-- Backup & Restore -->
     <string name="backup_password">Backup Password</string>

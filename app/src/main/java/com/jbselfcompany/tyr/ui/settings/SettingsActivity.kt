@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
@@ -13,6 +14,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.jbselfcompany.tyr.R
 import com.jbselfcompany.tyr.TyrApplication
@@ -51,10 +53,11 @@ class SettingsActivity : BaseActivity(), SettingsAdapter.Listener {
         private const val ID_LANGUAGE = 11
         private const val ID_THEME = 12
         private const val ID_HEADER_DEBUG = 13
-        private const val ID_COLLECT_LOGS = 14
-        private const val ID_CLEAR_LOGS = 15
-        private const val ID_HEADER_ABOUT = 16
-        private const val ID_ABOUT_APP = 17
+        private const val ID_ENABLE_LOG_COLLECTION = 14
+        private const val ID_COLLECT_LOGS = 15
+        private const val ID_CLEAR_LOGS = 16
+        private const val ID_HEADER_ABOUT = 17
+        private const val ID_ABOUT_APP = 18
     }
 
     private val createBackupLauncher = registerForActivityResult(
@@ -204,6 +207,15 @@ class SettingsActivity : BaseActivity(), SettingsAdapter.Listener {
         )
         settingsItems.add(
             SettingsAdapter.Item(
+                id = ID_ENABLE_LOG_COLLECTION,
+                titleRes = R.string.enable_log_collection,
+                descriptionRes = R.string.enable_log_collection_description,
+                type = SettingsAdapter.ItemType.SWITCH,
+                checked = configRepository.isLogCollectionEnabled()
+            )
+        )
+        settingsItems.add(
+            SettingsAdapter.Item(
                 id = ID_COLLECT_LOGS,
                 titleRes = R.string.collect_logs,
                 descriptionRes = R.string.collect_logs_description,
@@ -252,6 +264,12 @@ class SettingsActivity : BaseActivity(), SettingsAdapter.Listener {
                     showRestartDialog()
                 }
             }
+            ID_ENABLE_LOG_COLLECTION -> {
+                configRepository.setLogCollectionEnabled(isChecked)
+                if (YggmailService.isRunning) {
+                    showRestartDialog()
+                }
+            }
         }
     }
 
@@ -274,15 +292,54 @@ class SettingsActivity : BaseActivity(), SettingsAdapter.Listener {
             .setTitle(R.string.restart_required)
             .setMessage(R.string.restart_required_message)
             .setPositiveButton(R.string.restart_now) { _, _ ->
-                // Stop and restart service manually with longer delay
-                YggmailService.stop(this)
-                // Wait for service to stop, then restart (increased to 6 seconds)
-                Handler(Looper.getMainLooper()).postDelayed({
-                    YggmailService.start(this)
-                }, 6000) // 6 seconds delay to ensure ports are fully released
+                restartService()
             }
             .setNegativeButton(R.string.restart_later, null)
             .show()
+    }
+
+    private fun restartService() {
+        // Show loading overlay
+        showLoadingOverlay(true, getString(R.string.restarting_service))
+
+        // Stop service
+        YggmailService.stop(this)
+
+        // Wait for service to stop, then restart (6 seconds delay)
+        Handler(Looper.getMainLooper()).postDelayed({
+            if (!YggmailService.isRunning) {
+                // Service stopped successfully, now start it
+                YggmailService.start(this)
+
+                // Wait for service to start
+                Handler(Looper.getMainLooper()).postDelayed({
+                    checkServiceRestartedFromSettings()
+                }, 2000)
+            } else {
+                // Service still running, retry
+                Handler(Looper.getMainLooper()).postDelayed({
+                    restartService()
+                }, 1000)
+            }
+        }, 6000)
+    }
+
+    private fun checkServiceRestartedFromSettings() {
+        if (YggmailService.isRunning) {
+            // Service restarted successfully
+            showLoadingOverlay(false)
+
+            Snackbar.make(
+                binding.root,
+                R.string.service_restarted,
+                Snackbar.LENGTH_LONG
+            ).show()
+        } else {
+            // Wait a bit more
+            Handler(Looper.getMainLooper()).postDelayed({
+                checkServiceRestartedFromSettings()
+            }, 1000)
+        }
     }
 
     private fun showChangePasswordDialog() {
@@ -337,20 +394,32 @@ class SettingsActivity : BaseActivity(), SettingsAdapter.Listener {
     }
 
     private fun regenerateKeys() {
+        val wasServiceRunning = YggmailService.isRunning
+
+        // Show loading overlay
+        showLoadingOverlay(true, getString(R.string.regenerating_keys))
+
         // Stop service if running
-        if (YggmailService.isRunning) {
+        if (wasServiceRunning) {
             YggmailService.stop(this)
 
             // Wait for service to stop, then regenerate
             Handler(Looper.getMainLooper()).postDelayed({
-                performKeyRegeneration()
-            }, 6000) // 6 seconds delay to ensure service is fully stopped
+                if (!YggmailService.isRunning) {
+                    performKeyRegeneration(wasServiceRunning)
+                } else {
+                    // Service still running, retry
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        regenerateKeys()
+                    }, 1000)
+                }
+            }, 2000)
         } else {
-            performKeyRegeneration()
+            performKeyRegeneration(wasServiceRunning)
         }
     }
 
-    private fun performKeyRegeneration() {
+    private fun performKeyRegeneration(wasServiceRunning: Boolean) {
         // Delete database
         val success = YggmailService.deleteDatabase(this)
 
@@ -358,13 +427,65 @@ class SettingsActivity : BaseActivity(), SettingsAdapter.Listener {
             // Clear saved keys from config
             configRepository.clearKeys()
 
-            Toast.makeText(this, R.string.keys_regenerated, Toast.LENGTH_LONG).show()
+            if (wasServiceRunning) {
+                // Update loading text for restart
+                binding.loadingText.text = getString(R.string.restarting_service)
 
-            // Start service to generate new keys
-            YggmailService.start(this)
+                // Start service to generate new keys
+                YggmailService.start(this)
+
+                // Wait for service to start and stabilize
+                Handler(Looper.getMainLooper()).postDelayed({
+                    checkServiceRestarted()
+                }, 2000)
+            } else {
+                // Service was not running, just show success
+                showLoadingOverlay(false)
+                Snackbar.make(
+                    binding.root,
+                    R.string.keys_regenerated,
+                    Snackbar.LENGTH_LONG
+                ).show()
+            }
         } else {
-            Toast.makeText(this, R.string.error_regenerate_keys, Toast.LENGTH_SHORT).show()
+            showLoadingOverlay(false)
+            Snackbar.make(
+                binding.root,
+                R.string.error_regenerate_keys,
+                Snackbar.LENGTH_LONG
+            ).show()
         }
+    }
+
+    private fun checkServiceRestarted() {
+        if (YggmailService.isRunning) {
+            // Service restarted successfully
+            showLoadingOverlay(false)
+
+            Snackbar.make(
+                binding.root,
+                R.string.keys_regenerated,
+                Snackbar.LENGTH_LONG
+            ).show()
+        } else {
+            // Wait a bit more
+            Handler(Looper.getMainLooper()).postDelayed({
+                checkServiceRestarted()
+            }, 1000)
+        }
+    }
+
+    private fun showLoadingOverlay(show: Boolean, text: String? = null) {
+        binding.loadingOverlay.visibility = if (show) View.VISIBLE else View.GONE
+
+        if (show && text != null) {
+            binding.loadingText.text = text
+        } else if (!show) {
+            binding.loadingText.text = getString(R.string.restarting_service)
+        }
+
+        // Disable RecyclerView interaction while loading
+        binding.recyclerView.isEnabled = !show
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -529,13 +650,11 @@ class SettingsActivity : BaseActivity(), SettingsAdapter.Listener {
                 val selectedLanguage = languages[which]
                 if (selectedLanguage != currentLanguage) {
                     configRepository.setLanguage(selectedLanguage)
-                    Toast.makeText(this, R.string.restart_app_required, Toast.LENGTH_LONG).show()
-
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        recreate()
-                    }, 500)
+                    dialog.dismiss()
+                    showRestartAppDialog()
+                } else {
+                    dialog.dismiss()
                 }
-                dialog.dismiss()
             }
             .setNegativeButton(R.string.cancel, null)
             .show()
@@ -566,12 +685,42 @@ class SettingsActivity : BaseActivity(), SettingsAdapter.Listener {
                 val selectedTheme = themes[which]
                 if (selectedTheme != currentTheme) {
                     configRepository.setTheme(selectedTheme)
-                    applyTheme(selectedTheme)
+                    dialog.dismiss()
+                    showRestartAppDialog()
+                } else {
+                    dialog.dismiss()
                 }
-                dialog.dismiss()
             }
             .setNegativeButton(R.string.cancel, null)
             .show()
+    }
+
+    private fun showRestartAppDialog() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.restart_required)
+            .setMessage(R.string.restart_app_required)
+            .setPositiveButton(R.string.restart_now) { _, _ ->
+                restartApp()
+            }
+            .setNegativeButton(R.string.restart_later, null)
+            .show()
+    }
+
+    private fun restartApp() {
+        // Show loading overlay
+        showLoadingOverlay(true, getString(R.string.restart_app_required))
+
+        // Short delay to show the overlay, then restart the app
+        Handler(Looper.getMainLooper()).postDelayed({
+            // Get the launch intent for MainActivity
+            val intent = Intent(this, com.jbselfcompany.tyr.ui.MainActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            startActivity(intent)
+            finishAffinity() // Close all activities
+
+            // Exit the process gracefully
+            Runtime.getRuntime().exit(0)
+        }, 500)
     }
 
     private fun applyTheme(theme: String) {

@@ -166,8 +166,8 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
         val mailAddress = configRepository.getMailAddress()
         val isRunning = YggmailService.isRunning
 
-        // Mail configuration
-        if (!mailAddress.isNullOrEmpty()) {
+        // Mail configuration - only show when service is running
+        if (!mailAddress.isNullOrEmpty() && isRunning) {
             binding.textMailAddress.text = mailAddress
             binding.textMailAddress.visibility = View.VISIBLE
             binding.buttonSetupDeltachat.visibility = View.VISIBLE
@@ -499,7 +499,14 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
             val noPeersText = android.widget.TextView(this).apply {
                 text = getString(R.string.no_active_peer)
                 setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall)
-                setTextColor(getColor(android.R.color.darker_gray))
+                // Use Material3 color that adapts to light/dark theme
+                val typedValue = android.util.TypedValue()
+                context.theme.resolveAttribute(
+                    com.google.android.material.R.attr.colorOnSurfaceVariant,
+                    typedValue,
+                    true
+                )
+                setTextColor(typedValue.data)
             }
             binding.peersContainer.addView(noPeersText)
         } else {
@@ -570,7 +577,14 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
                         topMargin = 4.dpToPx()
                     }
                     setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall)
-                    setTextColor(getColor(android.R.color.darker_gray))
+                    // Use Material3 color that adapts to light/dark theme
+                    val typedValue = android.util.TypedValue()
+                    context.theme.resolveAttribute(
+                        com.google.android.material.R.attr.colorOnSurfaceVariant,
+                        typedValue,
+                        true
+                    )
+                    setTextColor(typedValue.data)
                 }
 
                 peerView.addView(firstRow)

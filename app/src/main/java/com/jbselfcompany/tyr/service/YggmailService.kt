@@ -234,6 +234,7 @@ class YggmailService : Service(), LogCallback {
             val imapAddr = "127.0.0.1:1143"
 
             // Create Yggmail service
+            // Always set LogCallback, but onLog() will check if logging is enabled
             yggmailService = mobile.Mobile.newYggmailService(dbPath, smtpAddr, imapAddr).apply {
                 setLogCallback(this@YggmailService)
             }
@@ -434,8 +435,14 @@ class YggmailService : Service(), LogCallback {
 
     /**
      * LogCallback implementation for Yggmail logs
+     * Only logs if log collection is enabled in settings
      */
     override fun onLog(level: String, tag: String, message: String) {
+        // Check if log collection is enabled
+        if (!configRepository.isLogCollectionEnabled()) {
+            return
+        }
+
         val logTag = "YggmailService"
         val logMessage = "[$tag] $message"
 

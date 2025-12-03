@@ -147,6 +147,8 @@
     <string name="restart_app_required">Перезапустите приложение для применения изменений</string>
 
     <!-- Debug Settings Items -->
+    <string name="enable_log_collection">Включить сбор логов</string>
+    <string name="enable_log_collection_description">Собирать логи службы Yggmail для отладки</string>
     <string name="collect_logs">Сбор логов</string>
     <string name="collect_logs_description">Просмотр и отправка логов приложения для отладки</string>
 
@@ -164,13 +166,17 @@
     <string name="restart_required">Требуется перезапуск</string>
     <string name="restart_required_message">Изменения вступят в силу после перезапуска службы.</string>
     <string name="apply_changes">Применить изменения</string>
+    <string name="applying_changes">Применяем изменения…</string>
     <string name="peers_applied">Изменения пиров успешно примененены</string>
     <string name="peers_applied_description">Новая конфигурация пиров активна</string>
     <string name="error_applying_peers">Не удалось применить конфигурацию пиров</string>
+    <string name="restarting_service">Перезапуск службы для применения изменений…</string>
+    <string name="restarting_service_logs">Перезапуск службы…</string>
     <string name="regenerate">Перегенерировать</string>
     <string name="regenerate_keys_message">Это создаст новый почтовый адрес. Вам потребуется перенастроить DeltaChat/ArcaneChat с новым адресом. Продолжить?</string>
     <string name="keys_regenerated">Ключи успешно перегенерированы. Проверьте новый почтовый адрес на главном экране.</string>
     <string name="error_regenerate_keys">Не удалось перегенерировать ключи</string>
+    <string name="regenerating_keys">Перегенерация ключей…</string>
 
     <!-- Logs -->
     <string name="logs">Логи</string>
@@ -183,10 +189,13 @@
     <string name="no_logs_to_share">Нет логов для отправки</string>
     <string name="no_logs_to_copy">Нет логов для копирования</string>
     <string name="logs_copied">Логи скопированы в буфер обмена</string>
+    <string name="logs_refreshed">Логи обновлены</string>
+    <string name="service_restarted">Служба успешно перезапущена</string>
     <string name="logs_cleared">Логи успешно очищены</string>
     <string name="clear_logs_confirmation">Очистить все накопленные логи?</string>
     <string name="error_loading_logs">Ошибка загрузки логов: %s</string>
     <string name="error_clearing_logs">Не удалось очистить логи</string>
+    <string name="log_collection_disabled">Сбор логов отключен.\n\nЧтобы просматривать логи, включите сбор логов в:\nНастройки → Отладка → Включить сбор логов</string>
 
     <!-- Backup & Restore -->
     <string name="backup_password">Пароль резервной копии</string>

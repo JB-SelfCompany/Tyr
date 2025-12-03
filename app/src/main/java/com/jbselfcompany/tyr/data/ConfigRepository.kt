@@ -27,6 +27,7 @@ class ConfigRepository(private val context: Context) {
         private const val KEY_PUBLIC_KEY = "public_key"
         private const val KEY_LANGUAGE = "language"
         private const val KEY_THEME = "theme"
+        private const val KEY_LOG_COLLECTION_ENABLED = "log_collection_enabled"
 
         // Default Yggdrasil peers
         val DEFAULT_PEERS = listOf(
@@ -230,6 +231,20 @@ class ConfigRepository(private val context: Context) {
      */
     fun setMulticastEnabled(enabled: Boolean) {
         prefs.edit { putBoolean(KEY_MULTICAST_ENABLED, enabled) }
+    }
+
+    /**
+     * Check if log collection is enabled
+     */
+    fun isLogCollectionEnabled(): Boolean {
+        return prefs.getBoolean(KEY_LOG_COLLECTION_ENABLED, false)
+    }
+
+    /**
+     * Set log collection enabled/disabled
+     */
+    fun setLogCollectionEnabled(enabled: Boolean) {
+        prefs.edit { putBoolean(KEY_LOG_COLLECTION_ENABLED, enabled) }
     }
 
     /**
