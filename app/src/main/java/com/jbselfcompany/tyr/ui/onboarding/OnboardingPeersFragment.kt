@@ -33,7 +33,10 @@ class OnboardingPeersFragment : Fragment() {
         val defaultPeers = ConfigRepository.DEFAULT_PEERS.joinToString("\n")
         binding.editPeers.setText(defaultPeers)
 
-        // Setup multicast checkbox
+        // Setup multicast checkbox - enabled by default
+        binding.checkboxMulticast.isChecked = true
+        TyrApplication.instance.configRepository.setMulticastEnabled(true)
+
         binding.checkboxMulticast.setOnCheckedChangeListener { _, isChecked ->
             TyrApplication.instance.configRepository.setMulticastEnabled(isChecked)
         }

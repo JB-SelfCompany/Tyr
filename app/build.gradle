@@ -16,8 +16,8 @@ android {
         applicationId "com.jbselfcompany.tyr"
         minSdk 23
         targetSdk 33
-        versionCode 15
-        versionName "1.5.1"
+        versionCode 16
+        versionName "1.5.2"
         resourceConfigurations += ['en', 'ru']
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'

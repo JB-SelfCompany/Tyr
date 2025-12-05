@@ -1,0 +1,4 @@
+• Added latest imap updates from the original Yggmail repository
+• Fixed ErrClosed error when performing any actions with peers
+• Attempted to fix multicast (may not function fully)
+• Redesigned peers control menu

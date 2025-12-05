@@ -120,6 +120,11 @@
     <string name="peer_url_hint">tcp://example.peer.network:7743</string>
     <string name="add">Add</string>
 
+    <!-- Peer Tags -->
+    <string name="peer_tag_default">Default</string>
+    <string name="peer_tag_multicast">Multicast</string>
+    <string name="peer_tag_custom">Custom</string>
+
     <!-- Security Settings Items -->
     <string name="change_password">Change Password</string>
     <string name="change_password_description">Update DeltaChat/ArcaneChat authentication password</string>

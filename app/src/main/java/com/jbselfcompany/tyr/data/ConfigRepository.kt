@@ -5,6 +5,8 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.core.content.edit
 import com.jbselfcompany.tyr.utils.SecurePreferences
+import org.json.JSONArray
+import org.json.JSONException
 
 /**
  * Repository for managing application configuration stored in SharedPreferences.
@@ -19,6 +21,7 @@ class ConfigRepository(private val context: Context) {
         private const val KEY_PASSWORD_HASH = "password_hash" // Legacy key for migration
         private const val KEY_PASSWORD_ENCRYPTED = "password_encrypted" // New secure key
         private const val KEY_PEERS = "peers"
+        private const val KEY_PEERS_V2 = "peers_v2" // New format with enabled/disabled state
         private const val KEY_USE_DEFAULT_PEERS = "use_default_peers"
         private const val KEY_SERVICE_ENABLED = "service_enabled"
         private const val KEY_AUTO_START = "auto_start"
@@ -50,6 +53,8 @@ class ConfigRepository(private val context: Context) {
     init {
         // Migrate existing plaintext passwords to encrypted storage
         migratePlaintextPassword()
+        // Migrate old peer format to new format
+        migratePeersToV2()
     }
 
     /**
@@ -72,6 +77,40 @@ class ConfigRepository(private val context: Context) {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error during password migration", e)
+        }
+    }
+
+    /**
+     * Migrate old peer format (simple strings) to new format (PeerInfo with enabled/disabled)
+     */
+    private fun migratePeersToV2() {
+        try {
+            // Check if already migrated
+            if (prefs.contains(KEY_PEERS_V2)) {
+                return
+            }
+
+            // Get old peers
+            val oldPeersString = prefs.getString(KEY_PEERS, null)
+            if (!oldPeersString.isNullOrEmpty()) {
+                Log.i(TAG, "Migrating peers to v2 format")
+
+                val oldPeers = oldPeersString.split("\n")
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+
+                // Convert to new format (all enabled, all custom)
+                val newPeers = oldPeers.map { PeerInfo(it, isEnabled = true, tag = PeerInfo.PeerTag.CUSTOM) }
+
+                savePeersV2(newPeers)
+
+                Log.i(TAG, "Peer migration completed successfully: ${newPeers.size} peers")
+            } else {
+                // No old peers, just mark as migrated with empty list
+                savePeersV2(emptyList())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error during peer migration", e)
         }
     }
 
@@ -142,53 +181,133 @@ class ConfigRepository(private val context: Context) {
     }
 
     /**
-     * Save list of custom Yggdrasil peers
+     * Save list of peers with v2 format (with enabled/disabled state)
      */
-    fun savePeers(peers: List<String>) {
-        val peersString = peers.joinToString("\n")
-        prefs.edit {
-            putString(KEY_PEERS, peersString)
-            putBoolean(KEY_USE_DEFAULT_PEERS, false)
+    private fun savePeersV2(peers: List<PeerInfo>) {
+        try {
+            val jsonArray = JSONArray()
+            peers.forEach { peer ->
+                jsonArray.put(peer.toJson())
+            }
+            prefs.edit { putString(KEY_PEERS_V2, jsonArray.toString()) }
+        } catch (e: JSONException) {
+            Log.e(TAG, "Error saving peers v2", e)
         }
     }
 
     /**
-     * Get list of Yggdrasil peers (either default or custom)
+     * Get all peers (with enabled/disabled state)
      */
+    fun getAllPeersInfo(): List<PeerInfo> {
+        return try {
+            val peersJson = prefs.getString(KEY_PEERS_V2, null)
+            if (peersJson.isNullOrEmpty()) {
+                // Return default peer as enabled
+                DEFAULT_PEERS.map { PeerInfo(it, isEnabled = true, tag = PeerInfo.PeerTag.DEFAULT) }
+            } else {
+                val jsonArray = JSONArray(peersJson)
+                val peersList = mutableListOf<PeerInfo>()
+                for (i in 0 until jsonArray.length()) {
+                    peersList.add(PeerInfo.fromJson(jsonArray.getJSONObject(i)))
+                }
+                // If empty and using defaults, return default peers
+                if (peersList.isEmpty() && isUsingDefaultPeers()) {
+                    DEFAULT_PEERS.map { PeerInfo(it, isEnabled = true, tag = PeerInfo.PeerTag.DEFAULT) }
+                } else {
+                    peersList
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting peers v2", e)
+            DEFAULT_PEERS.map { PeerInfo(it, isEnabled = true, tag = PeerInfo.PeerTag.DEFAULT) }
+        }
+    }
+
+    /**
+     * Save peer (add new or update existing)
+     */
+    fun savePeer(peer: PeerInfo) {
+        val peers = getAllPeersInfo().toMutableList()
+        val existingIndex = peers.indexOfFirst { it.uri == peer.uri }
+        if (existingIndex >= 0) {
+            peers[existingIndex] = peer
+        } else {
+            peers.add(peer)
+        }
+        savePeersV2(peers)
+        setUseDefaultPeers(false)
+    }
+
+    /**
+     * Remove peer by URI
+     */
+    fun removePeer(uri: String) {
+        val peers = getAllPeersInfo().toMutableList()
+        peers.removeAll { it.uri == uri }
+        savePeersV2(peers)
+    }
+
+    /**
+     * Update peer enabled state
+     */
+    fun setPeerEnabled(uri: String, enabled: Boolean) {
+        val peers = getAllPeersInfo().toMutableList()
+        val index = peers.indexOfFirst { it.uri == uri }
+        if (index >= 0) {
+            peers[index] = peers[index].copy(isEnabled = enabled)
+            savePeersV2(peers)
+        }
+    }
+
+    /**
+     * Legacy method: Save list of custom Yggdrasil peers as strings
+     */
+    @Deprecated("Use savePeer() instead")
+    fun savePeers(peers: List<String>) {
+        val peerInfos = peers.map { PeerInfo(it, isEnabled = true, tag = PeerInfo.PeerTag.CUSTOM) }
+        savePeersV2(peerInfos)
+        setUseDefaultPeers(false)
+    }
+
+    /**
+     * Legacy method: Get list of Yggdrasil peers (either default or custom)
+     * Returns only enabled peers as strings
+     */
+    @Deprecated("Use getAllPeersInfo() instead")
     fun getPeers(): List<String> {
+        return getEnabledPeers()
+    }
+
+    /**
+     * Get only enabled peers as strings
+     */
+    fun getEnabledPeers(): List<String> {
         return if (isUsingDefaultPeers()) {
             DEFAULT_PEERS
         } else {
-            val peersString = prefs.getString(KEY_PEERS, null)
-            if (peersString.isNullOrEmpty()) {
-                DEFAULT_PEERS
-            } else {
-                peersString.split("\n")
-                    .map { it.trim() }
-                    .filter { it.isNotEmpty() }
-            }
+            val enabledPeers = getAllPeersInfo()
+                .filter { it.isEnabled }
+                .map { it.uri }
+
+            // If no enabled peers and not using defaults, return empty list
+            // This allows multicast-only mode
+            enabledPeers
         }
     }
 
     /**
-     * Get custom peers (only returns saved custom peers, not defaults)
+     * Legacy method: Get custom peers (only returns saved custom peers, not defaults)
      */
+    @Deprecated("Use getAllPeersInfo() instead")
     fun getCustomPeers(): List<String> {
-        val peersString = prefs.getString(KEY_PEERS, null)
-        return if (peersString.isNullOrEmpty()) {
-            emptyList()
-        } else {
-            peersString.split("\n")
-                .map { it.trim() }
-                .filter { it.isNotEmpty() }
-        }
+        return getAllPeersInfo().map { it.uri }
     }
 
     /**
-     * Get peers as comma-separated string (for Yggmail service)
+     * Get enabled peers as comma-separated string (for Yggmail service)
      */
     fun getPeersString(): String {
-        return getPeers().joinToString(",")
+        return getEnabledPeers().joinToString(",")
     }
 
     /**
@@ -223,7 +342,7 @@ class ConfigRepository(private val context: Context) {
      * Check if multicast peer discovery is enabled
      */
     fun isMulticastEnabled(): Boolean {
-        return prefs.getBoolean(KEY_MULTICAST_ENABLED, false)
+        return prefs.getBoolean(KEY_MULTICAST_ENABLED, true) // Default to enabled
     }
 
     /**
