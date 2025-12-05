@@ -116,7 +116,10 @@
     <string name="use_default_peers">Использовать пиры по умолчанию</string>
     <string name="custom_peers">Пользовательские пиры</string>
     <string name="add_peer">Добавить пир</string>
+    <string name="edit_peer">Редактировать пир</string>
     <string name="remove_peer">Удалить пир</string>
+    <string name="delete_peer">Удалить пир</string>
+    <string name="delete_peer_confirmation">Удалить этот пир?\n\n%s</string>
     <string name="peer_url">URL пира</string>
     <string name="peer_url_hint">tcp://example.peer.network:7743</string>
     <string name="add">Добавить</string>

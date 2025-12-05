@@ -115,7 +115,10 @@
     <string name="use_default_peers">Use default peers</string>
     <string name="custom_peers">Custom Peers</string>
     <string name="add_peer">Add Peer</string>
+    <string name="edit_peer">Edit Peer</string>
     <string name="remove_peer">Remove peer</string>
+    <string name="delete_peer">Delete Peer</string>
+    <string name="delete_peer_confirmation">Delete this peer?\n\n%s</string>
     <string name="peer_url">Peer URL</string>
     <string name="peer_url_hint">tcp://example.peer.network:7743</string>
     <string name="add">Add</string>

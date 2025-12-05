@@ -77,6 +77,21 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
         unbindFromService()
     }
 
+    override fun onContextItemSelected(item: android.view.MenuItem): Boolean {
+        val position = adapter.getContextMenuPosition()
+        return when (item.itemId) {
+            PeerAdapter.MENU_EDIT -> {
+                editPeer(position)
+                true
+            }
+            PeerAdapter.MENU_DELETE -> {
+                showDeleteConfirmation(position)
+                true
+            }
+            else -> super.onContextItemSelected(item)
+        }
+    }
+
     private fun bindToService() {
         if (YggmailService.isRunning) {
             val intent = Intent(this, YggmailService::class.java)
@@ -96,7 +111,8 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
     private fun setupRecyclerView() {
         adapter = PeerAdapter(
             peers = peers,
-            onRemove = { position -> removePeer(position) },
+            onEdit = { position -> editPeer(position) },
+            onRemove = { position -> showDeleteConfirmation(position) },
             onToggle = { position, enabled -> togglePeer(position, enabled) }
         )
 
@@ -105,6 +121,9 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
         binding.recyclerPeers.addItemDecoration(
             DividerItemDecoration(this, DividerItemDecoration.VERTICAL)
         )
+
+        // Register context menu for RecyclerView
+        registerForContextMenu(binding.recyclerPeers)
     }
 
     private fun setupAddButton() {
@@ -131,13 +150,48 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
     }
 
     private fun showAddPeerDialog() {
+        showPeerDialog(title = getString(R.string.add_peer), existingPeer = null)
+    }
+
+    private fun editPeer(position: Int) {
+        if (position < 0 || position >= peers.size) return
+
+        val peer = peers[position]
+        showPeerDialog(
+            title = getString(R.string.edit_peer),
+            existingPeer = peer,
+            onSave = { newPeerUrl ->
+                // Update the peer
+                val updatedPeer = peer.copy(uri = newPeerUrl)
+                peers[position] = updatedPeer
+
+                // Remove old peer and save new one
+                configRepository.removePeer(peer.uri)
+                configRepository.savePeer(updatedPeer)
+
+                adapter.notifyItemChanged(position)
+
+                hasUnsavedChanges = true
+                updateApplyButtonVisibility()
+
+                Toast.makeText(this, R.string.peers_saved, Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    private fun showPeerDialog(title: String, existingPeer: PeerInfo?, onSave: ((String) -> Unit)? = null) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_add_peer, null)
         val editPeerUrl = dialogView.findViewById<TextInputEditText>(R.id.edit_peer_url)
 
+        // Pre-fill with existing peer URL if editing
+        existingPeer?.let {
+            editPeerUrl.setText(it.uri)
+        }
+
         MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.add_peer)
+            .setTitle(title)
             .setView(dialogView)
-            .setPositiveButton(R.string.add) { _, _ ->
+            .setPositiveButton(if (existingPeer != null) R.string.save else R.string.add) { _, _ ->
                 var peerUrl = editPeerUrl.text.toString().trim()
 
                 if (peerUrl.isEmpty()) {
@@ -166,20 +220,42 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
                     return@setPositiveButton
                 }
 
-                if (peers.any { it.uri == peerUrl }) {
+                // Check for duplicates, excluding the peer being edited
+                if (peers.any { it.uri == peerUrl && it.uri != existingPeer?.uri }) {
                     Toast.makeText(this, "Peer already exists", Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
 
-                val newPeer = PeerInfo(peerUrl, isEnabled = true, tag = PeerInfo.PeerTag.CUSTOM)
-                peers.add(newPeer)
-                adapter.notifyItemInserted(peers.size - 1)
-                configRepository.savePeer(newPeer)
+                if (existingPeer != null) {
+                    // Edit mode
+                    onSave?.invoke(peerUrl)
+                } else {
+                    // Add mode
+                    val newPeer = PeerInfo(peerUrl, isEnabled = true, tag = PeerInfo.PeerTag.CUSTOM)
+                    peers.add(newPeer)
+                    adapter.notifyItemInserted(peers.size - 1)
+                    configRepository.savePeer(newPeer)
 
-                hasUnsavedChanges = true
-                updateApplyButtonVisibility()
+                    hasUnsavedChanges = true
+                    updateApplyButtonVisibility()
 
-                Toast.makeText(this, R.string.peers_saved, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, R.string.peers_saved, Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun showDeleteConfirmation(position: Int) {
+        if (position < 0 || position >= peers.size) return
+
+        val peer = peers[position]
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.delete_peer)
+            .setMessage(getString(R.string.delete_peer_confirmation, peer.uri))
+            .setPositiveButton(R.string.delete_peer) { _, _ ->
+                removePeer(position)
             }
             .setNegativeButton(R.string.cancel, null)
             .show()
