@@ -61,8 +61,6 @@ class NetworkStatsMonitor(private val context: Context) {
 
     /**
      * Start monitoring network statistics
-     * @param enableLatencyMeasurement If true, measure TCP latency to peers (battery intensive)
-     *                                 Should only be enabled when app is in foreground
      */
     fun start(listener: NetworkStatsListener, enableLatencyMeasurement: Boolean = true) {
         if (isMonitoring) {
@@ -77,7 +75,7 @@ class NetworkStatsMonitor(private val context: Context) {
         // Start periodic updates
         handler.post(updateRunnable)
 
-        Log.d(TAG, "Network monitoring started (latency measurement: $enableLatencyMeasurement)")
+        Log.d(TAG, "Network monitoring started")
     }
 
     /**
@@ -96,8 +94,7 @@ class NetworkStatsMonitor(private val context: Context) {
     }
 
     /**
-     * Update network statistics by calling Yggmail service
-     * Shows all configured peers with latency measurements
+     * Shows all configured peers with latency measurements from Yggdrasil
      */
     private fun updateStats() {
         try {
@@ -111,18 +108,12 @@ class NetworkStatsMonitor(private val context: Context) {
             val peers = if (yggmailService != null) {
                 val peerConnections = yggmailService.getPeerConnections()
                 peerConnections?.map { peerConn ->
-                    // Only measure latency if explicitly enabled (app in foreground)
-                    val latency = if (measureLatency) {
-                        measureLatency(peerConn.host, peerConn.port)
-                    } else {
-                        -1 // Skip measurement to save battery
-                    }
-
+                    // Yggdrasil measures actual transport layer latency
                     PeerInfo(
                         host = peerConn.host,
                         port = peerConn.port,
                         connected = peerConn.connected,
-                        latencyMs = latency
+                        latencyMs = peerConn.latencyMs
                     )
                 } ?: emptyList()
             } else {
@@ -145,23 +136,6 @@ class NetworkStatsMonitor(private val context: Context) {
 
         } catch (e: Exception) {
             Log.e(TAG, "Error updating network stats", e)
-        }
-    }
-
-    /**
-     * Measure latency to a peer using TCP connection
-     * Returns latency in milliseconds, or -1 if measurement failed
-     */
-    private fun measureLatency(host: String, port: Int): Long {
-        return try {
-            val startTime = System.currentTimeMillis()
-            val socket = java.net.Socket()
-            socket.connect(java.net.InetSocketAddress(host, port), 2000) // 2 second timeout
-            val latency = System.currentTimeMillis() - startTime
-            socket.close()
-            latency
-        } catch (e: Exception) {
-            -1 // Failed to measure
         }
     }
 

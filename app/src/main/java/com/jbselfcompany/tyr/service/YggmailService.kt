@@ -506,7 +506,7 @@ class YggmailService : Service(), LogCallback {
         val peers = mutableListOf<PeerConnectionInfo>()
         try {
             // Simple JSON parsing without external library
-            // Format: [{"peerURL":"...","host":"...","port":7743,"connected":true},...]
+            // New format: [{"uri":"tls://...","up":true,"inbound":false,"lastError":"","key":"...","uptime":120,"latencyMs":45,"rxBytes":1024,"txBytes":2048,"rxRate":10,"txRate":20},...]
             val jsonArray = json.trim().removeSurrounding("[", "]")
             if (jsonArray.isEmpty()) return emptyList()
 
@@ -517,14 +517,33 @@ class YggmailService : Service(), LogCallback {
                 if (!obj.startsWith("{")) obj = "{$obj"
                 if (!obj.endsWith("}")) obj = "$obj}"
 
-                // Extract fields
-                val peerURL = extractJSONString(obj, "peerURL")
-                val host = extractJSONString(obj, "host")
-                val port = extractJSONInt(obj, "port")
-                val connected = extractJSONBoolean(obj, "connected")
+                // Extract fields from new format
+                val uri = extractJSONString(obj, "uri")
+                val up = extractJSONBoolean(obj, "up")
+                val inbound = extractJSONBoolean(obj, "inbound")
+                val lastError = extractJSONString(obj, "lastError")
+                val key = extractJSONString(obj, "key")
+                val uptime = extractJSONLong(obj, "uptime")
+                val latencyMs = extractJSONLong(obj, "latencyMs")
+                val rxBytes = extractJSONLong(obj, "rxBytes")
+                val txBytes = extractJSONLong(obj, "txBytes")
+                val rxRate = extractJSONLong(obj, "rxRate")
+                val txRate = extractJSONLong(obj, "txRate")
 
-                if (host.isNotEmpty() && port > 0) {
-                    peers.add(PeerConnectionInfo(peerURL, host, port, connected))
+                if (uri.isNotEmpty()) {
+                    peers.add(PeerConnectionInfo(
+                        uri = uri,
+                        up = up,
+                        inbound = inbound,
+                        lastError = lastError,
+                        key = key,
+                        uptime = uptime,
+                        latencyMs = latencyMs,
+                        rxBytes = rxBytes,
+                        txBytes = txBytes,
+                        rxRate = rxRate,
+                        txRate = txRate
+                    ))
                 }
             }
         } catch (e: Exception) {
@@ -543,6 +562,11 @@ class YggmailService : Service(), LogCallback {
         return pattern.find(json)?.groupValues?.get(1)?.toIntOrNull() ?: 0
     }
 
+    private fun extractJSONLong(json: String, key: String): Long {
+        val pattern = """"$key":(\d+)""".toRegex()
+        return pattern.find(json)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+    }
+
     private fun extractJSONBoolean(json: String, key: String): Boolean {
         val pattern = """"$key":(true|false)""".toRegex()
         return pattern.find(json)?.groupValues?.get(1) == "true"
@@ -552,11 +576,52 @@ class YggmailService : Service(), LogCallback {
      * Data class for peer connection information
      */
     data class PeerConnectionInfo(
-        val peerURL: String,
-        val host: String,
-        val port: Int,
+        val uri: String,           // Peer URI (e.g., "tls://1.2.3.4:7743")
+        val up: Boolean,           // Connection is active
+        val inbound: Boolean,      // True if peer initiated connection
+        val lastError: String,     // Last error message (empty if no error)
+        val key: String,           // Peer's public key (hex)
+        val uptime: Long,          // Connection uptime in seconds
+        val latencyMs: Long,       // Latency in milliseconds
+        val rxBytes: Long,         // Received bytes
+        val txBytes: Long,         // Transmitted bytes
+        val rxRate: Long,          // Receive rate (bytes/sec)
+        val txRate: Long           // Transmit rate (bytes/sec)
+    ) {
+        // Helper properties for backward compatibility
+        val host: String
+            get() = extractHostFromUri(uri)
+
+        val port: Int
+            get() = extractPortFromUri(uri)
+
         val connected: Boolean
-    )
+            get() = up
+
+        private fun extractHostFromUri(uri: String): String {
+            return try {
+                // Extract host from URI like "tls://1.2.3.4:7743" or "tcp://[::1]:7743"
+                val withoutScheme = uri.substringAfter("://")
+                if (withoutScheme.startsWith("[")) {
+                    // IPv6 address
+                    withoutScheme.substringAfter("[").substringBefore("]")
+                } else {
+                    // IPv4 address or hostname
+                    withoutScheme.substringBefore(":")
+                }
+            } catch (e: Exception) {
+                uri
+            }
+        }
+
+        private fun extractPortFromUri(uri: String): Int {
+            return try {
+                uri.substringAfterLast(":").toIntOrNull() ?: 0
+            } catch (e: Exception) {
+                0
+            }
+        }
+    }
 
     /**
      * Notify service that app is in foreground (active)
@@ -595,8 +660,7 @@ class YggmailService : Service(), LogCallback {
 
     /**
      * Hot reload peers without restarting the entire service
-     * Updates peer configuration gracefully without closing transport connections
-     * This prevents ErrClosed errors that occurred with the old approach
+     * Uses Yggdrasil Core's AddPeer/RemovePeer for live updates without reconnection
      */
     fun hotReloadPeers() {
         serviceHandler.post {
@@ -607,13 +671,14 @@ class YggmailService : Service(), LogCallback {
                 val peers = configRepository.getPeersString()
                 val multicastEnabled = configRepository.isMulticastEnabled()
 
-                // Call native UpdatePeers method (non-destructive)
-                // This only updates the configuration without closing transport
+                // Update peers using Yggdrasil Core's AddPeer/RemovePeer
+                // This approach doesn't close the transport, avoiding ErrClosed errors
                 yggmailService?.updatePeers(peers, multicastEnabled, ".*")
 
-                Log.i(TAG, "Peers configuration updated successfully")
+                Log.i(TAG, "Peers updated successfully using live configuration")
+
             } catch (e: Exception) {
-                Log.e(TAG, "Error updating peers configuration", e)
+                Log.e(TAG, "Error updating peers", e)
             }
         }
     }

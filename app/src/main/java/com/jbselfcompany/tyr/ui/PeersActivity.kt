@@ -152,7 +152,24 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
 
         // Only load custom peers if not using defaults
         if (!configRepository.isUsingDefaultPeers()) {
-            peers.addAll(configRepository.getCustomPeers())
+            val customPeers = configRepository.getCustomPeers()
+
+            // Migrate old peers without protocol prefix
+            val migratedPeers = customPeers.map { peer ->
+                if (!peer.contains("://")) {
+                    // Add tcp:// prefix to old-style peers
+                    "tcp://$peer"
+                } else {
+                    peer
+                }
+            }
+
+            // Save migrated peers if any changes were made
+            if (migratedPeers != customPeers) {
+                configRepository.savePeers(migratedPeers)
+            }
+
+            peers.addAll(migratedPeers)
         }
 
         adapter.notifyDataSetChanged()
@@ -170,7 +187,7 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
             .setTitle(R.string.add_peer)
             .setView(dialogView)
             .setPositiveButton(R.string.add) { _, _ ->
-                val peerUrl = editPeerUrl.text.toString().trim()
+                var peerUrl = editPeerUrl.text.toString().trim()
 
                 if (peerUrl.isEmpty()) {
                     Toast.makeText(this, R.string.error_peers_empty, Toast.LENGTH_SHORT).show()
@@ -179,6 +196,22 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
 
                 if (peerUrl.contains("\n")) {
                     Toast.makeText(this, "Peer URL cannot contain newlines", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
+                // Validate and fix peer URL format
+                // Yggdrasil requires full URI with protocol (tcp://, tls://, quic://, etc.)
+                if (!peerUrl.contains("://")) {
+                    // Auto-add tcp:// prefix if no protocol specified
+                    peerUrl = "tcp://$peerUrl"
+                    Toast.makeText(this, "Added tcp:// prefix automatically", Toast.LENGTH_SHORT).show()
+                }
+
+                // Validate protocol
+                val validProtocols = listOf("tcp://", "tls://", "quic://", "socks://", "unix://")
+                val hasValidProtocol = validProtocols.any { peerUrl.startsWith(it) }
+                if (!hasValidProtocol) {
+                    Toast.makeText(this, "Invalid protocol. Use: tcp://, tls://, or quic://", Toast.LENGTH_LONG).show()
                     return@setPositiveButton
                 }
 

@@ -459,14 +459,14 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
     /**
      * Start network statistics monitoring
      * Only runs when app is in foreground to save battery
-     * Latency measurements are enabled since user is actively viewing the app
+     * Latency information comes directly from Yggdrasil transport layer
      */
     private fun startNetworkMonitoring() {
         networkStatsMonitor.start(object : NetworkStatsMonitor.NetworkStatsListener {
             override fun onStatsUpdated(stats: NetworkStatsMonitor.NetworkStats) {
                 updateNetworkStatsUI(stats)
             }
-        }, enableLatencyMeasurement = true) // Enable latency checks only when app is active
+        }, enableLatencyMeasurement = true) // Parameter kept for API compatibility
     }
 
     /**
