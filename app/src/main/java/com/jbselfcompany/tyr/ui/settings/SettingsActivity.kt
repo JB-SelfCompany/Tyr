@@ -42,7 +42,6 @@ class SettingsActivity : BaseActivity(), SettingsAdapter.Listener {
         // Setting IDs
         private const val ID_HEADER_SERVICE = 1
         private const val ID_AUTO_START = 2
-        private const val ID_MULTICAST = 3
         private const val ID_HEADER_NETWORK = 4
         private const val ID_CONFIGURE_PEERS = 5
         private const val ID_HEADER_SECURITY = 6
@@ -110,15 +109,6 @@ class SettingsActivity : BaseActivity(), SettingsAdapter.Listener {
                 descriptionRes = R.string.auto_start_description,
                 type = SettingsAdapter.ItemType.SWITCH,
                 checked = configRepository.isAutoStartEnabled()
-            )
-        )
-        settingsItems.add(
-            SettingsAdapter.Item(
-                id = ID_MULTICAST,
-                titleRes = R.string.multicast_discovery,
-                descriptionRes = R.string.multicast_discovery_description,
-                type = SettingsAdapter.ItemType.SWITCH,
-                checked = configRepository.isMulticastEnabled()
             )
         )
 
@@ -257,12 +247,6 @@ class SettingsActivity : BaseActivity(), SettingsAdapter.Listener {
         when (id) {
             ID_AUTO_START -> {
                 configRepository.setAutoStartEnabled(isChecked)
-            }
-            ID_MULTICAST -> {
-                configRepository.setMulticastEnabled(isChecked)
-                if (YggmailService.isRunning) {
-                    showRestartDialog()
-                }
             }
             ID_ENABLE_LOG_COLLECTION -> {
                 configRepository.setLogCollectionEnabled(isChecked)

@@ -5,7 +5,6 @@
     <!-- Network permissions for Yggdrasil -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
 
     <!-- Query installed packages (Android 11+) -->
     <queries>

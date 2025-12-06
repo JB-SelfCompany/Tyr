@@ -92,8 +92,6 @@
     <string name="configure_peers">Настройка пиров</string>
     <string name="peers_description">Введите пиры сети Yggdrasil (по одному на строку). По умолчанию заполнены стандартные пиры.</string>
     <string name="peers_list">Список пиров</string>
-    <string name="enable_multicast">Включить Multicast-обнаружение</string>
-    <string name="multicast_description">Автоматическое обнаружение пиров в локальной сети</string>
     <string name="peers_info">Пиры по умолчанию уже заполнены. Вы можете добавить дополнительные пиры или оставить значения по умолчанию</string>
 
     <!-- Settings -->
@@ -107,8 +105,6 @@
     <!-- Service Settings Items -->
     <string name="auto_start_on_boot">Запуск при загрузке</string>
     <string name="auto_start_description">Автоматически запускать службу при загрузке устройства</string>
-    <string name="multicast_discovery">Multicast-обнаружение</string>
-    <string name="multicast_discovery_description">Автоматическое обнаружение пиров в локальной сети</string>
 
     <!-- Network Settings Items -->
     <string name="configure_peers_title">Настроить пиры</string>
@@ -126,7 +122,6 @@
 
     <!-- Peer Tags -->
     <string name="peer_tag_default">По умолчанию</string>
-    <string name="peer_tag_multicast">Multicast</string>
     <string name="peer_tag_custom">Пользовательский</string>
 
     <!-- Security Settings Items -->

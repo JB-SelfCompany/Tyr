@@ -12,7 +12,6 @@ data class PeerInfo(
 ) {
     enum class PeerTag {
         DEFAULT,    // Default peer included with the app
-        MULTICAST,  // Discovered via multicast
         CUSTOM      // Manually added by user
     }
 
@@ -39,15 +38,14 @@ data class PeerInfo(
                     // Handle migration from old "type" field to new "tag" field
                     val tagStr = json.optString("tag", "")
                     if (tagStr.isNotEmpty()) {
-                        PeerTag.valueOf(tagStr)
-                    } else {
-                        // Migration: STATIC -> CUSTOM, DISCOVERED -> MULTICAST
-                        val oldType = json.optString("type", "STATIC")
-                        when (oldType) {
-                            "DISCOVERED" -> PeerTag.MULTICAST
-                            "STATIC" -> PeerTag.CUSTOM
-                            else -> PeerTag.CUSTOM
+                        // Migration: Old MULTICAST -> CUSTOM
+                        when (tagStr) {
+                            "MULTICAST" -> PeerTag.CUSTOM
+                            else -> PeerTag.valueOf(tagStr)
                         }
+                    } else {
+                        // Migration: STATIC -> CUSTOM, DISCOVERED -> CUSTOM
+                        PeerTag.CUSTOM
                     }
                 } catch (e: IllegalArgumentException) {
                     PeerTag.CUSTOM

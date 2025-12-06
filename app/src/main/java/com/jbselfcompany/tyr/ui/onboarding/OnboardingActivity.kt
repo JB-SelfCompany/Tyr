@@ -149,11 +149,6 @@ class OnboardingActivity : BaseActivity(), OnRestoreCompletedListener {
         // Mark onboarding as completed
         configRepository.setOnboardingCompleted(true)
 
-        // Enable multicast by default for new installations
-        if (!configRepository.isMulticastEnabled()) {
-            configRepository.setMulticastEnabled(true)
-        }
-
         // Automatically start the Yggmail service after first setup
         if (!YggmailService.isRunning) {
             YggmailService.start(this)

@@ -51,7 +51,6 @@ object BackupManager {
         val peers: List<String>,
         val useDefaultPeers: Boolean,
         val autoStart: Boolean,
-        val multicastEnabled: Boolean,
         val mailAddress: String?,
         val publicKey: String?,
         val includesDatabase: Boolean,
@@ -97,7 +96,6 @@ object BackupManager {
                 peers = configRepo.getCustomPeers(),
                 useDefaultPeers = configRepo.isUsingDefaultPeers(),
                 autoStart = configRepo.isAutoStartEnabled(),
-                multicastEnabled = configRepo.isMulticastEnabled(),
                 mailAddress = configRepo.getMailAddress(),
                 publicKey = configRepo.getPublicKey(),
                 includesDatabase = includeDatabase,
@@ -113,7 +111,6 @@ object BackupManager {
                 put("peers", backupData.peers.joinToString("\n"))
                 put("useDefaultPeers", backupData.useDefaultPeers)
                 put("autoStart", backupData.autoStart)
-                put("multicastEnabled", backupData.multicastEnabled)
                 put("mailAddress", backupData.mailAddress ?: "")
                 put("publicKey", backupData.publicKey ?: "")
                 put("includesDatabase", backupData.includesDatabase)
@@ -216,7 +213,6 @@ object BackupManager {
                     .filter { it.isNotEmpty() },
                 useDefaultPeers = jsonObject.getBoolean("useDefaultPeers"),
                 autoStart = jsonObject.getBoolean("autoStart"),
-                multicastEnabled = jsonObject.getBoolean("multicastEnabled"),
                 mailAddress = jsonObject.optString("mailAddress").takeIf { it.isNotEmpty() },
                 publicKey = jsonObject.optString("publicKey").takeIf { it.isNotEmpty() },
                 includesDatabase = jsonObject.optBoolean("includesDatabase", false),
@@ -241,7 +237,6 @@ object BackupManager {
             }
             configRepo.setUseDefaultPeers(backupData.useDefaultPeers)
             configRepo.setAutoStartEnabled(backupData.autoStart)
-            configRepo.setMulticastEnabled(backupData.multicastEnabled)
 
             if (backupData.mailAddress != null) {
                 configRepo.saveMailAddress(backupData.mailAddress)

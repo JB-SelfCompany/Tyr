@@ -22,7 +22,6 @@ import com.jbselfcompany.tyr.TyrApplication
 import com.jbselfcompany.tyr.data.PeerInfo
 import com.jbselfcompany.tyr.ui.MainActivity
 import mobile.LogCallback
-import mobile.PeerDiscoveryCallback
 import mobile.YggmailService as MobileYggmailService
 import java.io.File
 
@@ -33,7 +32,7 @@ import java.io.File
  * Battery optimization: Uses timed WakeLock with periodic renewal
  * to balance connectivity and power consumption.
  */
-class YggmailService : Service(), LogCallback, PeerDiscoveryCallback {
+class YggmailService : Service(), LogCallback {
 
     companion object {
         private const val TAG = "YggmailService"
@@ -90,7 +89,6 @@ class YggmailService : Service(), LogCallback, PeerDiscoveryCallback {
     // Service state
     private var yggmailService: MobileYggmailService? = null
     private var wakeLock: PowerManager.WakeLock? = null
-    private var multicastLock: WifiManager.MulticastLock? = null
     private val configRepository by lazy { TyrApplication.instance.configRepository }
 
     // Threading
@@ -229,16 +227,8 @@ class YggmailService : Service(), LogCallback, PeerDiscoveryCallback {
             }
 
             val peers = configRepository.getPeersString()
-            var multicastEnabled = configRepository.isMulticastEnabled()
 
-            // Only enable multicast if on WiFi network
-            // Multicast discovery doesn't work on mobile/cellular networks
-            if (multicastEnabled && !isWifiConnected()) {
-                Log.w(TAG, "Multicast requested but not on WiFi - disabling multicast for this session")
-                multicastEnabled = false
-            }
-
-            Log.d(TAG, "Peers: '$peers', Multicast: $multicastEnabled, WiFi: ${isWifiConnected()}")
+            Log.d(TAG, "Peers: '$peers'")
 
             // Database path
             val dbPath = File(filesDir, "yggmail.db").absolutePath
@@ -252,7 +242,6 @@ class YggmailService : Service(), LogCallback, PeerDiscoveryCallback {
             // Always set LogCallback, but onLog() will check if logging is enabled
             yggmailService = mobile.Mobile.newYggmailService(dbPath, smtpAddr, imapAddr).apply {
                 setLogCallback(this@YggmailService)
-                setPeerDiscoveryCallback(this@YggmailService)
             }
 
             // Initialize (creates/loads keys)
@@ -271,7 +260,7 @@ class YggmailService : Service(), LogCallback, PeerDiscoveryCallback {
             Log.i(TAG, "Mail address: $mailAddress")
 
             // Start with configured peers
-            yggmailService?.start(peers, multicastEnabled, ".*")
+            yggmailService?.start(peers)
             Log.i(TAG, "Yggmail service started successfully")
 
             // Acquire wake lock with timeout and start periodic renewal
@@ -348,62 +337,6 @@ class YggmailService : Service(), LogCallback, PeerDiscoveryCallback {
             Log.e(TAG, "Error stopping Yggmail service", e)
             lastError = e.message
             updateStatus(ServiceStatus.ERROR)
-        }
-    }
-
-    /**
-     * Check if device is connected to WiFi network
-     * Multicast discovery only works on WiFi, not on mobile/cellular networks
-     */
-    private fun isWifiConnected(): Boolean {
-        return try {
-            val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            val network = connectivityManager.activeNetwork ?: return false
-            val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error checking WiFi connection", e)
-            false
-        }
-    }
-
-    /**
-     * Acquire MulticastLock to enable receiving multicast packets on WiFi
-     * Android WiFi driver drops multicast packets by default to save battery
-     * Without this lock, multicast peer discovery will not work
-     */
-    private fun acquireMulticastLock() {
-        try {
-            if (!isWifiConnected()) {
-                Log.w(TAG, "Not acquiring multicast lock: not on WiFi network")
-                return
-            }
-
-            val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-            multicastLock = wifiManager.createMulticastLock("Tyr::Multicast").apply {
-                setReferenceCounted(false)
-                acquire()
-            }
-            Log.d(TAG, "Multicast lock acquired - WiFi multicast enabled")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to acquire multicast lock", e)
-        }
-    }
-
-    /**
-     * Release MulticastLock to allow WiFi driver to filter multicast packets again
-     */
-    private fun releaseMulticastLock() {
-        try {
-            multicastLock?.let { lock ->
-                if (lock.isHeld) {
-                    lock.release()
-                    Log.d(TAG, "Multicast lock released")
-                }
-            }
-            multicastLock = null
-        } catch (e: Exception) {
-            Log.e(TAG, "Error releasing multicast lock", e)
         }
     }
 
@@ -525,97 +458,6 @@ class YggmailService : Service(), LogCallback, PeerDiscoveryCallback {
             "DEBUG", "D" -> Log.d(logTag, logMessage)
             "VERBOSE", "V" -> Log.v(logTag, logMessage)
             else -> Log.d(logTag, logMessage)
-        }
-    }
-
-    /**
-     * Callback for peer discovery via multicast
-     */
-    override fun onPeerDiscovered(peerURI: String?) {
-        if (peerURI.isNullOrEmpty()) {
-            return
-        }
-
-        Log.i(TAG, "Discovered peer via multicast: $peerURI")
-
-        // Validate that this is actually a local network peer
-        // Multicast discovery should only find peers on the same subnet
-        if (!isLocalNetworkPeer(peerURI)) {
-            Log.w(TAG, "Ignoring non-local peer from multicast discovery: $peerURI")
-            return
-        }
-
-        // Check if peer already exists in our list
-        val allPeers = configRepository.getAllPeersInfo()
-        val peerExists = allPeers.any { it.uri == peerURI }
-
-        if (!peerExists) {
-            // Add as discovered peer (disabled by default)
-            val newPeer = PeerInfo(
-                uri = peerURI,
-                isEnabled = false,
-                tag = PeerInfo.PeerTag.MULTICAST
-            )
-            configRepository.savePeer(newPeer)
-            Log.i(TAG, "Added discovered peer to configuration: $peerURI")
-        } else {
-            Log.d(TAG, "Peer already exists in configuration: $peerURI")
-        }
-    }
-
-    /**
-     * Check if a peer URI represents a local network peer
-     * Multicast discovery should only return peers on the same subnet:
-     * - Link-local IPv6 addresses (fe80::/10)
-     * - Private IPv4 addresses (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)
-     * - IPv6 ULA addresses (fc00::/7)
-     */
-    private fun isLocalNetworkPeer(peerURI: String): Boolean {
-        try {
-            // Extract host from URI (format: protocol://host:port)
-            val hostWithPort = peerURI.substringAfter("://").substringBefore("?")
-            val host = if (hostWithPort.startsWith("[")) {
-                // IPv6 format: [address]:port
-                hostWithPort.substringAfter("[").substringBefore("]")
-            } else {
-                // IPv4/hostname format: address:port
-                hostWithPort.substringBefore(":")
-            }
-
-            // Check for link-local IPv6 (fe80::)
-            if (host.startsWith("fe80:", ignoreCase = true)) {
-                return true
-            }
-
-            // Check for IPv6 ULA (fc00::/7 - starts with fc or fd)
-            if (host.startsWith("fc", ignoreCase = true) || host.startsWith("fd", ignoreCase = true)) {
-                return true
-            }
-
-            // Check for private IPv4 ranges
-            val ipv4Regex = """^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$""".toRegex()
-            val ipv4Match = ipv4Regex.matchEntire(host)
-            if (ipv4Match != null) {
-                val octets = ipv4Match.groupValues.drop(1).map { it.toIntOrNull() ?: return false }
-
-                // 10.0.0.0/8
-                if (octets[0] == 10) return true
-
-                // 172.16.0.0/12 (172.16.0.0 - 172.31.255.255)
-                if (octets[0] == 172 && octets[1] in 16..31) return true
-
-                // 192.168.0.0/16
-                if (octets[0] == 192 && octets[1] == 168) return true
-
-                // 169.254.0.0/16 (link-local IPv4)
-                if (octets[0] == 169 && octets[1] == 254) return true
-            }
-
-            // If it's a hostname (not IP), reject it - multicast should only discover IPs
-            return false
-        } catch (e: Exception) {
-            Log.e(TAG, "Error validating peer URI: $peerURI", e)
-            return false
         }
     }
 
@@ -832,11 +674,10 @@ class YggmailService : Service(), LogCallback, PeerDiscoveryCallback {
 
                 // Get updated configuration
                 val peers = configRepository.getPeersString()
-                val multicastEnabled = configRepository.isMulticastEnabled()
 
                 // Update peers using Yggdrasil Core's AddPeer/RemovePeer
                 // This approach doesn't close the transport, avoiding ErrClosed errors
-                yggmailService?.updatePeers(peers, multicastEnabled, ".*")
+                yggmailService?.updatePeers(peers)
 
                 Log.i(TAG, "Peers updated successfully using live configuration")
 

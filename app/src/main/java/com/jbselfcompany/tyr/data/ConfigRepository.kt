@@ -25,7 +25,6 @@ class ConfigRepository(private val context: Context) {
         private const val KEY_USE_DEFAULT_PEERS = "use_default_peers"
         private const val KEY_SERVICE_ENABLED = "service_enabled"
         private const val KEY_AUTO_START = "auto_start"
-        private const val KEY_MULTICAST_ENABLED = "multicast_enabled"
         private const val KEY_MAIL_ADDRESS = "mail_address"
         private const val KEY_PUBLIC_KEY = "public_key"
         private const val KEY_LANGUAGE = "language"
@@ -336,20 +335,6 @@ class ConfigRepository(private val context: Context) {
      */
     fun setAutoStartEnabled(enabled: Boolean) {
         prefs.edit { putBoolean(KEY_AUTO_START, enabled) }
-    }
-
-    /**
-     * Check if multicast peer discovery is enabled
-     */
-    fun isMulticastEnabled(): Boolean {
-        return prefs.getBoolean(KEY_MULTICAST_ENABLED, true) // Default to enabled
-    }
-
-    /**
-     * Set multicast peer discovery
-     */
-    fun setMulticastEnabled(enabled: Boolean) {
-        prefs.edit { putBoolean(KEY_MULTICAST_ENABLED, enabled) }
     }
 
     /**

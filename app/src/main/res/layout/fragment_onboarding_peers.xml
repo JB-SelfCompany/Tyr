@@ -72,47 +72,6 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Multicast Option Card -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/multicast_card"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            app:cardBackgroundColor="?attr/colorSurfaceVariant"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/peers_layout">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <com.google.android.material.checkbox.MaterialCheckBox
-                    android:id="@+id/checkbox_multicast"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/enable_multicast"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="40dp"
-                    android:layout_marginTop="4dp"
-                    android:alpha="0.87"
-                    android:text="@string/multicast_description"
-                    android:textSize="14sp"
-                    android:textColor="?attr/colorOnSurfaceVariant" />
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
         <!-- Info Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="0dp"
@@ -123,7 +82,7 @@
             app:cardElevation="0dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/multicast_card">
+            app:layout_constraintTop_toBottomOf="@id/peers_layout">
 
             <TextView
                 android:layout_width="match_parent"

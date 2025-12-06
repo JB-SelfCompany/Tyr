@@ -61,7 +61,6 @@ class PeerAdapter(
         holder.peerTypeLabel.visibility = View.VISIBLE
         holder.peerTypeLabel.text = when (peer.tag) {
             PeerInfo.PeerTag.DEFAULT -> holder.itemView.context.getString(R.string.peer_tag_default)
-            PeerInfo.PeerTag.MULTICAST -> holder.itemView.context.getString(R.string.peer_tag_multicast)
             PeerInfo.PeerTag.CUSTOM -> holder.itemView.context.getString(R.string.peer_tag_custom)
         }
 
