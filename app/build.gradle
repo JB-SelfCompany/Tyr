@@ -5,12 +5,12 @@ plugins {
 
 // ── Version control ───────────────────────────────────────────────────────────
 // Release: bump for production releases (IzzyOnDroid / F-Droid)
-def RELEASE_VERSION_CODE = 28
-def RELEASE_VERSION_NAME = "1.8.1"
+def RELEASE_VERSION_CODE = 29
+def RELEASE_VERSION_NAME = "1.9.0"
 
 // Dev (signed debug): bump independently of release
-def DEV_VERSION_CODE = 28
-def DEV_VERSION_NAME = "1.8.1-dev"
+def DEV_VERSION_CODE = 29
+def DEV_VERSION_NAME = "1.9.0-dev"
 // ─────────────────────────────────────────────────────────────────────────────
 
 android {
@@ -105,8 +105,8 @@ android {
 }
 
 dependencies {
-    // Yggmail library
-    implementation fileTree(include: ['*.aar'], dir: 'libs')
+    // Yggmail library (Rust/UniFFI via JNA)
+    implementation 'net.java.dev.jna:jna:5.14.0@aar'
 
     // AndroidX libraries
     implementation 'androidx.core:core-ktx:1.17.0'

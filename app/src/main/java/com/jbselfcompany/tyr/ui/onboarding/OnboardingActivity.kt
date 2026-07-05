@@ -132,33 +132,21 @@ class OnboardingActivity : BaseActivity(), OnRestoreCompletedListener {
                 }
             }
             is OnboardingPeersFragment -> {
-                val selectedPeers = currentFragment.getSelectedPeers()
                 val useDefault = currentFragment.isUsingDefaultPeers()
                 val manualPeerUrl = currentFragment.getManualPeerUrl()
 
                 // Nothing selected at all
-                if (selectedPeers.isEmpty() && !useDefault && manualPeerUrl.isNullOrBlank()) {
+                if (!useDefault && manualPeerUrl.isNullOrBlank()) {
                     Toast.makeText(this, R.string.error_no_peers_selected, Toast.LENGTH_SHORT).show()
                     return false
                 }
 
-                // Validate manually entered peer URL using shared validator
+                // Validate and save manually entered peer
                 if (!manualPeerUrl.isNullOrBlank()) {
                     if (!com.jbselfcompany.tyr.data.PeerInfo.isValidPeerUrl(manualPeerUrl)) {
                         Toast.makeText(this, R.string.error_invalid_peer_url, Toast.LENGTH_SHORT).show()
                         return false
                     }
-                }
-
-                // Save discovered/selected peers
-                if (selectedPeers.isNotEmpty()) {
-                    selectedPeers.sortedBy { it.rtt }.forEach { peer ->
-                        configRepository.savePeer(peer.toPeerInfo())
-                    }
-                }
-
-                // Save manually entered peer
-                if (!manualPeerUrl.isNullOrBlank()) {
                     configRepository.savePeer(
                         com.jbselfcompany.tyr.data.PeerInfo(
                             uri = manualPeerUrl,
@@ -168,8 +156,8 @@ class OnboardingActivity : BaseActivity(), OnRestoreCompletedListener {
                     )
                 }
 
-                // Use default peers if no custom selection was made
-                if (selectedPeers.isEmpty() && manualPeerUrl.isNullOrBlank()) {
+                // Use default peers when no manual peer was entered
+                if (manualPeerUrl.isNullOrBlank()) {
                     com.jbselfcompany.tyr.data.ConfigRepository.DEFAULT_PEERS.forEach { peerUri ->
                         configRepository.savePeer(
                             com.jbselfcompany.tyr.data.PeerInfo(

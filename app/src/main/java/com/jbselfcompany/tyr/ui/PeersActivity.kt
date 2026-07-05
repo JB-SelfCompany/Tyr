@@ -12,8 +12,8 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.PopupMenu
 import android.widget.Toast
-import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.DividerItemDecoration
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
@@ -34,15 +34,6 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
     private lateinit var adapter: PeerAdapter
     private val mainHandler = Handler(Looper.getMainLooper())
 
-    private val discoveredPeers = mutableListOf<com.jbselfcompany.tyr.data.DiscoveredPeer>()
-    private var searchInProgress = false
-    private var discoveryDialog: androidx.appcompat.app.AlertDialog? = null
-    private var discoveryAdapter: DiscoveredPeerAdapter? = null
-    private var discoveryProgressBar: com.google.android.material.progressindicator.LinearProgressIndicator? = null
-    private var discoveryProgressText: android.widget.TextView? = null
-    private var progressAnimator: android.animation.ValueAnimator? = null
-    private var currentProgress = 0
-    private var discoveryRecyclerView: androidx.recyclerview.widget.RecyclerView? = null
 
     private var yggmailService: YggmailService? = null
     private var serviceBound = false
@@ -145,10 +136,6 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
                 when (menuItem.itemId) {
                     R.id.action_add_manually -> {
                         showAddPeerDialog()
-                        true
-                    }
-                    R.id.action_find_peers -> {
-                        startPeerDiscovery()
                         true
                     }
                     else -> false
@@ -357,204 +344,6 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
         }
     }
 
-    private fun startPeerDiscovery() {
-        // Check network availability
-        if (!com.jbselfcompany.tyr.data.NetworkUtils.isNetworkAvailable(this)) {
-            showNoNetworkDialog()
-            return
-        }
-
-        if (searchInProgress) {
-            Toast.makeText(this, R.string.peer_discovery_in_progress, Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // Clear previous results
-        discoveredPeers.clear()
-
-        searchInProgress = true
-
-        // Show discovered peers dialog immediately with real-time updates
-        showDiscoveredPeersDialogRealtime()
-
-        // Set batching parameters based on network type
-        val (batchSize, concurrency, pauseMs) = com.jbselfcompany.tyr.data.NetworkUtils.getBatchingParams(this)
-
-        // Create callback
-        val callback = object : mobile.PeerDiscoveryCallback {
-            override fun onProgress(current: Long, total: Long, availableCount: Long) {
-                mainHandler.post {
-                    if (discoveryProgressBar == null || discoveryProgressText == null) return@post
-
-                    // Update progress bar with smooth animation (1% increments)
-                    val percentage = if (total > 0) ((current * 100) / total).toInt() else 0
-                    animateProgressTo(percentage)
-                }
-            }
-
-            override fun onPeerAvailable(peerJSON: String) {
-                mainHandler.post {
-                    try {
-                        val peer = com.jbselfcompany.tyr.data.DiscoveredPeer.fromJson(
-                            org.json.JSONObject(peerJSON)
-                        )
-                        discoveredPeers.add(peer)
-                        // Add peer to adapter in real-time with sorting by RTT
-                        discoveryAdapter?.addPeerSorted(peer)
-                        // Always scroll to top to show the fastest peers
-                        discoveryRecyclerView?.scrollToPosition(0)
-                    } catch (e: Exception) {
-                        // Ignore malformed JSON
-                    }
-                }
-            }
-        }
-
-        // Start async discovery using helper (doesn't require running service)
-        com.jbselfcompany.tyr.utils.PeerDiscoveryHelper.findAvailablePeersAsync(
-            context = this,
-            protocols = "tcp,tls,quic,ws,wss,unix,socks,sockstls",  // All protocols
-            region = "",                  // All regions
-            maxRTTMs = 500,              // Max 500ms RTT
-            callback = callback,
-            batchSize = batchSize,
-            concurrency = concurrency,
-            pauseMs = pauseMs
-        )
-
-        // Set timeout
-        mainHandler.postDelayed({
-            if (searchInProgress) {
-                finishDiscovery()
-            }
-        }, 60000) // 60 seconds timeout
-    }
-
-    private fun finishDiscovery() {
-        searchInProgress = false
-
-        // Update progress bar to 100% with animation
-        animateProgressTo(100)
-
-        if (discoveredPeers.isEmpty()) {
-            Toast.makeText(this, R.string.peer_discovery_no_peers_found, Toast.LENGTH_LONG).show()
-            discoveryDialog?.dismiss()
-            return
-        }
-
-        Toast.makeText(
-            this,
-            getString(R.string.peer_discovery_found, discoveredPeers.size),
-            Toast.LENGTH_SHORT
-        ).show()
-    }
-
-    private fun finishDiscoveryWithError(error: String) {
-        searchInProgress = false
-        discoveryDialog?.dismiss()
-
-        Toast.makeText(
-            this,
-            getString(R.string.peer_discovery_error, error),
-            Toast.LENGTH_LONG
-        ).show()
-    }
-
-    private fun showNoNetworkDialog() {
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.peer_discovery_no_network)
-            .setMessage(R.string.peer_discovery_no_network_message)
-            .setPositiveButton(R.string.ok, null)
-            .show()
-    }
-
-    private fun showDiscoveredPeersDialogRealtime() {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_discovered_peers_realtime, null)
-        val recyclerView = dialogView.findViewById<androidx.recyclerview.widget.RecyclerView>(
-            R.id.recycler_discovered_peers
-        )
-        discoveryProgressBar = dialogView.findViewById(R.id.progress_discovery)
-        discoveryProgressText = dialogView.findViewById(R.id.text_progress)
-        discoveryRecyclerView = recyclerView
-
-        // Reset progress
-        currentProgress = 0
-        progressAnimator?.cancel()
-        discoveryProgressBar?.progress = 0
-        discoveryProgressText?.text = getString(R.string.peer_discovery_progress_percent, 0)
-
-        discoveryAdapter = DiscoveredPeerAdapter { selectionCount ->
-            // Update selection count if needed
-        }
-
-        val layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this@PeersActivity)
-        recyclerView.apply {
-            this.layoutManager = layoutManager
-            adapter = discoveryAdapter
-
-            // Add divider between items for better visual separation
-            addItemDecoration(
-                DividerItemDecoration(
-                    this@PeersActivity,
-                    DividerItemDecoration.VERTICAL
-                )
-            )
-        }
-
-        discoveryDialog = MaterialAlertDialogBuilder(this, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Centered)
-            .setTitle(R.string.peer_discovery_discovered_peers)
-            .setView(dialogView)
-            .setPositiveButton(R.string.peer_add_selected) { _, _ ->
-                val selectedPeers = discoveryAdapter?.getSelectedPeers() ?: emptyList()
-                addDiscoveredPeers(selectedPeers)
-                cleanupDiscovery()
-            }
-            .setNegativeButton(R.string.cancel) { _, _ ->
-                cleanupDiscovery()
-            }
-            .setOnDismissListener {
-                cleanupDiscovery()
-            }
-            .show()
-    }
-
-    private fun addDiscoveredPeers(peersToAdd: List<com.jbselfcompany.tyr.data.DiscoveredPeer>) {
-        if (peersToAdd.isEmpty()) {
-            Toast.makeText(this, R.string.error_no_peers_selected, Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        var addedCount = 0
-
-        // Sort by RTT before adding (fastest first)
-        val sortedPeers = peersToAdd.sortedBy { it.rtt }
-
-        sortedPeers.forEach { discoveredPeer ->
-            // Convert to PeerInfo
-            val peerInfo = discoveredPeer.toPeerInfo()
-
-            // Check for duplicates
-            if (!peers.any { it.uri == peerInfo.uri }) {
-                peers.add(peerInfo)
-                configRepository.savePeer(peerInfo)
-                addedCount++
-            }
-        }
-
-        if (addedCount > 0) {
-            adapter.notifyDataSetChanged()
-            hasUnsavedChanges = true
-            updateApplyButtonVisibility()
-
-            Toast.makeText(
-                this,
-                getString(R.string.peers_added, addedCount),
-                Toast.LENGTH_SHORT
-            ).show()
-        } else {
-            Toast.makeText(this, R.string.all_peers_already_exist, Toast.LENGTH_SHORT).show()
-        }
-    }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
@@ -566,43 +355,4 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
         }
     }
 
-    /**
-     * Animate progress bar smoothly from current value to target (1% increments)
-     * Speed: 300ms per 1% for consistent, visible animation
-     */
-    private fun animateProgressTo(targetProgress: Int) {
-        if (discoveryProgressBar == null || discoveryProgressText == null) return
-
-        // Cancel previous animation
-        progressAnimator?.cancel()
-
-        // Create smooth animation with consistent speed (300ms per 1%)
-        progressAnimator = android.animation.ValueAnimator.ofInt(currentProgress, targetProgress).apply {
-            duration = ((targetProgress - currentProgress) * 300).toLong().coerceAtLeast(100)
-            interpolator = android.view.animation.LinearInterpolator()
-
-            addUpdateListener { animator ->
-                val value = animator.animatedValue as Int
-                currentProgress = value
-                discoveryProgressBar?.setProgress(value, false)
-                discoveryProgressText?.text = getString(R.string.peer_discovery_progress_percent, value)
-            }
-
-            start()
-        }
-    }
-
-    /**
-     * Cleanup discovery state
-     */
-    private fun cleanupDiscovery() {
-        searchInProgress = false
-        progressAnimator?.cancel()
-        progressAnimator = null
-        currentProgress = 0
-        discoveryAdapter = null
-        discoveryProgressBar = null
-        discoveryProgressText = null
-        discoveryRecyclerView = null
-    }
 }

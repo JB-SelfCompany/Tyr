@@ -5,10 +5,14 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# Keep Yggmail library classes
--keep class mobile.** { *; }
--keep interface mobile.** { *; }
--keepclassmembers class mobile.** { *; }
+# UniFFI + JNA keep rules
+-keep class com.sun.jna.** { *; }
+-keep class uniffi.yggmail_mobile.** { *; }
+-keep class * implements com.sun.jna.Library { *; }
+
+# JNA references java.awt.* (desktop GUI, absent on Android). Without this R8 aborts
+# minifyReleaseWithR8 on the missing classes (Native$AWT → java.awt.Component/Window/...).
+-dontwarn java.awt.**
 
 # Keep native methods
 -keepclasseswithmembernames class * {

@@ -291,28 +291,12 @@
 • And others…
 </string>
 
-    <!-- Peer Discovery -->
+    <!-- Peer Selection -->
     <string name="peer_add_manually">Add Manually</string>
-    <string name="peer_find_peers">Find Peers</string>
-    <string name="peer_discovery_searching">Searching for peers…</string>
-    <string name="peer_discovery_progress_percent">Searching: %d%%</string>
-    <string name="peer_discovery_discovered_peers">Discovered Peers</string>
-    <string name="peer_discovery_no_peers_found">No peers found</string>
     <string name="peer_filter_all">All</string>
     <string name="peer_select_all">Select All</string>
     <string name="peer_deselect_all">Clear Selection</string>
     <string name="peer_add_selected">Add Selected</string>
-    <string name="peer_discovery_progress">Checking %1$d / %2$d peers…</string>
-    <string name="peer_discovery_progress_detailed">Found %1$d of %2$d peers (total %3$d)</string>
-    <string name="peer_discovery_found">Found: %d peers</string>
-    <string name="peer_discovery_total_available">%d peers available</string>
-    <string name="peer_discovery_selected">%d selected</string>
-    <string name="peer_added">%d peer(s) added successfully</string>
-    <string name="peers_added">%d peer(s) added</string>
-    <string name="peer_discovery_error">Failed to discover peers: %s</string>
-    <string name="peer_discovery_no_network">No network connection</string>
-    <string name="peer_discovery_no_network_message">Cannot search for peers without an internet connection. Use default peers or add manually.</string>
-    <string name="peer_discovery_in_progress">Peer discovery already in progress</string>
     <string name="peer_from_cache">From cache (24h)</string>
     <string name="using_default_peers">Using default peers</string>
     <string name="all_peers_already_exist">All selected peers already exist</string>

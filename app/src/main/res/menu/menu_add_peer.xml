@@ -4,8 +4,4 @@
         android:id="@+id/action_add_manually"
         android:title="@string/peer_add_manually"
         android:icon="@android:drawable/ic_input_add" />
-    <item
-        android:id="@+id/action_find_peers"
-        android:title="@string/peer_find_peers"
-        android:icon="@drawable/ic_search" />
 </menu>

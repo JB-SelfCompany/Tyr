@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true">
@@ -34,16 +33,6 @@
             android:text="@string/peers_description"
             android:textSize="@dimen/text_size_onboarding_description"
             android:textColor="?attr/colorOnSurfaceVariant" />
-
-        <!-- Action Buttons -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_find_peers"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="@string/peer_find_peers"
-            app:icon="@drawable/ic_search"
-            style="@style/Widget.Material3.Button" />
 
         <!-- Default Peers Switch -->
         <com.google.android.material.card.MaterialCardView
@@ -147,118 +136,6 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
             </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Cache Indicator Chip -->
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chip_cache_indicator"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/peer_from_cache"
-            android:visibility="gone"
-            style="@style/Widget.Material3.Chip.Assist"
-            app:chipIcon="@drawable/ic_cached"
-            tools:visibility="visible" />
-
-        <!-- Progress Section -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/progress_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:visibility="gone"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp"
-            app:cardBackgroundColor="?attr/colorSurfaceVariant"
-            tools:visibility="visible">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <TextView
-                    android:id="@+id/text_progress"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?attr/textAppearanceTitleMedium"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:layout_marginBottom="12dp"
-                    tools:text="Searching: 45%" />
-
-                <com.google.android.material.progressindicator.LinearProgressIndicator
-                    android:id="@+id/progress_bar"
-                    android:layout_width="match_parent"
-                    android:layout_height="8dp"
-                    android:indeterminate="false"
-                    android:max="100"
-                    android:progress="0"
-                    app:trackCornerRadius="4dp"
-                    app:trackThickness="8dp"
-                    app:indicatorColor="?attr/colorPrimary"
-                    app:trackColor="?attr/colorSurfaceContainer" />
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Initial Instructions Card -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/instructions_card"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp"
-            app:cardBackgroundColor="?attr/colorSurfaceVariant">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="24dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/peer_onboarding_instructions"
-                    android:textAppearance="?attr/textAppearanceBodyLarge"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:gravity="center"
-                    android:lineSpacingExtra="4dp" />
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Discovered Peers RecyclerView with scrolling -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/peers_card"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:layout_marginTop="16dp"
-            android:visibility="gone"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="?attr/colorOutlineVariant">
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler_peers"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:padding="8dp"
-                android:clipToPadding="false"
-                android:scrollbars="vertical"
-                android:fadeScrollbars="false"
-                tools:visibility="visible"
-                tools:listitem="@layout/item_discovered_peer" />
 
         </com.google.android.material.card.MaterialCardView>
 
