@@ -16,19 +16,16 @@ class AboutActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_about)
 
-        // Toolbar
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = getString(R.string.about_title)
 
-        // App version
         val versionView = findViewById<TextView>(R.id.app_version)
         val versionName = BuildConfig.VERSION_NAME
         val versionCode = BuildConfig.VERSION_CODE
         versionView.text = getString(R.string.version_and_build_title, versionName, versionCode)
 
-        // Link buttons
         findViewById<AppCompatImageButton>(R.id.button_github).setOnClickListener {
             openLink("https://github.com/JB-SelfCompany/Tyr")
         }

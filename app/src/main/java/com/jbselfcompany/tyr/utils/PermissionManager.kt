@@ -14,14 +14,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import com.jbselfcompany.tyr.R
 
-/**
- * Helper class for managing app permissions
- */
 object PermissionManager {
 
-    /**
-     * Check if notification permission is granted (Android 13+)
-     */
     fun hasNotificationPermission(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.checkSelfPermission(
@@ -34,9 +28,6 @@ object PermissionManager {
         }
     }
 
-    /**
-     * Check if battery optimization is disabled for the app
-     */
     fun isBatteryOptimizationDisabled(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -47,16 +38,12 @@ object PermissionManager {
         }
     }
 
-    /**
-     * Request notification permission (Android 13+)
-     */
     fun requestNotificationPermission(
         activity: Activity,
         launcher: ActivityResultLauncher<String>
     ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (!hasNotificationPermission(activity)) {
-                // Show explanation dialog
                 AlertDialog.Builder(activity)
                     .setTitle(R.string.permission_notification_title)
                     .setMessage(R.string.permission_notification_message)
@@ -69,13 +56,9 @@ object PermissionManager {
         }
     }
 
-    /**
-     * Request battery optimization exclusion
-     */
     fun requestBatteryOptimizationExclusion(activity: Activity) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!isBatteryOptimizationDisabled(activity)) {
-                // Show explanation dialog
                 AlertDialog.Builder(activity)
                     .setTitle(R.string.permission_battery_title)
                     .setMessage(R.string.permission_battery_message)
@@ -97,9 +80,6 @@ object PermissionManager {
         }
     }
 
-    /**
-     * Check if all required permissions are granted
-     */
     fun hasAllRequiredPermissions(context: Context): Boolean {
         return hasNotificationPermission(context) && isBatteryOptimizationDisabled(context)
     }

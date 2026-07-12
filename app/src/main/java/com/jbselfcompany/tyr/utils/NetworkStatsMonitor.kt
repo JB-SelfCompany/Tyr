@@ -82,7 +82,6 @@ class NetworkStatsMonitor(private val context: Context) {
             return
         }
 
-        // Create and start background thread
         backgroundThread = android.os.HandlerThread("NetworkStatsMonitor").apply {
             start()
         }
@@ -92,7 +91,6 @@ class NetworkStatsMonitor(private val context: Context) {
         this.measureLatency = enableLatencyMeasurement
         isMonitoring = true
 
-        // Start periodic updates (fires immediately)
         handler.post(updateRunnable)
 
         // Schedule a follow-up update to catch peers that finish reconnecting
@@ -118,7 +116,6 @@ class NetworkStatsMonitor(private val context: Context) {
         handler.removeCallbacks(updateRunnable)
         listener = null
 
-        // Properly stop background thread
         backgroundHandler?.removeCallbacksAndMessages(null)
         backgroundThread?.quitSafely()
         backgroundThread = null
@@ -132,12 +129,10 @@ class NetworkStatsMonitor(private val context: Context) {
      */
     private fun updateStats() {
         try {
-            // Get connection info
             val activeNetwork = connectivityManager.activeNetwork
             val isConnected = activeNetwork != null
             val connectionType = getConnectionType(activeNetwork)
 
-            // Get peer connections from Yggmail service
             val yggmailService = TyrApplication.instance.yggmailServiceBinder?.getService()
             val peers = if (yggmailService != null) {
                 val peerConnections = yggmailService.getPeerConnections()
@@ -154,14 +149,12 @@ class NetworkStatsMonitor(private val context: Context) {
                 emptyList()
             }
 
-            // Create stats object
             val stats = NetworkStats(
                 peers = peers,
                 connectionType = connectionType,
                 isConnected = isConnected
             )
 
-            // Notify listener on main thread
             handler.post {
                 listener?.onStatsUpdated(stats)
             }

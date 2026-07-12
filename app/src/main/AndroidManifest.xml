@@ -90,26 +90,15 @@
                 android:value=".ui.MainActivity" />
         </activity>
 
-        <!-- Settings Activity -->
-        <activity
-            android:name=".ui.settings.SettingsActivity"
-            android:exported="false"
-            android:label="@string/settings"
-            android:parentActivityName=".ui.MainActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".ui.MainActivity" />
-        </activity>
-
         <!-- Logs Activity -->
         <activity
             android:name=".ui.logs.LogsActivity"
             android:exported="false"
             android:label="@string/logs"
-            android:parentActivityName=".ui.settings.SettingsActivity">
+            android:parentActivityName=".ui.MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".ui.settings.SettingsActivity" />
+                android:value=".ui.MainActivity" />
         </activity>
 
         <!-- Peers Activity -->
@@ -117,10 +106,10 @@
             android:name=".ui.PeersActivity"
             android:exported="false"
             android:label="@string/configure_peers_title"
-            android:parentActivityName=".ui.settings.SettingsActivity">
+            android:parentActivityName=".ui.MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".ui.settings.SettingsActivity" />
+                android:value=".ui.MainActivity" />
         </activity>
 
         <!-- Chat Conversation Activity -->

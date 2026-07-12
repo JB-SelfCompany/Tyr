@@ -64,7 +64,7 @@ class ZoomableImageView @JvmOverloads constructor(
         scaleType = ScaleType.MATRIX
     }
 
-    // ── Public API ────────────────────────────────────────────────────────────
+
 
     fun resetMatrix() {
         val bmp = (drawable as? BitmapDrawable)?.bitmap ?: return
@@ -81,8 +81,6 @@ class ZoomableImageView @JvmOverloads constructor(
         )
         imageMatrix = photoMatrix
     }
-
-    // ── Touch handling ────────────────────────────────────────────────────────
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         gestureDetector.onTouchEvent(event)
@@ -138,8 +136,6 @@ class ZoomableImageView @JvmOverloads constructor(
 
         return true
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     /** Clamp translation so the image cannot be panned fully off-screen. */
     private fun constrainTranslation() {

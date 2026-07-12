@@ -54,7 +54,6 @@ class LogsActivity : BaseActivity() {
     }
 
     private fun loadLogs() {
-        // Check if log collection is enabled
         if (!configRepository.isLogCollectionEnabled()) {
             binding.textLogs.text = getString(R.string.log_collection_disabled)
             logsText = ""

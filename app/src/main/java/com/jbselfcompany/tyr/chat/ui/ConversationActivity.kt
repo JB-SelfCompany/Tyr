@@ -257,10 +257,6 @@ class ConversationActivity : BaseActivity() {
         pollHandler.removeCallbacks(pollRunnable)
     }
 
-    // ==============================
-    // Attachment handling
-    // ==============================
-
     private fun onAttachButtonClick() {
         val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             android.Manifest.permission.READ_MEDIA_IMAGES
@@ -523,10 +519,6 @@ class ConversationActivity : BaseActivity() {
         return inSampleSize
     }
 
-    // ==============================
-    // Swipe to reply
-    // ==============================
-
     private fun setupSwipeToReply() {
         val swipeCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
 
@@ -604,10 +596,6 @@ class ConversationActivity : BaseActivity() {
         ItemTouchHelper(swipeCallback).attachToRecyclerView(binding.recyclerMessages)
     }
 
-    // ==============================
-    // Reply
-    // ==============================
-
     private fun startReply(quoteText: String) {
         replyToText = quoteText
         binding.layoutReplyPreview.visibility = View.VISIBLE
@@ -620,10 +608,6 @@ class ConversationActivity : BaseActivity() {
         binding.layoutReplyPreview.visibility = View.GONE
         binding.textReplyPreview.text = ""
     }
-
-    // ==============================
-    // Pending contact
-    // ==============================
 
     private fun showPendingBanner() {
         binding.layoutPendingBanner.visibility = View.VISIBLE
@@ -653,10 +637,6 @@ class ConversationActivity : BaseActivity() {
         chatRepository.declineContact(contactAddress)
         finish()
     }
-
-    // ==============================
-    // Load / send messages
-    // ==============================
 
     private fun loadMessages() {
         // If the conversation is visible, mark all incoming messages as read and

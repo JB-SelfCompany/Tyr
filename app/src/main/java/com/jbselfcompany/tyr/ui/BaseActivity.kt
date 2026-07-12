@@ -17,7 +17,6 @@ abstract class BaseActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Apply theme preference
         LocaleHelper.applyTheme(this)
     }
 }

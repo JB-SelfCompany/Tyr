@@ -26,7 +26,6 @@ class OnboardingActivity : BaseActivity(), OnRestoreCompletedListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // If already onboarded, go to main activity
         if (configRepository.isOnboardingCompleted()) {
             navigateToMain()
             return
@@ -44,7 +43,6 @@ class OnboardingActivity : BaseActivity(), OnRestoreCompletedListener {
         binding.viewPager.adapter = adapter
         binding.viewPager.isUserInputEnabled = false // Disable swipe
 
-        // Setup progress indicator
         binding.progressIndicator.max = adapter.itemCount * 100
         updateProgressIndicator(0)
 
@@ -177,15 +175,12 @@ class OnboardingActivity : BaseActivity(), OnRestoreCompletedListener {
     }
 
     private fun completeOnboarding() {
-        // Mark onboarding as completed
         configRepository.setOnboardingCompleted(true)
 
-        // Automatically start the Yggmail service after first setup
         if (!YggmailService.isRunning) {
             YggmailService.start(this)
         }
 
-        // Navigate to main activity
         navigateToMain()
     }
 

@@ -37,9 +37,6 @@ class AutoconfigServer(private val context: Context) {
     // Store tokens with their creation time
     private val tokens = ConcurrentHashMap<String, Long>()
 
-    /**
-     * Start the HTTP server on localhost
-     */
     fun start() {
         if (running) {
             TyrLogger.w(TAG,"Server already running")
@@ -72,9 +69,6 @@ class AutoconfigServer(private val context: Context) {
         }
     }
 
-    /**
-     * Stop the HTTP server
-     */
     fun stop() {
         running = false
         try {
@@ -89,17 +83,9 @@ class AutoconfigServer(private val context: Context) {
         }
     }
 
-    /**
-     * Check if server is running
-     */
     fun isRunning(): Boolean = running
 
-    /**
-     * Generate a new token for autoconfig URL
-     * @return token string
-     */
     fun generateToken(): String {
-        // Clean expired tokens
         cleanExpiredTokens()
 
         val token = UUID.randomUUID().toString().replace("-", "")
@@ -107,10 +93,6 @@ class AutoconfigServer(private val context: Context) {
         return token
     }
 
-    /**
-     * Generate DCACCOUNT URL with a new token
-     * @return DCACCOUNT URL string
-     */
     fun generateDcaccountUrl(): String {
         val token = generateToken()
         return "DCACCOUNT:https://127.0.0.1:$PORT/new_email?t=$token"
@@ -127,13 +109,8 @@ class AutoconfigServer(private val context: Context) {
      * @return DCLOGIN URL string
      */
     fun generateDcloginUrl(email: String, password: String): String {
-        // DCLOGIN format according to DeltaChat specification
-        // dclogin://email@domain/?p=password&v=1&ih=imap_host&ip=port&is=security&sh=smtp_host&sp=port&ss=security&ic=cert_checks
-
-        // URL encode the password to handle special characters
         val encodedPassword = java.net.URLEncoder.encode(password, "UTF-8")
 
-        // Build DCLOGIN URL with IMAP and SMTP configuration
         return buildString {
             append("dclogin://")
             append(email)
@@ -153,9 +130,6 @@ class AutoconfigServer(private val context: Context) {
         }
     }
 
-    /**
-     * Clean expired tokens
-     */
     private fun cleanExpiredTokens() {
         val now = System.currentTimeMillis()
         tokens.entries.removeIf { (_, timestamp) ->
@@ -163,29 +137,21 @@ class AutoconfigServer(private val context: Context) {
         }
     }
 
-    /**
-     * Validate token
-     */
     private fun isValidToken(token: String?): Boolean {
         if (token == null) return false
 
         val timestamp = tokens[token] ?: return false
         val now = System.currentTimeMillis()
 
-        // Check if token is expired
         return (now - timestamp) <= TOKEN_EXPIRY_MS
     }
 
-    /**
-     * Handle HTTP client connection
-     */
     private fun handleClient(socket: Socket) {
         // Called from clientExecutor thread pool — no extra thread needed
         try {
             val reader = BufferedReader(InputStreamReader(socket.getInputStream()))
             val writer = OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8)
 
-            // Read HTTP request line
             val requestLine = reader.readLine() ?: ""
             TyrLogger.d(TAG,"Request: $requestLine")
 
@@ -195,7 +161,6 @@ class AutoconfigServer(private val context: Context) {
                 line = reader.readLine()
             } while (!line.isNullOrEmpty())
 
-            // Parse request
             val parts = requestLine.split(" ")
             if (parts.size >= 2) {
                 val method = parts[0]
@@ -217,12 +182,8 @@ class AutoconfigServer(private val context: Context) {
         }
     }
 
-    /**
-     * Handle /new_email endpoint
-     */
     private fun handleNewEmailRequest(path: String, writer: OutputStreamWriter) {
         try {
-            // Extract token from query string
             val token = extractToken(path)
 
             if (!isValidToken(token)) {
@@ -230,7 +191,6 @@ class AutoconfigServer(private val context: Context) {
                 return
             }
 
-            // Get mail address and password from config
             val configRepository = TyrApplication.instance.configRepository
             val email = configRepository.getMailAddress()
             val password = configRepository.getPassword()
@@ -240,14 +200,12 @@ class AutoconfigServer(private val context: Context) {
                 return
             }
 
-            // Build JSON response
             val json = JSONObject()
             json.put("email", email)
             json.put("password", password)
 
             val responseBody = json.toString()
 
-            // Send HTTP response
             writer.write("HTTP/1.1 200 OK\r\n")
             writer.write("Content-Type: application/json\r\n")
             writer.write("Content-Length: ${responseBody.toByteArray(StandardCharsets.UTF_8).size}\r\n")
@@ -255,7 +213,6 @@ class AutoconfigServer(private val context: Context) {
             writer.write("\r\n")
             writer.write(responseBody)
 
-            // Remove token after use (one-time use)
             tokens.remove(token)
 
             TyrLogger.i(TAG,"Served autoconfig for $email")
@@ -265,9 +222,6 @@ class AutoconfigServer(private val context: Context) {
         }
     }
 
-    /**
-     * Extract token from query string
-     */
     private fun extractToken(path: String): String? {
         val queryStart = path.indexOf('?')
         if (queryStart == -1) return null
@@ -285,9 +239,6 @@ class AutoconfigServer(private val context: Context) {
         return null
     }
 
-    /**
-     * Send HTTP 400 Bad Request
-     */
     private fun send400(writer: OutputStreamWriter) {
         writer.write("HTTP/1.1 400 Bad Request\r\n")
         writer.write("Content-Length: 0\r\n")
@@ -295,9 +246,6 @@ class AutoconfigServer(private val context: Context) {
         writer.write("\r\n")
     }
 
-    /**
-     * Send HTTP 401 Unauthorized
-     */
     private fun send401(writer: OutputStreamWriter, message: String) {
         val json = JSONObject()
         json.put("error", message)
@@ -311,9 +259,6 @@ class AutoconfigServer(private val context: Context) {
         writer.write(body)
     }
 
-    /**
-     * Send HTTP 404 Not Found
-     */
     private fun send404(writer: OutputStreamWriter) {
         writer.write("HTTP/1.1 404 Not Found\r\n")
         writer.write("Content-Length: 0\r\n")
@@ -321,9 +266,6 @@ class AutoconfigServer(private val context: Context) {
         writer.write("\r\n")
     }
 
-    /**
-     * Send HTTP 500 Internal Server Error
-     */
     private fun send500(writer: OutputStreamWriter, message: String) {
         val json = JSONObject()
         json.put("error", message)

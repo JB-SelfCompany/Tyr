@@ -124,7 +124,6 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
             DividerItemDecoration(this, DividerItemDecoration.VERTICAL)
         )
 
-        // Register context menu for RecyclerView
         registerForContextMenu(binding.recyclerPeers)
     }
 

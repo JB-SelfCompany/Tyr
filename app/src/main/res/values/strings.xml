@@ -284,7 +284,7 @@
     <string name="website">Website</string>
     <string name="libs_label">Used libraries</string>
     <string name="libs_used">\n
-• Yggmail (Go)\n
+• Yggmail-ng (Rust)\n
 • Yggdrasil Network (LGPLv3)\n
 • AndroidX (Apache 2.0)\n
 • Material Components (Apache 2.0)\n
@@ -301,6 +301,9 @@
     <string name="using_default_peers">Using default peers</string>
     <string name="all_peers_already_exist">All selected peers already exist</string>
     <string name="error_no_peers_selected">Please select at least one peer or use default peers</string>
+
+    <!-- Chat maintenance -->
+    <string name="chat_under_maintenance">Chat is temporarily unavailable — under maintenance.</string>
 
     <!-- Storage Settings -->
     <string name="storage_settings">Storage</string>

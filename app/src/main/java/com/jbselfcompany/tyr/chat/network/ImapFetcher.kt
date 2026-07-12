@@ -162,10 +162,8 @@ class ImapFetcher(
                     return lines
                 }
 
-                // Read server greeting
                 readLine() ?: throw java.io.IOException("IMAP connection closed before greeting")
 
-                // LOGIN
                 val loginTag = nextTag()
                 writer.println("$loginTag LOGIN \"${address.escapeImap()}\" \"${password.escapeImap()}\"")
                 val loginLines = mutableListOf<String>()
@@ -183,7 +181,6 @@ class ImapFetcher(
                     return Result.Error("IMAP LOGIN failed")
                 }
 
-                // SELECT TyrChat
                 val selectResp = cmd("SELECT TyrChat")
                 if (selectResp.none { it.contains("OK", ignoreCase = true) }) {
                     try { cmd("LOGOUT") } catch (_: Exception) {}
@@ -320,10 +317,8 @@ class ImapFetcher(
                     return lines
                 }
 
-                // Read server greeting
                 readLine() ?: return@use false
 
-                // LOGIN
                 val loginTag = nextTag()
                 writer.println("$loginTag LOGIN \"${myAddress.escapeImap()}\" \"${password.escapeImap()}\"")
                 val loginLines = mutableListOf<String>()
@@ -338,7 +333,6 @@ class ImapFetcher(
                     return@use false
                 }
 
-                // SELECT TyrChat
                 val selectResp = cmd("SELECT TyrChat")
                 if (selectResp.none { it.contains("OK", ignoreCase = true) }) {
                     try { cmd("LOGOUT") } catch (_: Exception) {}

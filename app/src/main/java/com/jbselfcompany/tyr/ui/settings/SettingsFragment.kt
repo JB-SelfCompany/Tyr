@@ -54,9 +54,6 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
         private const val ID_CHANGE_PASSWORD = 7
         private const val ID_REGENERATE_KEYS = 8
         private const val ID_BACKUP_RESTORE = 9
-        private const val ID_HEADER_STORAGE = 19
-        private const val ID_UNREAD_QUOTA = 20
-        private const val ID_CLEAR_OUTBOUND_QUEUE = 21
         private const val ID_HEADER_APPEARANCE = 10
         private const val ID_LANGUAGE = 11
         private const val ID_THEME = 12
@@ -74,9 +71,6 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
         // Chat settings
         private const val ID_HEADER_CHAT = 26
         private const val ID_ACCEPT_NON_CONTACTS = 27
-
-        // Media cache
-        private const val ID_CLEAR_MEDIA_CACHE = 28
     }
 
     private var backupPassword: String = ""
@@ -205,39 +199,6 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
             )
         )
 
-        // Storage Settings Section
-        settingsItems.add(
-            SettingsAdapter.Item(
-                id = ID_HEADER_STORAGE,
-                titleRes = R.string.storage_settings,
-                type = SettingsAdapter.ItemType.HEADER
-            )
-        )
-        settingsItems.add(
-            SettingsAdapter.Item(
-                id = ID_UNREAD_QUOTA,
-                titleRes = R.string.unread_quota,
-                descriptionRes = R.string.unread_quota_description,
-                type = SettingsAdapter.ItemType.PLAIN
-            )
-        )
-        settingsItems.add(
-            SettingsAdapter.Item(
-                id = ID_CLEAR_OUTBOUND_QUEUE,
-                titleRes = R.string.clear_outbound_queue,
-                descriptionRes = R.string.clear_outbound_queue_description,
-                type = SettingsAdapter.ItemType.PLAIN
-            )
-        )
-        settingsItems.add(
-            SettingsAdapter.Item(
-                id = ID_CLEAR_MEDIA_CACHE,
-                titleRes = R.string.clear_media_cache,
-                descriptionRes = R.string.clear_media_cache_description,
-                type = SettingsAdapter.ItemType.PLAIN
-            )
-        )
-
         // Appearance Settings Section
         settingsItems.add(
             SettingsAdapter.Item(
@@ -352,7 +313,6 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
         binding.recyclerView.adapter = adapter
     }
 
-    // SettingsAdapter.Listener implementation
     override fun onSwitchToggled(id: Int, isChecked: Boolean) {
         when (id) {
             ID_AUTO_START -> {
@@ -378,9 +338,6 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
             ID_CHANGE_PASSWORD -> showChangePasswordDialog()
             ID_REGENERATE_KEYS -> showRegenerateKeysDialog()
             ID_BACKUP_RESTORE -> showBackupRestoreOptions()
-            ID_UNREAD_QUOTA -> showUnreadQuotaDialog()
-            ID_CLEAR_OUTBOUND_QUEUE -> showClearOutboundQueueDialog()
-            ID_CLEAR_MEDIA_CACHE -> showClearMediaCacheDialog()
             ID_LANGUAGE -> showLanguageDialog()
             ID_THEME -> showThemeDialog()
             ID_COLLECT_LOGS -> startActivity(Intent(requireContext(), LogsActivity::class.java))
@@ -808,241 +765,6 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
             else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
         }
         AppCompatDelegate.setDefaultNightMode(mode)
-    }
-
-    private fun showUnreadQuotaDialog() {
-        if (!YggmailService.isRunning) {
-            Toast.makeText(requireContext(), R.string.error_service_not_running, Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val binder = TyrApplication.instance.yggmailServiceBinder
-        val service = binder?.getService()
-
-        if (service == null) {
-            Toast.makeText(requireContext(), R.string.error_service_not_available, Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // Show loading while fetching quota info
-        showLoadingOverlay(true, getString(R.string.loading_quota_info))
-
-        Thread {
-            val maxSizeInfo = service.getMaxMessageSizeInfo()
-
-            requireActivity().runOnUiThread {
-                if (!isAdded) return@runOnUiThread
-                showLoadingOverlay(false)
-
-                if (maxSizeInfo == null) {
-                    Toast.makeText(requireContext(), R.string.error_loading_quota, Toast.LENGTH_SHORT).show()
-                    return@runOnUiThread
-                }
-
-                // Show dialog with slider
-                val dialogView = requireActivity().layoutInflater.inflate(R.layout.dialog_unread_quota, null)
-                val slider = dialogView.findViewById<com.google.android.material.slider.Slider>(R.id.quota_slider)
-                val textCurrent = dialogView.findViewById<android.widget.TextView>(R.id.text_current_quota)
-                // Configure slider (10 MB - 500 MB, step 10 MB)
-                slider.valueFrom = 10f
-                slider.valueTo = 500f
-                slider.stepSize = 10f
-                slider.value = maxSizeInfo.maxSizeMB.toFloat()
-
-                // Update current max size text
-                textCurrent.text = getString(R.string.quota_current_value, maxSizeInfo.maxSizeMB)
-
-                // Update text when slider changes
-                slider.addOnChangeListener { _, value, _ ->
-                    textCurrent.text = getString(R.string.quota_current_value, value.toLong())
-                }
-
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle(R.string.unread_quota)
-                    .setView(dialogView)
-                    .setPositiveButton(R.string.save) { _, _ ->
-                        val newQuota = slider.value.toLong()
-                        saveUnreadQuota(service, newQuota)
-                    }
-                    .setNegativeButton(R.string.cancel, null)
-                    .show()
-            }
-        }.start()
-    }
-
-    private fun saveUnreadQuota(service: YggmailService, quotaMB: Long) {
-        showLoadingOverlay(true, getString(R.string.saving_quota))
-
-        Thread {
-            val success = service.setMaxMessageSizeMB(quotaMB)
-
-            requireActivity().runOnUiThread {
-                if (!isAdded) return@runOnUiThread
-                showLoadingOverlay(false)
-
-                if (success) {
-                    // Cache the new quota so ConversationActivity can validate outgoing file sizes
-                    TyrApplication.instance.configRepository.cacheMaxMessageSizeMB(quotaMB)
-                    Toast.makeText(
-                        requireContext(),
-                        getString(R.string.quota_saved, quotaMB),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } else {
-                    Toast.makeText(requireContext(), R.string.error_saving_quota, Toast.LENGTH_SHORT).show()
-                }
-            }
-        }.start()
-    }
-
-    private fun showClearOutboundQueueDialog() {
-        if (!YggmailService.isRunning) {
-            Toast.makeText(requireContext(), R.string.error_service_not_running, Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val binder = TyrApplication.instance.yggmailServiceBinder
-        val service = binder?.getService()
-
-        if (service == null) {
-            Toast.makeText(requireContext(), R.string.error_service_not_available, Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        showLoadingOverlay(true, getString(R.string.loading_queue_info))
-
-        Thread {
-            val count = service.getOutboundQueueCount()
-
-            requireActivity().runOnUiThread {
-                if (!isAdded) return@runOnUiThread
-                showLoadingOverlay(false)
-
-                if (count < 0) {
-                    Toast.makeText(requireContext(), R.string.error_loading_queue_info, Toast.LENGTH_SHORT).show()
-                    return@runOnUiThread
-                }
-
-                val message = if (count == 0) {
-                    getString(R.string.outbound_queue_empty)
-                } else {
-                    getString(R.string.outbound_queue_clear_confirmation, count)
-                }
-
-                val builder = MaterialAlertDialogBuilder(requireContext())
-                    .setTitle(R.string.clear_outbound_queue)
-                    .setMessage(message)
-
-                if (count > 0) {
-                    builder
-                        .setPositiveButton(R.string.ok) { _, _ -> clearOutboundQueue(service) }
-                        .setNegativeButton(R.string.cancel, null)
-                } else {
-                    builder.setPositiveButton(R.string.ok, null)
-                }
-
-                builder.show()
-            }
-        }.start()
-    }
-
-    private fun clearOutboundQueue(service: YggmailService) {
-        showLoadingOverlay(true, getString(R.string.clearing_queue))
-
-        Thread {
-            val cleared = service.clearOutboundQueue()
-
-            requireActivity().runOnUiThread {
-                if (!isAdded) return@runOnUiThread
-                showLoadingOverlay(false)
-
-                if (cleared < 0) {
-                    Toast.makeText(requireContext(), R.string.error_clearing_queue, Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(
-                        requireContext(),
-                        getString(R.string.queue_cleared, cleared),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        }.start()
-    }
-
-    private fun showClearMediaCacheDialog() {
-        showLoadingOverlay(true, getString(R.string.loading_storage_stats))
-
-        Thread {
-            val appContext = context?.applicationContext
-            if (appContext == null) {
-                requireActivity().runOnUiThread { showLoadingOverlay(false) }
-                return@Thread
-            }
-
-            // Attachments live in getExternalFilesDir(null)/attachments (or filesDir/attachments
-            // as fallback), matching the paths used in ConversationActivity and ChatFragment.
-            val attachmentsDir = java.io.File(
-                appContext.getExternalFilesDir(null) ?: appContext.filesDir, "attachments"
-            )
-            val attachmentsSizeBytes = attachmentsDir.walkTopDown()
-                .filter { it.isFile }
-                .sumOf { it.length() }
-            val attachmentsSizeMB = attachmentsSizeBytes / (1024.0 * 1024.0)
-
-            requireActivity().runOnUiThread {
-                if (!isAdded) return@runOnUiThread
-                showLoadingOverlay(false)
-
-                val builder = MaterialAlertDialogBuilder(requireContext())
-                    .setTitle(R.string.clear_media_cache)
-                    .setMessage(R.string.clear_media_cache_description)
-
-                if (attachmentsSizeBytes > 0) {
-                    builder.setPositiveButton(getString(R.string.clear_media_cache)) { _, _ ->
-                        performClearMediaCache(attachmentsDir, attachmentsSizeMB)
-                    }
-                    builder.setNegativeButton(R.string.cancel, null)
-                } else {
-                    builder.setMessage(R.string.media_cache_nothing_to_clear)
-                    builder.setPositiveButton(R.string.ok, null)
-                }
-
-                builder.show()
-            }
-        }.start()
-    }
-
-    private fun performClearMediaCache(attachmentsDir: java.io.File, sizeMB: Double) {
-        Thread {
-            var freedBytes = 0L
-            var success = true
-            try {
-                if (attachmentsDir.exists()) {
-                    attachmentsDir.walkTopDown()
-                        .filter { it.isFile }
-                        .forEach { file ->
-                            freedBytes += file.length()
-                            file.delete()
-                        }
-                }
-            } catch (e: Exception) {
-                success = false
-            }
-
-            val freedMB = freedBytes / (1024.0 * 1024.0)
-            requireActivity().runOnUiThread {
-                if (!isAdded) return@runOnUiThread
-                if (success) {
-                    Toast.makeText(
-                        requireContext(),
-                        getString(R.string.media_cache_cleared, freedMB),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } else {
-                    Toast.makeText(requireContext(), R.string.media_cache_error, Toast.LENGTH_SHORT).show()
-                }
-            }
-        }.start()
     }
 
     private fun showClearLogsDialog() {

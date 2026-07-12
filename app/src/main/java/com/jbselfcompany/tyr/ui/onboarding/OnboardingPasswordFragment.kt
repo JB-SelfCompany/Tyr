@@ -23,16 +23,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/**
- * Callback interface for restore completion
- */
 interface OnRestoreCompletedListener {
     fun onRestoreCompleted()
 }
 
-/**
- * Password setup fragment for onboarding
- */
 class OnboardingPasswordFragment : Fragment() {
 
     private var _binding: FragmentOnboardingPasswordBinding? = null
@@ -157,7 +151,6 @@ class OnboardingPasswordFragment : Fragment() {
                             Toast.LENGTH_LONG
                         ).show()
 
-                        // Notify parent activity that restore is complete
                         restoreListener?.onRestoreCompleted()
                     } else {
                         Toast.makeText(
@@ -181,16 +174,10 @@ class OnboardingPasswordFragment : Fragment() {
         }
     }
 
-    /**
-     * Get password entered by user
-     */
     fun getPassword(): String {
         return binding.editPassword.text.toString()
     }
 
-    /**
-     * Get confirm password entered by user
-     */
     fun getConfirmPassword(): String {
         return binding.editConfirmPassword.text.toString()
     }

@@ -64,7 +64,6 @@ class PeerAdapter(
             PeerInfo.PeerTag.CUSTOM -> holder.itemView.context.getString(R.string.peer_tag_custom)
         }
 
-        // Set up switch listener
         holder.peerSwitch.setOnCheckedChangeListener(null)
         holder.peerSwitch.setOnCheckedChangeListener { _, isChecked ->
             onToggle(holder.adapterPosition, isChecked)
@@ -73,7 +72,6 @@ class PeerAdapter(
         // Prevent switch from triggering context menu
         holder.peerSwitch.setOnLongClickListener { true }
 
-        // Set up long press listener for context menu
         holder.itemView.setOnLongClickListener {
             false // Return false to allow context menu creation
         }

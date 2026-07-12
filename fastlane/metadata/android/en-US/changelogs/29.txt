@@ -1,0 +1,2 @@
+• New Rust engine: the app now runs on a fully rewritten native library — faster, lighter and more reliable than the previous Go engine
+• Sturdier storage: an internal error no longer stops mail from being saved until a restart

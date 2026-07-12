@@ -42,9 +42,6 @@ object BackupManager {
     // Backup file extension
     const val BACKUP_FILE_EXTENSION = ".tyrbackup"
 
-    /**
-     * Data class representing backup content
-     */
     data class BackupData(
         val version: Int,
         val timestamp: Long,
@@ -84,7 +81,6 @@ object BackupManager {
         return try {
             val configRepo = ConfigRepository(context)
 
-            // Read databases if requested
             val databaseData = if (includeDatabase) {
                 readDatabaseAsBase64(context)
             } else {
@@ -92,7 +88,6 @@ object BackupManager {
             }
             val chatDatabaseData = readChatDatabaseAsBase64(context)
 
-            // Create backup data object
             val backupData = BackupData(
                 version = BACKUP_VERSION,
                 timestamp = System.currentTimeMillis(),
@@ -109,7 +104,6 @@ object BackupManager {
                 chatDatabaseData = chatDatabaseData
             )
 
-            // Convert to JSON
             val jsonObject = JSONObject().apply {
                 put("version", backupData.version)
                 put("timestamp", backupData.timestamp)
@@ -132,7 +126,6 @@ object BackupManager {
 
             val plaintext = jsonObject.toString().toByteArray(Charsets.UTF_8)
 
-            // Generate salt and IV
             val salt = ByteArray(SALT_LENGTH)
             val iv = ByteArray(IV_LENGTH)
             SecureRandom().apply {
@@ -140,17 +133,15 @@ object BackupManager {
                 nextBytes(iv)
             }
 
-            // Derive key from password
             val key = deriveKey(backupPassword, salt)
 
-            // Encrypt data
             val cipher = Cipher.getInstance(ALGORITHM)
             val secretKey = SecretKeySpec(key, KEY_ALGORITHM)
             val gcmSpec = GCMParameterSpec(GCM_TAG_LENGTH, iv)
             cipher.init(Cipher.ENCRYPT_MODE, secretKey, gcmSpec)
             val ciphertext = cipher.doFinal(plaintext)
 
-            // Write to output stream: salt + iv + ciphertext
+            // Write format: salt + iv + ciphertext
             outputStream.write(salt)
             outputStream.write(iv)
             outputStream.write(ciphertext)
@@ -178,7 +169,6 @@ object BackupManager {
         backupPassword: String
     ): Boolean {
         return try {
-            // Read encrypted data
             val encryptedData = inputStream.readBytes()
 
             if (encryptedData.size < SALT_LENGTH + IV_LENGTH + 16) {
@@ -186,33 +176,27 @@ object BackupManager {
                 return false
             }
 
-            // Extract salt, IV, and ciphertext
             val salt = encryptedData.copyOfRange(0, SALT_LENGTH)
             val iv = encryptedData.copyOfRange(SALT_LENGTH, SALT_LENGTH + IV_LENGTH)
             val ciphertext = encryptedData.copyOfRange(SALT_LENGTH + IV_LENGTH, encryptedData.size)
 
-            // Derive key from password
             val key = deriveKey(backupPassword, salt)
 
-            // Decrypt data
             val cipher = Cipher.getInstance(ALGORITHM)
             val secretKey = SecretKeySpec(key, KEY_ALGORITHM)
             val gcmSpec = GCMParameterSpec(GCM_TAG_LENGTH, iv)
             cipher.init(Cipher.DECRYPT_MODE, secretKey, gcmSpec)
             val plaintext = cipher.doFinal(ciphertext)
 
-            // Parse JSON
             val jsonString = String(plaintext, Charsets.UTF_8)
             val jsonObject = JSONObject(jsonString)
 
-            // Validate version
             val version = jsonObject.getInt("version")
             if (version > BACKUP_VERSION) {
                 TyrLogger.e(TAG,"Backup version $version is not supported (current version: $BACKUP_VERSION)")
                 return false
             }
 
-            // Create backup data object
             val backupData = BackupData(
                 version = version,
                 timestamp = jsonObject.getLong("timestamp"),
@@ -232,7 +216,6 @@ object BackupManager {
                 chatDatabaseData = jsonObject.optString("chatDatabaseData").takeIf { it.isNotEmpty() }
             )
 
-            // Restore configuration
             val configRepo = ConfigRepository(context)
 
             if (backupData.password != null) {
@@ -257,15 +240,12 @@ object BackupManager {
                 configRepo.savePublicKey(backupData.publicKey)
             }
 
-            // Restore onboarding completed flag
             configRepo.setOnboardingCompleted(backupData.onboardingCompleted)
 
-            // Restore yggmail database if included
             if (backupData.includesDatabase && backupData.databaseData != null) {
                 writeDatabaseFromBase64(context, backupData.databaseData)
             }
 
-            // Restore chat database if included
             if (backupData.includesChatDatabase && backupData.chatDatabaseData != null) {
                 writeChatDatabaseFromBase64(context, backupData.chatDatabaseData)
             }
@@ -278,9 +258,6 @@ object BackupManager {
         }
     }
 
-    /**
-     * Derive encryption key from password using PBKDF2.
-     */
     private fun deriveKey(password: String, salt: ByteArray): ByteArray {
         val keySpec = PBEKeySpec(password.toCharArray(), salt, ITERATION_COUNT, KEY_SIZE)
         val keyFactory = SecretKeyFactory.getInstance(KEY_DERIVATION)
@@ -420,18 +397,11 @@ object BackupManager {
         }
     }
 
-    /**
-     * Generate default backup filename with timestamp.
-     */
     fun generateBackupFilename(): String {
         val timestamp = System.currentTimeMillis()
         return "tyr_backup_${timestamp}${BACKUP_FILE_EXTENSION}"
     }
 
-    /**
-     * Verify backup password without full restoration.
-     * Useful for validating password before proceeding with restore.
-     */
     fun verifyBackupPassword(inputStream: InputStream, password: String): Boolean {
         return try {
             val encryptedData = inputStream.readBytes()

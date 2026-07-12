@@ -183,7 +183,6 @@ class ChatMessageAdapter(
                 binding.textAttachmentSize
             )
 
-            // Status icon
             when (msg.status) {
                 ChatMessage.STATUS_SENDING -> {
                     binding.imageStatus.visibility = View.INVISIBLE
@@ -200,12 +199,10 @@ class ChatMessageAdapter(
                 }
             }
 
-            // Click on attachment
             if (msg.hasAttachment) {
                 binding.layoutAttachment.setOnClickListener { onAttachmentClick?.invoke(msg) }
             }
 
-            // Single tap: show message context menu
             binding.root.setOnClickListener {
                 showMessageMenu(binding.root, msg.body)
             }
@@ -248,7 +245,6 @@ class ChatMessageAdapter(
                 binding.layoutAttachment.setOnClickListener { onAttachmentClick?.invoke(msg) }
             }
 
-            // Single tap: show message context menu
             binding.root.setOnClickListener {
                 showMessageMenu(binding.root, msg.body)
             }

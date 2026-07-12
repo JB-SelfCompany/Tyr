@@ -102,7 +102,6 @@ class SettingsAdapter(
             switch.setOnCheckedChangeListener(null)
             switch.isChecked = item.checked
 
-            // Set listener for switch changes
             switch.setOnCheckedChangeListener { _, isChecked ->
                 item.checked = isChecked
                 listener.onSwitchToggled(item.id, isChecked)

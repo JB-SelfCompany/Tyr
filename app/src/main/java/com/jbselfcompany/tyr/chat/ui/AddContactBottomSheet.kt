@@ -55,7 +55,6 @@ class AddContactBottomSheet : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Tab switching: Manual / QR Scan
         binding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
                 when (tab.position) {
@@ -73,7 +72,6 @@ class AddContactBottomSheet : BottomSheetDialogFragment() {
             override fun onTabReselected(tab: TabLayout.Tab) {}
         })
 
-        // Default: Manual tab visible
         binding.sectionManual.visibility = View.VISIBLE
         binding.sectionQr.visibility = View.GONE
 

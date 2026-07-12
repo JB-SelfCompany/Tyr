@@ -7,9 +7,6 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.jbselfcompany.tyr.databinding.FragmentOnboardingWelcomeBinding
 
-/**
- * Welcome screen fragment for onboarding
- */
 class OnboardingWelcomeFragment : Fragment() {
 
     private var _binding: FragmentOnboardingWelcomeBinding? = null

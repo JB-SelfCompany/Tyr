@@ -259,7 +259,6 @@ class YggmailService : Service() {
 
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Create service thread
         serviceThread = HandlerThread("YggmailServiceThread").apply { start() }
         serviceHandler = Handler(serviceThread.looper)
         // Use the same background thread for chat polling to avoid tying up main looper
@@ -477,6 +476,7 @@ class YggmailService : Service() {
      */
     private fun startYggmail() {
         serviceHandler.post {
+            if (isRunning) return@post
             startYggmailSync()
         }
     }
@@ -519,11 +519,11 @@ class YggmailService : Service() {
             // Create instance (auto-inits tracing)
             val mobile = YggmailMobile()
 
-            // Set password
-            mobile.setPassword(password)
-
-            // Start with config
+            // Start with config 
             mobile.start(config)
+
+            // Set password after start so the running instance picks it up
+            mobile.setPassword(password)
 
             yggmailMobile = mobile
 
@@ -1081,186 +1081,6 @@ class YggmailService : Service() {
         serviceHandler.post {
             performSoftStopSync()
         }
-    }
-
-    // ========== Quota Management ==========
-
-    /**
-     * Set maximum message size in megabytes
-     * @param maxSizeMB Maximum message size in megabytes
-     * @return true on success, false on error
-     */
-    fun setMaxMessageSizeMB(maxSizeMB: Long): Boolean {
-        val latch = CountDownLatch(1)
-        var success = false
-        var error: Exception? = null
-
-        serviceHandler.post {
-            try {
-                yggmailMobile?.setMaxMessageSizeMb(maxSizeMB.toULong())
-                success = true
-                TyrLogger.i(TAG,"Max message size set to ${maxSizeMB}MB")
-            } catch (e: Exception) {
-                error = e
-                TyrLogger.e(TAG,"Error setting max message size", e)
-            } finally {
-                latch.countDown()
-            }
-        }
-
-        if (!latch.await(5, TimeUnit.SECONDS)) {
-            TyrLogger.e(TAG,"Timeout setting max message size")
-            return false
-        }
-
-        return success && error == null
-    }
-
-    /**
-     * Data class for message size limit information
-     */
-    data class MaxMessageSizeInfo(
-        val maxSizeMB: Long  // Maximum message size limit in MB
-    )
-
-    /**
-     * Get message size limit information
-     * @return MaxMessageSizeInfo object, or null on error
-     */
-    fun getMaxMessageSizeInfo(): MaxMessageSizeInfo? {
-        val latch = CountDownLatch(1)
-        var result: MaxMessageSizeInfo? = null
-        var error: Exception? = null
-
-        serviceHandler.post {
-            try {
-                val infoJson = yggmailMobile?.getMaxMessageSizeInfo()
-                if (infoJson != null) {
-                    val jsonObj = JSONObject(infoJson)
-                    result = MaxMessageSizeInfo(
-                        maxSizeMB = jsonObj.optLong("maxSizeMB", 0)
-                    )
-                }
-            } catch (e: Exception) {
-                error = e
-                TyrLogger.e(TAG,"Error getting max message size info", e)
-            } finally {
-                latch.countDown()
-            }
-        }
-
-        if (!latch.await(15, TimeUnit.SECONDS)) {
-            TyrLogger.e(TAG,"Timeout getting max message size info")
-            return null
-        }
-
-        if (error != null) {
-            return null
-        }
-
-        return result
-    }
-
-    // ========== Storage Statistics ==========
-
-    /**
-     * Data class for mail storage statistics
-     */
-    data class MailStorageStats(
-        val dbSizeMB: Double,     // Database BLOB size in MB
-        val fileSizeMB: Double,   // File storage size in MB
-        val totalSizeMB: Double   // Total storage size in MB
-    )
-
-    /**
-     * Get mail storage statistics
-     * @return MailStorageStats object, or null on error
-     */
-    fun getMailStorageStats(): MailStorageStats? {
-        val latch = CountDownLatch(1)
-        var result: MailStorageStats? = null
-        var error: Exception? = null
-
-        serviceHandler.post {
-            try {
-                val statsJson = yggmailMobile?.getMailStorageStats()
-                if (statsJson != null) {
-                    val jsonObj = JSONObject(statsJson)
-                    result = MailStorageStats(
-                        dbSizeMB = jsonObj.optDouble("dbSizeMB", 0.0),
-                        fileSizeMB = jsonObj.optDouble("fileSizeMB", 0.0),
-                        totalSizeMB = jsonObj.optDouble("totalSizeMB", 0.0)
-                    )
-                }
-            } catch (e: Exception) {
-                error = e
-                TyrLogger.e(TAG,"Error getting mail storage stats", e)
-            } finally {
-                latch.countDown()
-            }
-        }
-
-        if (!latch.await(15, TimeUnit.SECONDS)) {
-            TyrLogger.e(TAG,"Timeout getting mail storage stats")
-            return null
-        }
-
-        if (error != null) {
-            return null
-        }
-
-        return result
-    }
-
-    /**
-     * Get count of messages in the outbound send queue.
-     * Returns -1 if service is unavailable.
-     */
-    fun getOutboundQueueCount(): Int {
-        val latch = CountDownLatch(1)
-        var result: UInt? = null
-
-        serviceHandler.post {
-            try {
-                result = yggmailMobile?.getOutboundQueueCount()
-            } catch (e: Exception) {
-                TyrLogger.e(TAG,"Error getting outbound queue count", e)
-            } finally {
-                latch.countDown()
-            }
-        }
-
-        if (!latch.await(5, TimeUnit.SECONDS)) {
-            TyrLogger.e(TAG,"Timeout getting outbound queue count")
-            return -1
-        }
-        return result?.toInt() ?: -1
-    }
-
-    /**
-     * Clear all entries from the outbound send queue.
-     * Returns the number of entries removed, or -1 on error.
-     */
-    fun clearOutboundQueue(): Int {
-        val latch = CountDownLatch(1)
-        var error: Exception? = null
-
-        serviceHandler.post {
-            try {
-                yggmailMobile?.clearOutboundQueue()
-            } catch (e: Exception) {
-                error = e
-                TyrLogger.e(TAG,"Error clearing outbound queue", e)
-            } finally {
-                latch.countDown()
-            }
-        }
-
-        if (!latch.await(10, TimeUnit.SECONDS)) {
-            TyrLogger.e(TAG,"Timeout clearing outbound queue")
-            return -1
-        }
-        return if (error == null) 0 else -1
     }
 
     // ---- Background chat polling ----

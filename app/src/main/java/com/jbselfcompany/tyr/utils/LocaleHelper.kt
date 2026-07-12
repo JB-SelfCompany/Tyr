@@ -26,9 +26,6 @@ object LocaleHelper {
         }
     }
 
-    /**
-     * Update context locale.
-     */
     private fun updateLocale(context: Context, languageCode: String): Context {
         val locale = Locale(languageCode)
         Locale.setDefault(locale)

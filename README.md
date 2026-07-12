@@ -1,17 +1,20 @@
 <div align="center">
 
-# 📧 Tyr
+<img src="logo.png" width="120" alt="Tyr logo">
 
-True Peer-to-Peer Email on Yggdrasil Network
+# Tyr
+
+Peer-to-peer email on the Yggdrasil network.
 
 [![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 ![Android](https://img.shields.io/badge/Android-6.0+-3DDC84.svg)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.2.20-purple.svg)](https://kotlinlang.org)
-![Version](https://img.shields.io/f-droid/v/com.jbselfcompany.tyr?baseUrl=https://apt.izzysoft.de/fdroid&label=IzzyOnDroid)
+![IzzyOnDroid](https://img.shields.io/f-droid/v/com.jbselfcompany.tyr?baseUrl=https://apt.izzysoft.de/fdroid&label=IzzyOnDroid)
 ![Downloads](https://img.shields.io/github/downloads/JB-SelfCompany/Tyr/total)
 [![Visitors](https://visitor-badge.laobi.icu/badge?page_id=JB-SelfCompany.Tyr)](https://github.com/JB-SelfCompany/Tyr)
 
-[<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroidButtonGreyBorder_nofont.png" height="80" alt="Get it at IzzyOnDroid">](https://apt.izzysoft.de/packages/com.jbselfcompany.tyr)
+
+[<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroidButtonGreyBorder_nofont.png" height="70" alt="Get it at IzzyOnDroid">](https://apt.izzysoft.de/packages/com.jbselfcompany.tyr)
 
 **[English](#) | [Русский](README.ru.md)**
 
@@ -19,237 +22,144 @@ True Peer-to-Peer Email on Yggdrasil Network
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 <div align="center">
 
 | | | | |
 | --- | --- | --- | --- |
-| <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/01.png" width="220"> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/02.png" width="220"> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/03.png" width="220"> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/05.png" width="220"> |
+| <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/01.png" width="200"> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/02.png" width="200"> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/03.png" width="200"> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/05.png" width="200"> |
 
 </div>
 
 ---
 
-## 🌐 What is Tyr?
+## What is Tyr?
 
-We're taught that email must go through servers. Why? Because the Internet was built around centralized infrastructure. Every email you send travels through multiple servers - your provider's server, maybe a few relay servers, and finally your recipient's provider's server. Each hop is a potential point of surveillance, censorship, or failure.
+Tyr runs a complete mail server on your Android device and routes mail over the
+[Yggdrasil](https://yggdrasil-network.github.io/) mesh network — no central mail
+servers, no port forwarding, no STUN/TURN. Messages route directly between nodes,
+and Yggdrasil encrypts everything in transit.
 
-Even "encrypted" email solutions still rely on these centralized servers. They encrypt the message content but the metadata - who you're talking to, when, how often - is visible to anyone watching the servers.
+Your address is derived from an Ed25519 public key (`<64-hex>@yggmail`), so it
+cannot be spoofed. Standard SMTP/IMAP is exposed on localhost, so any mail client
+works; DeltaChat/ArcaneChat give the best P2P messaging experience.
 
-But there is a network, called **[Yggdrasil](https://yggdrasil-network.github.io/)**, that gives everyone a free IPv6 and doesn't need a blessing from your ISP. We finally have this possibility to use true P2P email. And moreover, this network has strong encryption to protect all data that flows from one IP to another.
+## Features
 
-**Tyr brings true peer-to-peer email to your Android device** using these unusual conditions. Unlike traditional email clients, Tyr doesn't need:
+- Built-in P2P chat (text + photos) over Yggdrasil — no third-party app required
+- DeltaChat / ArcaneChat auto-configuration
+- Works with any SMTP/IMAP client (K-9 Mail, Thunderbird Mobile, FairEmail)
+- Local SMTP (`127.0.0.1:1025`) and IMAP (`127.0.0.1:1143`) servers
+- Ed25519 cryptographic identity
+- Configurable Yggdrasil peers with RTT-based auto-discovery
+- Push notifications with Doze-aware battery optimization
+- Auto-start on boot
+- Password-protected encrypted backup/restore
+- Log collection with period selection and archiving
 
-- ❌ Centralized mail servers (the connections are straight P2P)
-- ❌ Message encryption layers (the network takes care of that)
-- ❌ Port forwarding or STUN/TURN servers (Yggdrasil handles NAT traversal)
-
----
-
-## ✨ Features
-
-| Feature | Description |
-|---------|-------------|
-| 💬 **Built-in Tyr Chat** | Native P2P messenger — no third-party app needed. Send messages and photos directly over Yggdrasil |
-| 🔗 **Full DeltaChat/ArcaneChat Integration** | Seamless setup with the best decentralized messengers |
-| 📧 **Email Client Support** | Works with K-9 Mail, Thunderbird Mobile, FairEmail, and any SMTP/IMAP client |
-| 📱 **QR Code Sharing** | Generate and share mailto: links via QR codes |
-| 📧 **Local SMTP/IMAP Server** | Complete mail server running directly on your device |
-| 🔐 **Cryptographic Identity** | Automatic Ed25519 key generation - your mail identity cannot be spoofed |
-| 🌍 **Yggdrasil Network** | Connect via configurable peers - censorship-resistant by design |
-| 🔍 **Auto-Peer Discovery** | Automatic peer discovery with RTT-based sorting for optimal performance |
-| 🔔 **Push Notifications** | Instant message delivery with minimal battery impact |
-| 🚀 **Auto-Start on Boot** | Always-on availability for incoming messages |
-| 💾 **Encrypted Backup & Restore** | Password-protected configuration with optional key export |
-| 🔋 **Extreme Battery Optimization** | 10-15x improvement: 1-3%/hour (was 15-30%), 98% fewer packets, full Doze Mode support |
-| 📊 **Advanced Logging** | Period selection, log archiving, and real-time monitoring |
-
----
-
-## 🛠️ How It Works
+## How it works
 
 ```mermaid
 graph LR
-    A[Tyr Chat] -->|Built-in| B[Tyr Service]
+    A[Tyr Chat] -->|built-in| B[Tyr service]
     C[DeltaChat/ArcaneChat] -->|SMTP/IMAP| B
-    B -->|Yggmail Protocol| D[Yggdrasil Network]
-    D -->|P2P Encrypted| E[Recipient's Tyr]
-    E -->|Built-in| F[Tyr Chat]
-    E -->|SMTP/IMAP| G[Recipient's Chat App]
+    B -->|YMP| D[Yggdrasil network]
+    D -->|P2P encrypted| E[Recipient's Tyr]
 ```
 
-Tyr runs a complete email server right on your Android device, using the Yggdrasil network for transport. The **[Yggmail](https://github.com/JB-SelfCompany/yggmail-android)** mail server (built in Go) is embedded as a library inside the app and runs as a foreground service.
+The mail server is [yggmail-ng](https://github.com/JB-SelfCompany/Yggmail-ng)
+(Rust), embedded as a native library via UniFFI (`libyggmail_mobile.so`) and run
+as a foreground service. On top of Yggdrasil it exposes SMTP and IMAP4rev1 on
+localhost; any client can connect.
 
-On top of Yggdrasil, it provides standard **SMTP** and **IMAP** protocols on localhost (`127.0.0.1:1025` and `127.0.0.1:1143`). Any email client can connect to these ports - but we recommend **DeltaChat** or **ArcaneChat** for the best P2P messaging experience.
+Built-in chat (since 1.8) uses the same encrypted P2P transport: text and photos,
+delivery/read receipts, tap-to-copy, auto-read on open, and suppressed
+notifications while a conversation is in the foreground.
 
-### 💬 Built-in Tyr Chat
+## Quick start
 
-Starting with version 1.8, Tyr includes a **native P2P messenger** — no third-party app required. Open a contact's address, start chatting right away. The chat works directly over Yggdrasil using the same encrypted P2P transport.
+### DeltaChat / ArcaneChat (recommended)
 
-**Chat features:**
-- Send and receive text messages and photos
-- Delivery status with checkmarks (sent / delivered)
-- Tap any message to copy its text
-- Auto-read: messages are marked as read the moment you open a conversation
-- Notifications are suppressed while you are actively in the chat
+**Automatic:** complete onboarding (password + peers), start the service, install
+[DeltaChat](https://delta.chat/) or [ArcaneChat](https://github.com/ArcaneChat/android),
+then tap **Setup DeltaChat/ArcaneChat** — Tyr opens the app pre-configured.
 
-### 📬 Mail Address Format
+**Manual:** create a new profile → *Use a different server* → enter your `@yggmail`
+address (from Tyr's main screen) and the password you set in Tyr.
 
-Every Tyr installation generates unique **Ed25519 cryptographic keys**. Your mail address is derived from your public key:
+### Other clients (K-9 Mail, Thunderbird, FairEmail)
 
-```
-<64-hex-characters>@yggmail
-```
+- **Email:** your `<64-hex>@yggmail` address
+- **Password:** the password set during onboarding
+- **IMAP:** `127.0.0.1:1143` (no TLS) · **SMTP:** `127.0.0.1:1025` (no TLS)
 
-This means your identity is **cryptographically verifiable** and cannot be spoofed.
+Tyr must be running for mail to flow — enable auto-start in settings. Use the **QR
+Code** button to share your address.
 
----
+## Security
 
-## 📱 Quick Start
+- Password stored via Android Keystore (AES-256-GCM), with automatic recovery for
+  known Keystore issues on Samsung and other devices
+- P2P traffic encrypted by Yggdrasil in transit
+- SMTP/IMAP bound to localhost only
+- Ed25519 identity — address cannot be spoofed
+- Password-protected encrypted backups
+- Push without third-party push services or metadata exposure
 
-### Setting up DeltaChat/ArcaneChat
-
-#### Option 1: Automatic Setup (Recommended)
-
-1. Install Tyr and complete the onboarding (set password, configure peers)
-2. Start the Yggmail service in Tyr
-3. Install [DeltaChat](https://delta.chat/) or [ArcaneChat](https://github.com/ArcaneChat/android)
-4. In Tyr's main screen, tap **"Setup DeltaChat/ArcaneChat"**
-5. Tyr will automatically open your chat app with pre-configured settings
-6. Complete the setup and start chatting!
-
-#### Option 2: Manual Setup
-
-If automatic setup doesn't work:
-
-1. Complete Tyr onboarding and start the service
-2. Copy your mail address from Tyr's main screen (looks like `abc123...@yggmail`)
-3. In DeltaChat/ArcaneChat, create a new profile
-4. Tap **"Use a different server"**
-5. Enter your Yggmail address and the password you set in Tyr
-6. Tap "✓" to complete setup
-
-### Setting up Other Email Clients
-
-Tyr works with any standard email client. For K-9 Mail, Thunderbird Mobile, or FairEmail:
-
-1. Complete Tyr onboarding and start the service
-2. In Tyr's main screen, tap **"Email Client Setup"** card for detailed instructions
-3. Configure your email client with:
-   - **Email**: Your mail address from Tyr (e.g., `abc123...@yggmail`)
-   - **Password**: The password you set during Tyr onboarding
-   - **IMAP**: 127.0.0.1:1143 (no encryption)
-   - **SMTP**: 127.0.0.1:1025 (no encryption)
-
-**QR Code Sharing**: Tap the **"QR Code"** button in Tyr to generate a QR code for your mail address. You can share it via the system share sheet to quickly exchange addresses with contacts.
-
-> **Important**: Tyr must be running for your email client to send and receive messages. Enable auto-start in Tyr settings for seamless experience.
-
----
-
-## 🔒 Security Features
-
-- **Password Encryption**: Android Keystore System with AES-256-GCM
-- **Automatic Keystore Recovery**: Handles Android Keystore issues on Samsung and other devices
-- **Network Encryption**: All P2P communications encrypted by Yggdrasil Network
-- **Local-Only Access**: SMTP/IMAP ports bound to localhost only
-- **Cryptographic Identity**: Ed25519 keys ensure your mail address cannot be spoofed
-- **Encrypted Backups**: Configuration and keys backed up with password protection
-- **Privacy-First Push**: Instant notifications without third-party push services or metadata exposure
-
----
-
-## 🏗️ Building from Source
+## Building from source
 
 ### Prerequisites
 
-- Android Studio (latest version)
 - JDK 17
-- Android SDK (API 23-36)
-- Go 1.21+ and gomobile (only if rebuilding yggmail.aar)
+- Android SDK — Platform 36, build-tools, min API 23 (Android Studio provides these)
+- Android SDK/NDK path configured (`local.properties` or `ANDROID_HOME`)
 
-### Build Commands
+Gradle is provided by the wrapper (`./gradlew`) — no separate install.
+
+### Build
 
 ```bash
-# Clone the repository
 git clone https://github.com/JB-SelfCompany/Tyr.git
 cd Tyr
-
-# Build debug APK
-./gradlew assembleDebug
-
-# Install to connected device
-./gradlew installDebug
+./gradlew assembleDebug      # debug APK → app/build/outputs/apk/debug/
+./gradlew installDebug       # install to a connected device
 ```
 
-APKs will be in `app/build/outputs/apk/debug/` or `app/build/outputs/apk/release/`
+### Rebuilding the native library (optional)
 
-### Rebuilding yggmail.aar (optional)
+The prebuilt `libyggmail_mobile.so` files live in `app/src/main/jniLibs/<abi>/` and
+the UniFFI bindings in `app/src/main/java/uniffi/yggmail_mobile/`. To rebuild them
+from [yggmail-ng](https://github.com/JB-SelfCompany/Yggmail-ng) you additionally need:
+
+- Rust (stable) + Android targets:
+  `rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android`
+- `cargo install cargo-ndk`
+- Android NDK with `ANDROID_NDK_HOME` set
 
 ```bash
-cd ../yggmail/mobile
-
-# Windows
-..\build-android.bat
-
-# Unix
-gomobile bind -target=android -androidapi 23 -javapkg=com.jbselfcompany.tyr -ldflags="-checklinkname=0" -o yggmail.aar .
+cd Yggmail-ng && ./build-android.sh        # then copy the .so + bindings per the script's hint
 ```
 
-Then copy `yggmail.aar` to `Tyr/app/libs/`
-
----
-
-## 🔧 Technical Details
+## Technical details
 
 | Component | Details |
 |-----------|---------|
-| **Language** | Kotlin 2.2.20 |
-| **Min SDK** | 23 (Android 6.0) |
-| **Target SDK** | 33 (Android 13) |
-| **Compile SDK** | 36 |
-| **Architecture** | Layered (UI → Service → Data) |
-| **Mail Server** | Yggmail (Go library via gomobile) |
-| **Network** | Yggdrasil overlay mesh network |
-| **Localization** | English, Russian |
-| **Native Library** | yggmail.aar (located in `app/libs/`) |
+| Language | Kotlin 2.2.20 |
+| Min / Target / Compile SDK | 23 / 33 / 36 |
+| Architecture | Layered (UI → Service → Data) |
+| Mail server | yggmail-ng (Rust) via UniFFI (`libyggmail_mobile.so`) |
+| Network | Yggdrasil overlay mesh |
+| Localization | English, Russian |
 
----
+## Related projects
 
-## 🤝 Related Projects
+- [yggmail-ng](https://github.com/JB-SelfCompany/Yggmail-ng) — the mail server that powers Tyr
+- [Yggdrasil Network](https://yggdrasil-network.github.io/) — the mesh network
+- [DeltaChat](https://delta.chat/) · [ArcaneChat](https://github.com/ArcaneChat/android) — recommended clients
+- [K-9 Mail](https://k9mail.app/) · [Thunderbird Mobile](https://www.thunderbird.net/mobile/) · [FairEmail](https://email.faircode.eu/)
+- [Mimir](https://github.com/Revertron/Mimir) — P2P messenger on Yggdrasil (sister project)
 
-- **[Yggmail](https://github.com/JB-SelfCompany/yggmail-android)**: The mail transfer agent that powers Tyr
-- **[Mimir](https://github.com/Revertron/Mimir)**: P2P messenger on Yggdrasil (sister project)
-- **[Yggdrasil Network](https://yggdrasil-network.github.io/)**: The mesh network infrastructure
-- **[DeltaChat](https://delta.chat/)**: Recommended email-based messenger client
-- **[ArcaneChat](https://github.com/ArcaneChat/android)**: Alternative email-based messenger client
-- **[K-9 Mail](https://k9mail.app/)**: Open-source email client for Android
-- **[Thunderbird Mobile](https://www.thunderbird.net/mobile/)**: Mozilla's mobile email client (based on K-9)
-- **[FairEmail](https://email.faircode.eu/)**: Privacy-oriented email client for Android
+## License
 
----
-
-## 📄 License
-
-Tyr is open source software. The Yggmail library uses **Mozilla Public License v. 2.0**.
-
-See [LICENSE](LICENSE) file for full details.
-
----
-
-## 🌟 Why P2P Email Matters
-
-> **Censorship Circumvention**: Connect to any of hundreds of available Yggdrasil nodes, host your own, or even build a private network. Email freedom is literally in your hands.
-
-> **Privacy by Design**: No metadata collection, no server logs, no third-party surveillance. Your conversations belong to you.
-
-> **Decentralization**: No single point of failure, no corporate control. True peer-to-peer architecture.
-
----
-
-<div align="center">
-
-Made with ❤️ by <a href="https://github.com/JB-SelfCompany">JB-SelfCompany</a>
-
-</div>
+App: GPLv3 (see [LICENSE](LICENSE)). The embedded yggmail-ng library is MPL-2.0.

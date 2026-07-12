@@ -76,17 +76,14 @@ class SmtpSender(
                     return line.startsWith(code)
                 }
 
-                // Read greeting
                 if (!expectCode("220")) {
                     TyrLogger.w(TAG, "SMTP greeting failed from $host:$port")
                     return Result.Error("SMTP greeting failed")
                 }
 
-                // EHLO
                 writeLine("EHLO android-tyr")
                 if (!expectCode("250")) return Result.Error("EHLO failed")
 
-                // AUTH LOGIN
                 writeLine("AUTH LOGIN")
                 val authPrompt1 = readLine()
                 if (!authPrompt1.startsWith("334")) return Result.Error("AUTH LOGIN prompt failed")
@@ -103,19 +100,15 @@ class SmtpSender(
                     return Result.Error("AUTH password failed")
                 }
 
-                // MAIL FROM
                 writeLine("MAIL FROM:<$fromAddress>")
                 if (!expectCode("250")) return Result.Error("MAIL FROM failed")
 
-                // RCPT TO
                 writeLine("RCPT TO:<$toAddress>")
                 if (!expectCode("250")) return Result.Error("RCPT TO failed")
 
-                // DATA
                 writeLine("DATA")
                 if (!expectCode("354")) return Result.Error("DATA command failed")
 
-                // Headers
                 // Capture the timestamp NOW — this is the value the recipient will parse
                 // from the Date: header and echo back as X-Tyr-Delivery-Timestamp.
                 // It must match what we store in the DB, so we capture it here rather than
@@ -160,7 +153,6 @@ class SmtpSender(
                     writeLine("Content-Type: multipart/mixed; boundary=\"$boundary\"")
                     writeLine("")
 
-                    // Text part
                     writeLine("--$boundary")
                     writeLine("Content-Type: text/plain; charset=UTF-8")
                     writeLine("Content-Transfer-Encoding: 8bit")
@@ -170,7 +162,6 @@ class SmtpSender(
                     }
                     writeLine("")
 
-                    // Attachment part
                     writeLine("--$boundary")
                     val safeName = attachment.name.replace("\"", "'")
                     writeLine("Content-Type: ${attachment.mimeType}; name=\"$safeName\"")
@@ -190,7 +181,6 @@ class SmtpSender(
                     writeLine("")
                     writeLine("--$boundary--")
                 } else {
-                    // Plain text message
                     writeLine("Content-Type: text/plain; charset=UTF-8")
                     writeLine("")
                     body.lines().forEach { line ->
@@ -202,7 +192,6 @@ class SmtpSender(
                 if (!expectCode("250")) return Result.Error("Message DATA failed")
                 socket.soTimeout = 30_000  // reset for QUIT
 
-                // QUIT
                 writeLine("QUIT")
                 readLine() // 221 Bye
 

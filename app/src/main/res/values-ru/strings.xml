@@ -285,7 +285,7 @@
     <string name="website">Веб-сайт</string>
     <string name="libs_label">Использованные библиотеки</string>
     <string name="libs_used">\n
-• Yggmail (Go)\n
+• Yggmail-ng (Rust)\n
 • Yggdrasil Network (LGPLv3)\n
 • AndroidX (Apache 2.0)\n
 • Material Components (Apache 2.0)\n
@@ -302,6 +302,9 @@
     <string name="using_default_peers">Используются дефолтные пиры</string>
     <string name="all_peers_already_exist">Все выбранные пиры уже существуют</string>
     <string name="error_no_peers_selected">Пожалуйста, выберите хотя бы один пир или используйте дефолтные пиры</string>
+
+    <!-- Chat maintenance -->
+    <string name="chat_under_maintenance">Чат временно недоступен — идёт техобслуживание.</string>
 
     <!-- Storage Settings -->
     <string name="storage_settings">Хранилище</string>

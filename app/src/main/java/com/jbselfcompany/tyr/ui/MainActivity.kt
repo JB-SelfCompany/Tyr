@@ -95,9 +95,6 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
 
             yggmailService?.addStatusListener(this@MainActivity)
 
-            // Update storage and quota info when service connects
-            updateStorageInfo()
-
             // BIND_AUTO_CREATE creates the service via onCreate() without calling onStartCommand().
             // After a process kill + system restart, the service is bound but Yggmail is never
             // initialized. Kick it with an explicit start if it should be running but isn't.
@@ -132,7 +129,7 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
         setupUI()
         bindService()
 
-        // Handle tab selection from SettingsActivity navigation
+        // Handle tab selection from settings tab navigation
         if (intent.getStringExtra(EXTRA_TAB) == TAB_CHAT) {
             binding.bottomNavigation.selectedItemId = R.id.nav_chat
         }
@@ -147,7 +144,7 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        // Handle tab selection when resumed from SettingsActivity
+        // Handle tab selection when resumed from settings tab
         if (intent.getStringExtra(EXTRA_TAB) == TAB_CHAT) {
             binding.bottomNavigation.selectedItemId = R.id.nav_chat
         }
@@ -162,8 +159,6 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
         yggmailService?.setAppActive(true)
         // Start network monitoring
         startNetworkMonitoring()
-        // Update storage info
-        updateStorageInfo()
         // Update chat badge and listen for new messages
         updateChatBadge()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -311,9 +306,6 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
             binding.buttonToggleService.setIconResource(R.drawable.ic_play_arrow)
         }
 
-        // Update storage info
-        // This function will handle visibility based on service state
-        updateStorageInfo()
     }
 
     private fun setupDeltaChat() {
@@ -616,8 +608,9 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
         binding.contentSettings.visibility = View.GONE
         if (!chatFragmentLoaded) {
             chatFragmentLoaded = true
+            // Chat is under maintenance — show a placeholder instead of ChatFragment.
             supportFragmentManager.beginTransaction()
-                .replace(R.id.content_chat, ChatFragment())
+                .replace(R.id.content_chat, MaintenanceFragment())
                 .commitNow()
         }
     }
@@ -1021,51 +1014,6 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
             .show()
     }
 
-    /**
-     * Update storage and quota info card
-     * Shows message size limit and storage statistics
-     */
-    private fun updateStorageInfo() {
-        if (!YggmailService.isRunning) {
-            binding.cardStorageQuota.visibility = View.GONE
-            return
-        }
-
-        // Show card immediately if service is running
-        binding.cardStorageQuota.visibility = View.VISIBLE
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            val maxSizeInfo = yggmailService?.getMaxMessageSizeInfo()
-            val storageStats = yggmailService?.getMailStorageStats()
-
-            // Calculate media cache size (chat attachments in external or internal files dir)
-            val attachmentsDir = java.io.File(
-                getExternalFilesDir(null) ?: filesDir, "attachments"
-            )
-            val mediaCacheSizeMB = attachmentsDir.walkTopDown()
-                .filter { it.isFile }
-                .sumOf { it.length() } / (1024.0 * 1024.0)
-
-            withContext(Dispatchers.Main) {
-                if (maxSizeInfo == null || storageStats == null) return@withContext
-
-                binding.textQuotaInfo.text = getString(R.string.max_file_size, maxSizeInfo.maxSizeMB)
-                binding.quotaInfoProgress.visibility = View.GONE
-
-                val storageText = buildString {
-                    append(getString(R.string.storage_db_size, storageStats.dbSizeMB))
-                    append("\n")
-                    append(getString(R.string.storage_file_size, storageStats.fileSizeMB))
-                    append("\n")
-                    append(getString(R.string.storage_total_size, storageStats.totalSizeMB))
-                }
-                binding.textStorageInfo.text = storageText
-
-                binding.textMediaCacheInfo.text = getString(R.string.storage_media_cache_size, mediaCacheSizeMB)
-            }
-        }
-    }
-
     /** Called by ChatFragment after opening/closing conversations to keep badge in sync. */
     fun refreshChatBadge() = updateChatBadge()
 
@@ -1074,20 +1022,7 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
      * Counts distinct conversations (not messages) that have unread incoming messages.
      */
     private fun updateChatBadge() {
-        val myAddress = configRepository.getMailAddress() ?: return
-        lifecycleScope.launch(Dispatchers.IO) {
-            val count = ChatRepository(this@MainActivity).getUnreadChatCount(myAddress)
-            withContext(Dispatchers.Main) {
-                if (!isFinishing && !isDestroyed) {
-                    val badge = binding.bottomNavigation.getOrCreateBadge(R.id.nav_chat)
-                    if (count > 0) {
-                        badge.isVisible = true
-                        badge.number = count
-                    } else {
-                        binding.bottomNavigation.removeBadge(R.id.nav_chat)
-                    }
-                }
-            }
-        }
+        // Chat is under maintenance — never show an unread badge on the Chat tab.
+        binding.bottomNavigation.removeBadge(R.id.nav_chat)
     }
 }

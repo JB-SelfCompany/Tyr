@@ -48,9 +48,6 @@ object SecurePreferences {
         }
     }
 
-    /**
-     * Create EncryptedSharedPreferences instance
-     */
     private fun createEncryptedPreferences(context: Context): SharedPreferences {
         val masterKey = MasterKey.Builder(context)
             .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
@@ -77,10 +74,7 @@ object SecurePreferences {
         TyrLogger.w(TAG,"Keystore exception detected. Clearing corrupted encrypted preferences and master key...")
 
         try {
-            // Delete corrupted SharedPreferences file
             deleteSharedPreferences(context)
-
-            // Delete corrupted master key from Android Keystore
             deleteMasterKey()
 
             TyrLogger.i(TAG,"Successfully cleared corrupted data. Recreating encrypted preferences...")
@@ -89,7 +83,6 @@ object SecurePreferences {
             context.getSharedPreferences(RECOVERY_FLAG_PREFS, android.content.Context.MODE_PRIVATE)
                 .edit().putBoolean(RECOVERY_FLAG_KEY, true).apply()
 
-            // Recreate encrypted preferences
             return createEncryptedPreferences(context)
         } catch (recoveryException: Exception) {
             TyrLogger.e(TAG,"Failed to recover from Keystore exception. Original exception:", originalException)
@@ -98,9 +91,6 @@ object SecurePreferences {
         }
     }
 
-    /**
-     * Delete the encrypted SharedPreferences file
-     */
     private fun deleteSharedPreferences(context: Context) {
         try {
             val prefsFile = File(context.applicationInfo.dataDir + "/shared_prefs/${SECURE_PREFS_NAME}.xml")
@@ -113,9 +103,6 @@ object SecurePreferences {
         }
     }
 
-    /**
-     * Delete the master key from Android Keystore
-     */
     private fun deleteMasterKey() {
         try {
             val keyStore = KeyStore.getInstance("AndroidKeyStore")
@@ -130,9 +117,6 @@ object SecurePreferences {
         }
     }
 
-    /**
-     * Securely store a string value.
-     */
     fun putString(context: Context, key: String, value: String?) {
         try {
             val prefs = getEncryptedPreferences(context)
@@ -143,9 +127,6 @@ object SecurePreferences {
         }
     }
 
-    /**
-     * Retrieve a securely stored string value.
-     */
     fun getString(context: Context, key: String, defaultValue: String? = null): String? {
         return try {
             val prefs = getEncryptedPreferences(context)
@@ -156,25 +137,16 @@ object SecurePreferences {
         }
     }
 
-    /**
-     * Remove a securely stored value.
-     */
     fun remove(context: Context, key: String) {
         val prefs = getEncryptedPreferences(context)
         prefs.edit().remove(key).apply()
     }
 
-    /**
-     * Check if a key exists in secure storage.
-     */
     fun contains(context: Context, key: String): Boolean {
         val prefs = getEncryptedPreferences(context)
         return prefs.contains(key)
     }
 
-    /**
-     * Clear all securely stored values.
-     */
     fun clear(context: Context) {
         val prefs = getEncryptedPreferences(context)
         prefs.edit().clear().apply()
