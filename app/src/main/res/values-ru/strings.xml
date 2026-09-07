@@ -441,11 +441,17 @@
     <string name="chat_message_status_desc">Статус сообщения</string>
     <string name="chat_message_copied">Скопировано</string>
     <string name="chat_message_menu_copy">Копировать</string>
+    <string name="chat_message_menu_reply">Ответить</string>
+    <string name="chat_message_menu_delete">Удалить</string>
+    <string name="chat_message_delete_title">Удалить сообщение?</string>
+    <string name="chat_message_delete_body">Сообщение будет удалено только на этом устройстве. У собеседника оно останется.</string>
 
     <!-- Chat Settings -->
     <string name="chat_settings">Чат</string>
     <string name="chat_accept_non_contacts">Принимать сообщения от незнакомцев</string>
     <string name="chat_accept_non_contacts_description">Показывать предпросмотр сообщений от пользователей не из контактов</string>
+    <string name="chat_block_screenshots">Блокировать скриншоты в чате</string>
+    <string name="chat_block_screenshots_description">Запретить снимки и запись экрана в чате</string>
     <!-- Stranger message prompt -->
     <string name="chat_stranger_message_title">Сообщение от неизвестного контакта</string>
     <string name="chat_stranger_message_body">%1$s написал вам:\n\n%2$s</string>

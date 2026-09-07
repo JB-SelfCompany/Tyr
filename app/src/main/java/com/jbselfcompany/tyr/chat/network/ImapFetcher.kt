@@ -407,7 +407,7 @@ class ImapFetcher(
 
             // Whether we are currently accumulating lines from a BODY[HEADER.FIELDS] section.
             // Reset to false by an empty line (end-of-headers) or a new BODY section announcement.
-            var collectingHeader = line.contains("BODY[HEADER", ignoreCase = true) && line.contains("{")
+            var collectingHeader = (line.contains("BODY[HEADER", ignoreCase = true) || line.contains("BODY.PEEK[HEADER", ignoreCase = true)) && line.contains("{")
             var collectingBody = false
 
             // Applies one header line to the current message fields.
@@ -518,11 +518,11 @@ class ImapFetcher(
                     uid < 0 && l.trim().matches(Regex("UID\\s+\\d+", RegexOption.IGNORE_CASE)) -> {
                         uid = l.trim().removePrefix("UID ").trim().toLongOrNull() ?: -1L
                     }
-                    l.contains("BODY[HEADER", ignoreCase = true) && l.contains("{") -> {
+                    (l.contains("BODY[HEADER", ignoreCase = true) || l.contains("BODY.PEEK[HEADER", ignoreCase = true)) && l.contains("{") -> {
                         collectingHeader = true
                         collectingBody = false
                     }
-                    l.contains("BODY[TEXT]", ignoreCase = true) && l.contains("{") -> {
+                    (l.contains("BODY[TEXT]", ignoreCase = true) || l.contains("BODY.PEEK[TEXT]", ignoreCase = true)) && l.contains("{") -> {
                         collectingBody = true
                         collectingHeader = false
                     }

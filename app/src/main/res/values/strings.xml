@@ -440,11 +440,17 @@
     <string name="chat_message_status_desc">Message status</string>
     <string name="chat_message_copied">Copied</string>
     <string name="chat_message_menu_copy">Copy</string>
+    <string name="chat_message_menu_reply">Reply</string>
+    <string name="chat_message_menu_delete">Delete</string>
+    <string name="chat_message_delete_title">Delete message?</string>
+    <string name="chat_message_delete_body">The message will be removed only on this device. Your contact will still have it.</string>
 
     <!-- Chat Settings -->
     <string name="chat_settings">Chat</string>
     <string name="chat_accept_non_contacts">Accept messages from strangers</string>
     <string name="chat_accept_non_contacts_description">Show preview of messages from users not in your contacts</string>
+    <string name="chat_block_screenshots">Block screenshots in chat</string>
+    <string name="chat_block_screenshots_description">Prevent screenshots and screen recording of chat screens</string>
     <!-- Stranger message prompt -->
     <string name="chat_stranger_message_title">Message from unknown contact</string>
     <string name="chat_stranger_message_body">%1$s sent you a message:\n\n%2$s</string>

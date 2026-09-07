@@ -1,19 +1,27 @@
 package com.jbselfcompany.tyr.chat.ui
 
 import android.content.ClipData
+import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
+import android.os.Build
+import android.os.PersistableBundle
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.DecelerateInterpolator
 import android.widget.ImageView
-import android.widget.PopupMenu
+import android.widget.LinearLayout
+import android.widget.PopupWindow
 import android.widget.TextView
 import android.widget.Toast
-import androidx.recyclerview.widget.RecyclerView
-import android.graphics.BitmapFactory
-import android.graphics.Matrix
 import androidx.exifinterface.media.ExifInterface
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.RecyclerView
 import com.jbselfcompany.tyr.R
 import com.jbselfcompany.tyr.chat.data.ChatMessage
 import com.jbselfcompany.tyr.databinding.ItemMessageReceivedBinding
@@ -27,7 +35,8 @@ import java.util.Locale
 class ChatMessageAdapter(
     private val context: Context,
     private val onReplySwipe: ((ChatMessage) -> Unit)? = null,
-    private val onAttachmentClick: ((ChatMessage) -> Unit)? = null
+    private val onAttachmentClick: ((ChatMessage) -> Unit)? = null,
+    private val onDelete: ((ChatMessage) -> Unit)? = null
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     sealed class ChatListItem {
@@ -42,9 +51,6 @@ class ChatMessageAdapter(
         const val VIEW_SENT = 1
         const val VIEW_RECEIVED = 2
         const val VIEW_DATE_SEPARATOR = 3
-
-        // Context menu item IDs — extend here to add more actions (forward, delete, reply, etc.)
-        private const val MENU_ITEM_COPY = 1
 
         /**
          * Parses email-style quoted text from a message body.
@@ -94,26 +100,62 @@ class ChatMessageAdapter(
         }
     }
 
+    /**
+     * Saves the current items snapshot, rebuilds from rawMessages, then dispatches
+     * granular add/change/remove notifications via DiffUtil instead of
+     * notifyDataSetChanged(). Must be called on the main thread.
+     */
+    private fun applyItems() {
+        val oldItems = items.toList()
+        buildItems()
+        val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+            override fun getOldListSize() = oldItems.size
+            override fun getNewListSize() = items.size
+
+            override fun areItemsTheSame(oldPos: Int, newPos: Int): Boolean {
+                val old = oldItems[oldPos]
+                val new = items[newPos]
+                return when {
+                    old is ChatListItem.DateItem && new is ChatListItem.DateItem ->
+                        old.label == new.label
+                    old is ChatListItem.MessageItem && new is ChatListItem.MessageItem ->
+                        old.msg.id == new.msg.id
+                    else -> false
+                }
+            }
+
+            override fun areContentsTheSame(oldPos: Int, newPos: Int): Boolean {
+                // ChatMessage is a data class with no transient fields, so equals() is
+                // a reliable visual-equality check across all rendered fields
+                // (body, timestamp, status, attachment fields, etc.).
+                return oldItems[oldPos] == items[newPos]
+            }
+        })
+        diff.dispatchUpdatesTo(this)
+    }
+
     fun submitList(newMessages: List<ChatMessage>) {
         rawMessages.clear()
         rawMessages.addAll(newMessages)
-        buildItems()
-        notifyDataSetChanged()
+        applyItems()
     }
 
     fun addMessage(message: ChatMessage) {
         rawMessages.add(message)
-        buildItems()
-        notifyDataSetChanged()
+        applyItems()
     }
 
     fun updateMessageStatus(messageId: Long, status: Int) {
         val idx = rawMessages.indexOfFirst { it.id == messageId }
         if (idx >= 0) {
             rawMessages[idx] = rawMessages[idx].copy(status = status)
-            buildItems()
-            notifyDataSetChanged()
+            applyItems()
         }
+    }
+
+    fun removeMessageById(id: Long) {
+        rawMessages.removeAll { it.id == id }
+        applyItems()
     }
 
     fun getItem(position: Int): ChatMessage =
@@ -203,8 +245,9 @@ class ChatMessageAdapter(
                 binding.layoutAttachment.setOnClickListener { onAttachmentClick?.invoke(msg) }
             }
 
-            binding.root.setOnClickListener {
-                showMessageMenu(binding.root, msg.body)
+            binding.root.setOnLongClickListener {
+                showMessageMenu(binding.root, msg)
+                true
             }
         }
     }
@@ -245,34 +288,71 @@ class ChatMessageAdapter(
                 binding.layoutAttachment.setOnClickListener { onAttachmentClick?.invoke(msg) }
             }
 
-            binding.root.setOnClickListener {
-                showMessageMenu(binding.root, msg.body)
+            binding.root.setOnLongClickListener {
+                showMessageMenu(binding.root, msg)
+                true
             }
         }
     }
 
     /**
-     * Shows a popup context menu anchored to the tapped message view.
-     * Additional actions (forward, delete, reply, etc.) can be added here later.
+     * Shows a Telegram-style popup context menu anchored to the long-pressed message view.
+     * Actions: Reply, Copy, Delete.
      */
-    private fun showMessageMenu(anchor: View, body: String) {
-        val popup = PopupMenu(anchor.context, anchor)
-        popup.menu.add(0, MENU_ITEM_COPY, 0, anchor.context.getString(R.string.chat_message_menu_copy))
-        popup.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                MENU_ITEM_COPY -> {
-                    copyMessageText(anchor.context, body)
-                    true
-                }
-                else -> false
-            }
+    private fun showMessageMenu(anchor: View, msg: ChatMessage) {
+        val ctx = anchor.context
+        val content = LayoutInflater.from(ctx).inflate(R.layout.popup_message_actions, null)
+
+        val elevationPx = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP, 8f, ctx.resources.displayMetrics
+        )
+        val popup = PopupWindow(content, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true).apply {
+            elevation = elevationPx
+            isOutsideTouchable = true
         }
-        popup.show()
+
+        content.findViewById<LinearLayout>(R.id.action_reply).setOnClickListener {
+            popup.dismiss()
+            onReplySwipe?.invoke(msg)
+        }
+        content.findViewById<LinearLayout>(R.id.action_copy).setOnClickListener {
+            popup.dismiss()
+            copyMessageText(ctx, msg.body)
+        }
+        content.findViewById<LinearLayout>(R.id.action_delete).setOnClickListener {
+            popup.dismiss()
+            onDelete?.invoke(msg)
+        }
+
+        content.scaleX = 0.85f
+        content.scaleY = 0.85f
+        content.alpha = 0f
+        content.pivotX = 0f
+        content.pivotY = 0f
+
+        popup.showAsDropDown(anchor, 0, 0, Gravity.START)
+
+        content.post {
+            content.animate()
+                .scaleX(1f)
+                .scaleY(1f)
+                .alpha(1f)
+                .setDuration(160)
+                .setInterpolator(DecelerateInterpolator())
+                .start()
+        }
     }
 
     private fun copyMessageText(ctx: Context, body: String) {
         val clipboard = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        clipboard.setPrimaryClip(ClipData.newPlainText("message", body))
+        val clip = ClipData.newPlainText("message", body).apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                description.extras = PersistableBundle().apply {
+                    putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true)
+                }
+            }
+        }
+        clipboard.setPrimaryClip(clip)
         Toast.makeText(ctx, ctx.getString(R.string.chat_message_copied), Toast.LENGTH_SHORT).show()
     }
 

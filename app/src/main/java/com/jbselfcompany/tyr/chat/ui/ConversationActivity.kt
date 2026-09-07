@@ -17,6 +17,7 @@ import android.util.TypedValue
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -29,6 +30,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.jbselfcompany.tyr.R
 import com.jbselfcompany.tyr.TyrApplication
+import com.jbselfcompany.tyr.chat.data.ChatContact
 import com.jbselfcompany.tyr.chat.data.ChatMessage
 import com.jbselfcompany.tyr.chat.data.ChatRepository
 import com.jbselfcompany.tyr.chat.network.ImapFetcher
@@ -44,7 +46,7 @@ class ConversationActivity : BaseActivity() {
     companion object {
         const val EXTRA_CONTACT_ADDRESS = "extra_contact_address"
         const val EXTRA_CONTACT_NAME = "extra_contact_name"
-        private const val POLL_INTERVAL_MS = 20_000L
+        private const val POLL_INTERVAL_MS = 6_000L
         private const val ATTACHMENTS_DIR = "attachments"
 
         /**
@@ -79,7 +81,7 @@ class ConversationActivity : BaseActivity() {
     private val isFetchInProgress = java.util.concurrent.atomic.AtomicBoolean(false)
 
     // Receive instant refresh when the background service delivers a new message or
-    // processes a delivery receipt — avoids waiting for the 20-second poll cycle.
+    // processes a delivery receipt — avoids waiting for the next poll cycle.
     //
     // The service already inserted the message into the DB before broadcasting, so
     // there is no need to do another IMAP fetch here: doing so would compute
@@ -126,6 +128,12 @@ class ConversationActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (configRepository.getBlockScreenshots()) {
+            window.setFlags(
+                WindowManager.LayoutParams.FLAG_SECURE,
+                WindowManager.LayoutParams.FLAG_SECURE
+            )
+        }
         binding = ActivityConversationBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -149,6 +157,9 @@ class ConversationActivity : BaseActivity() {
             },
             onAttachmentClick = { msg ->
                 openAttachment(msg)
+            },
+            onDelete = { msg ->
+                confirmAndDeleteMessage(msg)
             }
         )
 
@@ -157,6 +168,7 @@ class ConversationActivity : BaseActivity() {
                 stackFromEnd = true
             }
             adapter = messageAdapter
+            itemAnimator = ChatItemAnimator()
         }
 
         setupSwipeToReply()
@@ -183,10 +195,6 @@ class ConversationActivity : BaseActivity() {
         }
 
         loadMessages()
-
-        if (YggmailService.isRunning) {
-            pollHandler.post(pollRunnable)
-        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -237,18 +245,27 @@ class ConversationActivity : BaseActivity() {
         }
 
         // Register for instant refresh when the service delivers a message or processes
-        // a delivery receipt — supplements the 20-second poll for immediate UI updates.
+        // a delivery receipt — supplements the poll for immediate UI updates.
         val filter = IntentFilter(YggmailService.ACTION_NEW_CHAT_MESSAGES)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(newMessageReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
         } else {
             registerReceiver(newMessageReceiver, filter)
         }
+
+        // Restart the poll immediately so we don't wait up to POLL_INTERVAL_MS after
+        // returning to the conversation. The runnable re-posts itself with the interval.
+        // removeCallbacks first to guard against duplicate chains on unusual lifecycle sequences.
+        if (YggmailService.isRunning) {
+            pollHandler.removeCallbacks(pollRunnable)
+            pollHandler.post(pollRunnable)
+        }
     }
 
     override fun onPause() {
         super.onPause()
         activeChatAddress = null
+        pollHandler.removeCallbacks(pollRunnable)
         try { unregisterReceiver(newMessageReceiver) } catch (_: Exception) {}
     }
 
@@ -377,7 +394,7 @@ class ConversationActivity : BaseActivity() {
         val localId = chatRepository.insertMessage(optimisticMsg)
         val msgWithId = optimisticMsg.copy(id = localId)
         messageAdapter.addMessage(msgWithId)
-        binding.recyclerMessages.scrollToPosition(messageAdapter.itemCount - 1)
+        binding.recyclerMessages.smoothScrollToPosition(messageAdapter.itemCount - 1)
         binding.editMessage.setText("")
         binding.editMessage.isEnabled = true
         binding.buttonSend.isEnabled = true
@@ -687,7 +704,7 @@ class ConversationActivity : BaseActivity() {
         val localId = chatRepository.insertMessage(optimisticMsg)
         val msgWithId = optimisticMsg.copy(id = localId)
         messageAdapter.addMessage(msgWithId)
-        binding.recyclerMessages.scrollToPosition(messageAdapter.itemCount - 1)
+        binding.recyclerMessages.smoothScrollToPosition(messageAdapter.itemCount - 1)
         binding.editMessage.setText("")
         binding.editMessage.isEnabled = true
         binding.buttonSend.isEnabled = true
@@ -759,11 +776,28 @@ class ConversationActivity : BaseActivity() {
                     changed = true
                 }
                 val newlyReceived = mutableListOf<ChatMessage>()
+                val acceptFromNonContacts = configRepository.getAcceptMessagesFromNonContacts()
+                val nicknameMap = result.data.nicknameUpdates.associate { it.senderAddr to it.nickname }
+
                 for (msg in result.data.messages) {
-                    if (!chatRepository.imapUidExists(msg.imapUid)) {
-                        chatRepository.insertMessage(msg)
-                        if (!msg.isSent) newlyReceived.add(msg)
-                        changed = true
+                    if (msg.isSent) continue
+                    if (chatRepository.imapUidExists(msg.imapUid)) continue
+                    if (chatRepository.isContactDeclined(msg.fromAddr)) continue
+
+                    val senderInContacts = chatRepository.contactExists(msg.fromAddr)
+                    when {
+                        senderInContacts -> {
+                            chatRepository.insertMessage(msg)
+                            newlyReceived.add(msg)
+                            changed = true
+                        }
+                        acceptFromNonContacts -> {
+                            chatRepository.addPendingContact(ChatContact(address = msg.fromAddr, name = nicknameMap[msg.fromAddr] ?: ""))
+                            chatRepository.insertMessage(msg.copy(isRead = false))
+                            newlyReceived.add(msg)
+                            changed = true
+                        }
+                        // else: setting off — drop silently
                     }
                 }
 
@@ -797,6 +831,18 @@ class ConversationActivity : BaseActivity() {
                 isFetchInProgress.set(false)
             }
         }.start()
+    }
+
+    private fun confirmAndDeleteMessage(msg: ChatMessage) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.chat_message_delete_title)
+            .setMessage(R.string.chat_message_delete_body)
+            .setPositiveButton(R.string.chat_delete) { _, _ ->
+                chatRepository.deleteMessage(msg.id)
+                messageAdapter.removeMessageById(msg.id)
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun sendDeliveryReceipts(messages: List<ChatMessage>, password: String) {

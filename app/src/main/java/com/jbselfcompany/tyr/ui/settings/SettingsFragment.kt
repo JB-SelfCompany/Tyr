@@ -71,6 +71,9 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
         // Chat settings
         private const val ID_HEADER_CHAT = 26
         private const val ID_ACCEPT_NON_CONTACTS = 27
+
+        // Security switch
+        private const val ID_BLOCK_SCREENSHOTS = 28
     }
 
     private var backupPassword: String = ""
@@ -172,6 +175,15 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
                 id = ID_HEADER_SECURITY,
                 titleRes = R.string.security_settings,
                 type = SettingsAdapter.ItemType.HEADER
+            )
+        )
+        settingsItems.add(
+            SettingsAdapter.Item(
+                id = ID_BLOCK_SCREENSHOTS,
+                titleRes = R.string.chat_block_screenshots,
+                descriptionRes = R.string.chat_block_screenshots_description,
+                type = SettingsAdapter.ItemType.SWITCH,
+                checked = configRepository.getBlockScreenshots()
             )
         )
         settingsItems.add(
@@ -328,6 +340,9 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
             }
             ID_ACCEPT_NON_CONTACTS -> {
                 configRepository.setAcceptMessagesFromNonContacts(isChecked)
+            }
+            ID_BLOCK_SCREENSHOTS -> {
+                configRepository.setBlockScreenshots(isChecked)
             }
         }
     }

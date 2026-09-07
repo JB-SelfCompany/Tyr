@@ -41,6 +41,7 @@ class ConfigRepository(private val context: Context) {
 
         // Chat settings
         private const val KEY_ACCEPT_MESSAGES_FROM_NON_CONTACTS = "accept_messages_non_contacts"
+        private const val KEY_BLOCK_SCREENSHOTS = "block_screenshots"
 
         // Max message size cache (MB) — mirrors the yggmail quota setting
         private const val KEY_MAX_MESSAGE_SIZE_MB = "max_message_size_mb"
@@ -466,6 +467,13 @@ class ConfigRepository(private val context: Context) {
 
     fun setAcceptMessagesFromNonContacts(enabled: Boolean) {
         prefs.edit { putBoolean(KEY_ACCEPT_MESSAGES_FROM_NON_CONTACTS, enabled) }
+    }
+
+    fun getBlockScreenshots(): Boolean =
+        prefs.getBoolean(KEY_BLOCK_SCREENSHOTS, false)
+
+    fun setBlockScreenshots(enabled: Boolean) {
+        prefs.edit { putBoolean(KEY_BLOCK_SCREENSHOTS, enabled) }
     }
 
     // ============================================

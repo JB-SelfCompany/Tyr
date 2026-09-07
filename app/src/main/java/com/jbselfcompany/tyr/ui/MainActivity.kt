@@ -608,9 +608,8 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
         binding.contentSettings.visibility = View.GONE
         if (!chatFragmentLoaded) {
             chatFragmentLoaded = true
-            // Chat is under maintenance — show a placeholder instead of ChatFragment.
             supportFragmentManager.beginTransaction()
-                .replace(R.id.content_chat, MaintenanceFragment())
+                .replace(R.id.content_chat, ChatFragment())
                 .commitNow()
         }
     }

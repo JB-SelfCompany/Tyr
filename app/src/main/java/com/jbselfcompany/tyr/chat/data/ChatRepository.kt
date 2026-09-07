@@ -188,6 +188,10 @@ class ChatRepository(context: Context) {
         return db.writableDatabase.insert(TABLE_MESSAGES, null, cv)
     }
 
+    fun deleteMessage(id: Long) {
+        db.writableDatabase.delete(TABLE_MESSAGES, "$COL_ID = ?", arrayOf(id.toString()))
+    }
+
     fun updateMessageTimestamp(messageId: Long, timestamp: Long) {
         val cv = ContentValues().apply { put(COL_TIMESTAMP, timestamp) }
         db.writableDatabase.update(TABLE_MESSAGES, cv, "$COL_ID = ?", arrayOf(messageId.toString()))
@@ -206,12 +210,12 @@ class ChatRepository(context: Context) {
 
     /**
      * Update status of a sent message identified by (sender=myAddr, recipient=peerAddr, timestamp≈ts).
-     * Used for read receipts that carry the original message timestamp instead of an IMAP UID.
-     * Tolerance is ±2 seconds to account for Date header second-precision rounding.
-     */
-    /**
-     * @param maxCurrentStatus If >= 0, only updates messages whose current status <= maxCurrentStatus.
-     * Use ChatMessage.STATUS_SENDING for delivery receipts (don't downgrade STATUS_SENT).
+     * Used for delivery receipts that carry the original message timestamp instead of an IMAP UID.
+     * Tolerance is ±5 seconds; only the single closest row by timestamp is updated to avoid
+     * mis-attributing the status when two messages are sent in quick succession.
+     *
+     * @param maxCurrentStatus Only updates messages whose current status <= maxCurrentStatus.
+     * Pass ChatMessage.STATUS_SENDING for delivery receipts (don't downgrade STATUS_SENT).
      */
     fun updateSentMessageStatusNearTimestamp(
         myAddr: String, peerAddr: String, timestamp: Long, status: Int,
@@ -220,14 +224,16 @@ class ChatRepository(context: Context) {
         val my = myAddr.trim().lowercase()
         val peer = peerAddr.trim().lowercase()
         val toleranceMs = 5_000L
-        val cv = ContentValues().apply { put(COL_STATUS, status) }
-        val statusFilter = if (maxCurrentStatus < Int.MAX_VALUE) " AND $COL_STATUS <= $maxCurrentStatus" else ""
-        db.writableDatabase.update(
-            TABLE_MESSAGES, cv,
-            "$COL_FROM_ADDR = ? AND $COL_TO_ADDR = ? AND $COL_IS_SENT = 1 " +
-                    "AND ABS($COL_TIMESTAMP - ?) <= $toleranceMs" + statusFilter,
-            arrayOf(my, peer, timestamp.toString())
-        )
+        val statusClause = if (maxCurrentStatus < Int.MAX_VALUE) " AND $COL_STATUS <= $maxCurrentStatus" else ""
+        // Update only the single nearest row to avoid tagging the wrong message when two
+        // outgoing messages have timestamps within the tolerance window.
+        val sql = "UPDATE $TABLE_MESSAGES SET $COL_STATUS = ? " +
+            "WHERE $COL_ID = (" +
+            "SELECT $COL_ID FROM $TABLE_MESSAGES " +
+            "WHERE $COL_FROM_ADDR = ? AND $COL_TO_ADDR = ? AND $COL_IS_SENT = 1 " +
+            "AND ABS($COL_TIMESTAMP - ?) <= $toleranceMs" + statusClause +
+            " ORDER BY ABS($COL_TIMESTAMP - ?) ASC LIMIT 1)"
+        db.writableDatabase.execSQL(sql, arrayOf(status, my, peer, timestamp, timestamp))
     }
 
     fun getConversation(myAddress: String, peerAddress: String): List<ChatMessage> {
