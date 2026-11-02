@@ -59,9 +59,11 @@ class PeerAdapter(
 
         // Show tag label for all peers
         holder.peerTypeLabel.visibility = View.VISIBLE
-        holder.peerTypeLabel.text = when (peer.tag) {
-            PeerInfo.PeerTag.DEFAULT -> holder.itemView.context.getString(R.string.peer_tag_default)
-            PeerInfo.PeerTag.CUSTOM -> holder.itemView.context.getString(R.string.peer_tag_custom)
+        holder.peerTypeLabel.text = when {
+            peer.uri == com.jbselfcompany.tyr.TyrApplication.instance.configRepository.getBackupPeer() ->
+                holder.itemView.context.getString(R.string.peer_tag_backup)
+            peer.tag == PeerInfo.PeerTag.DEFAULT -> holder.itemView.context.getString(R.string.peer_tag_default)
+            else -> holder.itemView.context.getString(R.string.peer_tag_custom)
         }
 
         holder.peerSwitch.setOnCheckedChangeListener(null)

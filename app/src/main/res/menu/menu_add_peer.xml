@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
+        android:id="@+id/action_pick_peer"
+        android:title="@string/peer_pick_best" />
+    <item
         android:id="@+id/action_add_manually"
         android:title="@string/peer_add_manually"
         android:icon="@android:drawable/ic_input_add" />

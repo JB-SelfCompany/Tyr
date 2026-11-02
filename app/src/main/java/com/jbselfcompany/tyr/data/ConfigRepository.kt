@@ -23,6 +23,8 @@ class ConfigRepository(private val context: Context) {
         private const val KEY_PEERS = "peers"
         private const val KEY_PEERS_V2 = "peers_v2" // New format with enabled/disabled state
         private const val KEY_USE_DEFAULT_PEERS = "use_default_peers"
+        private const val KEY_BACKUP_PEER = "backup_peer"
+        private const val KEY_AUTO_PICK_PENDING = "auto_pick_pending"
         private const val KEY_SERVICE_ENABLED = "service_enabled"
         private const val KEY_AUTO_START = "auto_start"
         private const val KEY_MAIL_ADDRESS = "mail_address"
@@ -313,6 +315,40 @@ class ConfigRepository(private val context: Context) {
     @Deprecated("Use getAllPeersInfo() instead")
     fun getCustomPeers(): List<String> {
         return getAllPeersInfo().map { it.uri }
+    }
+
+    /** Standby peer for the enabled one; never connected until a failover. */
+    fun getBackupPeer(): String? = prefs.getString(KEY_BACKUP_PEER, null)
+
+    fun isAutoPickPending(): Boolean = prefs.getBoolean(KEY_AUTO_PICK_PENDING, false)
+
+    fun setAutoPickPending(pending: Boolean) {
+        prefs.edit { putBoolean(KEY_AUTO_PICK_PENDING, pending) }
+    }
+
+    /**
+     * Apply a peer pick (as Huginn does): [winner] becomes the only enabled peer and the backup is
+     * parked in the list, disabled. [fresh] (onboarding) replaces the list with just those two - the
+     * bootstrap defaults go; otherwise every other peer is kept, disabled. A null winner (the current
+     * peer stays, or nothing passed) leaves the list alone and only updates the backup.
+     */
+    fun applyPickedPeer(winner: String?, backup: String?, fresh: Boolean = false) {
+        val main = winner ?: getEnabledPeers().firstOrNull()
+        val standby = backup?.takeIf { it.isNotBlank() && it != main }
+        if (winner != null) {
+            val others = if (fresh) emptyList() else getAllPeersInfo().filter { it.uri != winner }.map { it.copy(isEnabled = false) }
+            val parked = standby?.takeIf { s -> others.none { it.uri == s } }?.let { PeerInfo(it, isEnabled = false, tag = PeerInfo.PeerTag.CUSTOM) }
+            savePeersV2(listOf(PeerInfo(winner, isEnabled = true, tag = PeerInfo.PeerTag.CUSTOM)) + others + listOfNotNull(parked))
+            setUseDefaultPeers(false)
+        }
+        prefs.edit { putString(KEY_BACKUP_PEER, standby) }
+    }
+
+    /** The enabled peer is down: the backup takes over and the old peer becomes the backup. */
+    fun swapToBackup(): Boolean {
+        val backup = getBackupPeer() ?: return false
+        applyPickedPeer(backup, getEnabledPeers().firstOrNull())
+        return true
     }
 
     fun getPeersString(): String {

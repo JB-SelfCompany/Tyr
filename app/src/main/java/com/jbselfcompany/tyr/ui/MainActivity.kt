@@ -771,10 +771,12 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
         // Clear existing views
         binding.peersContainer.removeAllViews()
 
-        if (peers.isEmpty()) {
+        // During a peer pick the links are probes, not peers: show the pick instead of them.
+        val picking = YggmailService.isPickingPeers
+        if (peers.isEmpty() || picking) {
             // Show "no peers" message
             val noPeersText = android.widget.TextView(this).apply {
-                text = getString(R.string.no_active_peer)
+                text = getString(if (picking) R.string.peer_pick_in_progress else R.string.no_active_peer)
                 setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall)
                 // Use Material3 color that adapts to light/dark theme
                 val typedValue = android.util.TypedValue()

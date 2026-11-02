@@ -132,9 +132,12 @@ class OnboardingActivity : BaseActivity(), OnRestoreCompletedListener {
             is OnboardingPeersFragment -> {
                 val useDefault = currentFragment.isUsingDefaultPeers()
                 val manualPeerUrl = currentFragment.getManualPeerUrl()
+                val autoPick = currentFragment.isAutoPick()
+                // Default peers bootstrap the node; the service replaces them with the pick.
+                configRepository.setAutoPickPending(autoPick)
 
                 // Nothing selected at all
-                if (!useDefault && manualPeerUrl.isNullOrBlank()) {
+                if (!useDefault && !autoPick && manualPeerUrl.isNullOrBlank()) {
                     Toast.makeText(this, R.string.error_no_peers_selected, Toast.LENGTH_SHORT).show()
                     return false
                 }

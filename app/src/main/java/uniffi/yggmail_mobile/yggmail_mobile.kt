@@ -613,6 +613,28 @@ internal open class UniffiForeignFutureResultVoid(
 internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
     fun callback(`callbackData`: Long,`result`: UniffiForeignFutureResultVoid.UniffiByValue,)
 }
+internal interface UniffiCallbackInterfacePickListenerMethod0 : com.sun.jna.Callback {
+    fun callback(`uniffiHandle`: Long,`stage`: RustBuffer.ByValue,`done`: Int,`total`: Int,`uniffiOutReturn`: Pointer,uniffiCallStatus: UniffiRustCallStatus,)
+}
+@Structure.FieldOrder("uniffiFree", "uniffiClone", "onProgress")
+internal open class UniffiVTableCallbackInterfacePickListener(
+    @JvmField internal var `uniffiFree`: UniffiCallbackInterfaceFree? = null,
+    @JvmField internal var `uniffiClone`: UniffiCallbackInterfaceClone? = null,
+    @JvmField internal var `onProgress`: UniffiCallbackInterfacePickListenerMethod0? = null,
+) : Structure() {
+    class UniffiByValue(
+        `uniffiFree`: UniffiCallbackInterfaceFree? = null,
+        `uniffiClone`: UniffiCallbackInterfaceClone? = null,
+        `onProgress`: UniffiCallbackInterfacePickListenerMethod0? = null,
+    ): UniffiVTableCallbackInterfacePickListener(`uniffiFree`,`uniffiClone`,`onProgress`,), Structure.ByValue
+
+   internal fun uniffiSetValue(other: UniffiVTableCallbackInterfacePickListener) {
+        `uniffiFree` = other.`uniffiFree`
+        `uniffiClone` = other.`uniffiClone`
+        `onProgress` = other.`onProgress`
+    }
+
+}
 
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
@@ -636,6 +658,8 @@ internal object IntegrityCheckingUniffiLib {
         uniffiCheckContractApiVersion(this)
         uniffiCheckApiChecksums(this)
     }
+    external fun uniffi_yggmail_mobile_checksum_method_yggmailmobile_cancel_pick(
+    ): Short
     external fun uniffi_yggmail_mobile_checksum_method_yggmailmobile_clear_outbound_queue(
     ): Short
     external fun uniffi_yggmail_mobile_checksum_method_yggmailmobile_get_inbox_count(
@@ -653,6 +677,8 @@ internal object IntegrityCheckingUniffiLib {
     external fun uniffi_yggmail_mobile_checksum_method_yggmailmobile_get_peer_connections_json(
     ): Short
     external fun uniffi_yggmail_mobile_checksum_method_yggmailmobile_get_state(
+    ): Short
+    external fun uniffi_yggmail_mobile_checksum_method_yggmailmobile_pick_peers(
     ): Short
     external fun uniffi_yggmail_mobile_checksum_method_yggmailmobile_send_mail(
     ): Short
@@ -680,6 +706,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Short
     external fun uniffi_yggmail_mobile_checksum_constructor_yggmailmobile_new(
     ): Short
+    external fun uniffi_yggmail_mobile_checksum_method_picklistener_on_progress(
+    ): Short
     external fun ffi_yggmail_mobile_uniffi_contract_version(
     ): Int
 
@@ -696,6 +724,7 @@ internal object UniffiLib {
 
     init {
         Native.register(UniffiLib::class.java, findLibraryName(componentName = "yggmail_mobile"))
+        uniffiCallbackInterfacePickListener.register(this)
         
     }
     external fun uniffi_yggmail_mobile_fn_clone_yggmailmobile(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
@@ -704,6 +733,8 @@ internal object UniffiLib {
     ): Unit
     external fun uniffi_yggmail_mobile_fn_constructor_yggmailmobile_new(uniffi_out_err: UniffiRustCallStatus, 
     ): Long
+    external fun uniffi_yggmail_mobile_fn_method_yggmailmobile_cancel_pick(`ptr`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     external fun uniffi_yggmail_mobile_fn_method_yggmailmobile_clear_outbound_queue(`ptr`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     external fun uniffi_yggmail_mobile_fn_method_yggmailmobile_get_inbox_count(`ptr`: Long,uniffi_out_err: UniffiRustCallStatus, 
@@ -721,6 +752,8 @@ internal object UniffiLib {
     external fun uniffi_yggmail_mobile_fn_method_yggmailmobile_get_peer_connections_json(`ptr`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_yggmail_mobile_fn_method_yggmailmobile_get_state(`ptr`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_yggmail_mobile_fn_method_yggmailmobile_pick_peers(`ptr`: Long,`catalogJson`: RustBuffer.ByValue,`enabled`: RustBuffer.ByValue,`disabled`: RustBuffer.ByValue,`listener`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_yggmail_mobile_fn_method_yggmailmobile_send_mail(`ptr`: Long,`to`: RustBuffer.ByValue,`subject`: RustBuffer.ByValue,`body`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
@@ -745,6 +778,8 @@ internal object UniffiLib {
     external fun uniffi_yggmail_mobile_fn_method_yggmailmobile_stop_smtp(`ptr`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     external fun uniffi_yggmail_mobile_fn_method_yggmailmobile_update_peers(`ptr`: Long,`peersJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    external fun uniffi_yggmail_mobile_fn_init_callback_vtable_picklistener(`vtable`: UniffiVTableCallbackInterfacePickListener,
     ): Unit
     external fun ffi_yggmail_mobile_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -865,6 +900,9 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
 }
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
+    if (lib.uniffi_yggmail_mobile_checksum_method_yggmailmobile_cancel_pick() != 56853.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_yggmail_mobile_checksum_method_yggmailmobile_clear_outbound_queue() != 52855.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -890,6 +928,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_yggmail_mobile_checksum_method_yggmailmobile_get_state() != 29750.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_yggmail_mobile_checksum_method_yggmailmobile_pick_peers() != 45909.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_yggmail_mobile_checksum_method_yggmailmobile_send_mail() != 47361.toShort()) {
@@ -929,6 +970,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_yggmail_mobile_checksum_constructor_yggmailmobile_new() != 22526.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_yggmail_mobile_checksum_method_picklistener_on_progress() != 2665.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
 }
@@ -1022,7 +1066,38 @@ object UniffiWithHandle
  *
  * @suppress
  * */
-object NoHandle
+object NoHandle// Magic number for the Rust proxy to call using the same mechanism as every other method,
+// to free the callback once it's dropped by Rust.
+internal const val IDX_CALLBACK_FREE = 0
+// Callback return codes
+internal const val UNIFFI_CALLBACK_SUCCESS = 0
+internal const val UNIFFI_CALLBACK_ERROR = 1
+internal const val UNIFFI_CALLBACK_UNEXPECTED_ERROR = 2
+
+/**
+ * @suppress
+ */
+public abstract class FfiConverterCallbackInterface<CallbackInterface: Any>: FfiConverter<CallbackInterface, Long> {
+    internal val handleMap = UniffiHandleMap<CallbackInterface>()
+
+    internal fun drop(handle: Long) {
+        handleMap.remove(handle)
+    }
+
+    override fun lift(value: Long): CallbackInterface {
+        return handleMap.get(value)
+    }
+
+    override fun read(buf: ByteBuffer) = lift(buf.getLong())
+
+    override fun lower(value: CallbackInterface) = handleMap.insert(value)
+
+    override fun allocationSize(value: CallbackInterface) = 8UL
+
+    override fun write(value: CallbackInterface, buf: ByteBuffer) {
+        buf.putLong(lower(value))
+    }
+}
 /**
  * The cleaner interface for Object finalization code to run.
  * This is the entry point to any implementation that we're using.
@@ -1358,6 +1433,8 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
 
 public interface YggmailMobileInterface {
     
+    fun `cancelPick`()
+    
     fun `clearOutboundQueue`()
     
     /**
@@ -1387,6 +1464,12 @@ public interface YggmailMobileInterface {
      * Current node state snapshot.
      */
     fun `getState`(): YggmailState
+    
+    /**
+     * Pick the best public peer (blocks ~1 min; call off the service thread).
+     * Returns {"verdict","switch","gain","backup","rows":[{uri,host,country,latencyMs,depth,usable}]}.
+     */
+    fun `pickPeers`(`catalogJson`: kotlin.String, `enabled`: List<kotlin.String>, `disabled`: List<kotlin.String>, `listener`: PickListener): kotlin.String
     
     /**
      * Send a plain-text email.
@@ -1522,6 +1605,18 @@ open class YggmailMobile: Disposable, AutoCloseable, YggmailMobileInterface
         }
     }
 
+    override fun `cancelPick`()
+        = 
+    callWithHandle {
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_yggmail_mobile_fn_method_yggmailmobile_cancel_pick(
+        it,
+        _status)
+}
+    }
+    
+    
+
     override fun `clearOutboundQueue`()
         = 
     callWithHandle {
@@ -1644,6 +1739,24 @@ open class YggmailMobile: Disposable, AutoCloseable, YggmailMobileInterface
     UniffiLib.uniffi_yggmail_mobile_fn_method_yggmailmobile_get_state(
         it,
         _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Pick the best public peer (blocks ~1 min; call off the service thread).
+     * Returns {"verdict","switch","gain","backup","rows":[{uri,host,country,latencyMs,depth,usable}]}.
+     */
+    @Throws(YggmailException::class)override fun `pickPeers`(`catalogJson`: kotlin.String, `enabled`: List<kotlin.String>, `disabled`: List<kotlin.String>, `listener`: PickListener): kotlin.String {
+            return FfiConverterString.lift(
+    callWithHandle {
+    uniffiRustCallWithError(YggmailException) { _status ->
+    UniffiLib.uniffi_yggmail_mobile_fn_method_yggmailmobile_pick_peers(
+        it,
+        FfiConverterString.lower(`catalogJson`),FfiConverterSequenceString.lower(`enabled`),FfiConverterSequenceString.lower(`disabled`),FfiConverterTypePickListener.lower(`listener`),_status)
 }
     }
     )
@@ -2080,6 +2193,68 @@ public object FfiConverterTypeYggmailError : FfiConverterRustBuffer<YggmailExcep
     }
 
 }
+
+
+
+
+
+public interface PickListener {
+    
+    fun `onProgress`(`stage`: kotlin.String, `done`: kotlin.UInt, `total`: kotlin.UInt)
+    
+    companion object
+}
+
+
+
+// Put the implementation in an object so we don't pollute the top-level namespace
+internal object uniffiCallbackInterfacePickListener {
+    internal object `onProgress`: UniffiCallbackInterfacePickListenerMethod0 {
+        override fun callback(`uniffiHandle`: Long,`stage`: RustBuffer.ByValue,`done`: Int,`total`: Int,`uniffiOutReturn`: Pointer,uniffiCallStatus: UniffiRustCallStatus,) {
+            val uniffiObj = FfiConverterTypePickListener.handleMap.get(uniffiHandle)
+            val makeCall = { ->
+                uniffiObj.`onProgress`(
+                    FfiConverterString.lift(`stage`),
+                    FfiConverterUInt.lift(`done`),
+                    FfiConverterUInt.lift(`total`),
+                )
+            }
+            val writeReturn = { _: Unit -> Unit }
+            uniffiTraitInterfaceCall(uniffiCallStatus, makeCall, writeReturn)
+        }
+    }
+
+    internal object uniffiFree: UniffiCallbackInterfaceFree {
+        override fun callback(handle: Long) {
+            FfiConverterTypePickListener.handleMap.remove(handle)
+        }
+    }
+
+    internal object uniffiClone: UniffiCallbackInterfaceClone {
+        override fun callback(handle: Long): Long {
+            return FfiConverterTypePickListener.handleMap.clone(handle)
+        }
+    }
+
+    internal var vtable = UniffiVTableCallbackInterfacePickListener.UniffiByValue(
+        uniffiFree,
+        uniffiClone,
+        `onProgress`,
+    )
+
+    // Registers the foreign callback with the Rust side.
+    // This method is generated for each callback interface.
+    internal fun register(lib: UniffiLib) {
+        lib.uniffi_yggmail_mobile_fn_init_callback_vtable_picklistener(vtable)
+    }
+}
+
+/**
+ * The ffiConverter which transforms the Callbacks in to handles to pass to Rust.
+ *
+ * @suppress
+ */
+public object FfiConverterTypePickListener: FfiConverterCallbackInterface<PickListener>()
 
 
 

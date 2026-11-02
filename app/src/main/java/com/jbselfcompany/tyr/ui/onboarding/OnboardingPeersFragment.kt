@@ -48,6 +48,9 @@ class OnboardingPeersFragment : Fragment() {
         return if (url.isNullOrBlank()) null else url
     }
 
-    /** A valid selection is either the default-peers toggle or a manually entered peer. */
-    fun hasValidSelection(): Boolean = useDefaultPeers || !getManualPeerUrl().isNullOrBlank()
+    /** Pick the best public peer after the first start (on by default). */
+    fun isAutoPick(): Boolean = binding.switchAutoPick.isChecked
+
+    /** A valid selection: auto-pick, the default-peers toggle or a manually entered peer. */
+    fun hasValidSelection(): Boolean = isAutoPick() || useDefaultPeers || !getManualPeerUrl().isNullOrBlank()
 }

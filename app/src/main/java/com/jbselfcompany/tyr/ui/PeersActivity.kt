@@ -137,11 +137,68 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
                         showAddPeerDialog()
                         true
                     }
+                    R.id.action_pick_peer -> {
+                        pickBestPeer()
+                        true
+                    }
                     else -> false
                 }
             }
             popup.show()
         }
+    }
+
+    /** Rank public peers on a worker thread; show progress, then the top and an Apply button. */
+    private fun pickBestPeer() {
+        val service = yggmailService?.takeIf { YggmailService.isRunning }
+        if (service == null) {
+            Toast.makeText(this, R.string.peer_pick_needs_service, Toast.LENGTH_SHORT).show()
+            return
+        }
+        var result: org.json.JSONObject? = null
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.peer_pick_best)
+            .setMessage(R.string.peer_pick_loading)
+            .setCancelable(false)
+            .setNegativeButton(android.R.string.cancel) { _, _ -> service.cancelPeerPick() }
+            .setPositiveButton(R.string.peer_pick_apply) { _, _ ->
+                result?.let { service.applyPeerPick(it); loadPeers() }
+            }
+            .show()
+        val apply = dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE)
+        apply.visibility = View.GONE
+        Thread({
+            val text = try {
+                val r = service.runPeerPick { stage, done, total ->
+                    val label = getString(if (stage == "provider") R.string.peer_pick_stage_provider else R.string.peer_pick_stage_yggdrasil)
+                    mainHandler.post { dialog.setMessage("$label $done/$total") }
+                }
+                result = r
+                describePick(r)
+            } catch (e: Exception) {
+                getString(R.string.peer_pick_failed, e.message ?: "")
+            }
+            mainHandler.post {
+                dialog.setMessage(text)
+                dialog.getButton(android.content.DialogInterface.BUTTON_NEGATIVE).setText(R.string.close)
+                apply.visibility = if (result?.optString("switch").isNullOrEmpty()) View.GONE else View.VISIBLE
+            }
+        }, "peer-pick").start()
+    }
+
+    private fun describePick(r: org.json.JSONObject): String {
+        val verdict = when (r.optString("verdict")) {
+            "switch" -> r.optInt("gain", -1).let {
+                if (it >= 0) getString(R.string.peer_pick_switch_gain, it) else getString(R.string.peer_pick_switch)
+            }
+            "current_best", "small_gain" -> getString(R.string.peer_pick_keep)
+            else -> getString(R.string.peer_pick_none)
+        }
+        val rows = r.optJSONArray("rows") ?: org.json.JSONArray()
+        val top = (0 until rows.length()).map { rows.getJSONObject(it) }.filter { it.optBoolean("usable") }.take(5)
+            .joinToString("\n") { "• ${it.optString("host")} (${it.optString("country")}) — ${it.optDouble("latencyMs").toLong()} ms" }
+        val backup = r.optString("backup").ifEmpty { null }?.let { "\n" + getString(R.string.peer_pick_backup, it) } ?: ""
+        return "$verdict\n\n$top$backup"
     }
 
     private fun setupApplyButton() {

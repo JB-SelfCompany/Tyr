@@ -28,6 +28,9 @@ import com.jbselfcompany.tyr.ui.MainActivity
 import com.jbselfcompany.tyr.chat.data.ChatRepository
 import com.jbselfcompany.tyr.chat.network.ImapFetcher
 import com.jbselfcompany.tyr.chat.network.SmtpSender
+import android.os.SystemClock
+import com.jbselfcompany.tyr.utils.PeerCatalog
+import uniffi.yggmail_mobile.PickListener
 import uniffi.yggmail_mobile.YggmailMobile
 import uniffi.yggmail_mobile.YggmailConfig
 import uniffi.yggmail_mobile.YggmailState
@@ -65,6 +68,18 @@ class YggmailService : Service() {
         const val ACTION_MAINTENANCE_CHECK = "com.jbselfcompany.tyr.MAINTENANCE_CHECK"
         const val ACTION_NEW_CHAT_MESSAGES = "com.jbselfcompany.tyr.NEW_CHAT_MESSAGES"
         private const val CHAT_POLL_INTERVAL_MS = 2 * 60 * 1000L // 2 minutes
+        /** A peer pick is running: its probe links are not real peers, the UI hides them. */
+        @Volatile
+        var isPickingPeers = false
+            private set
+
+        private const val FAILOVER_DOWN_MS = 2 * 60 * 1000L     // skip reconnect blips
+        private const val FAILOVER_MIN_GAP_MS = 10 * 60 * 1000L // no flapping when our own network is gone
+
+        /** Swap to the backup once the main peer has been down [FAILOVER_DOWN_MS], at most every [FAILOVER_MIN_GAP_MS]. */
+        internal fun failoverDue(downSince: Long, now: Long, lastFailover: Long): Boolean =
+            downSince > 0 && now - downSince >= FAILOVER_DOWN_MS &&
+                (lastFailover == 0L || now - lastFailover >= FAILOVER_MIN_GAP_MS)
         private const val CHAT_NOTIFICATION_BASE_ID = 2000
         // ponytail: reduced from 10s to 5s — faster reconnection after startup, still enough for init
         private const val STARTUP_GRACE_PERIOD_MS = 5_000L
@@ -170,6 +185,9 @@ class YggmailService : Service() {
 
     // Connection status tracking
     private var lastConnectionStatus: String? = null
+    // Failover bookkeeping (elapsedRealtime ms; 0 = not set).
+    private var mainPeerDownSince = 0L
+    private var lastFailoverAt = 0L
     private var connectionCheckRunnable: Runnable? = null
 
     // Background chat polling (initialized on serviceThread in onCreate)
@@ -548,6 +566,19 @@ class YggmailService : Service() {
             startConnectionStatusCheck()
             startChatPolling()
             MaintenanceReceiver.scheduleMaintenance(this@YggmailService)
+            // Onboarding asked for a pick: run it once the node is up. A failure keeps the flag,
+            // so the next start tries again.
+            if (configRepository.isAutoPickPending()) {
+                Thread({
+                    try {
+                        val result = runPeerPick(fresh = true) { stage, done, total -> TyrLogger.d(TAG, "Auto-pick $stage $done/$total") }
+                        applyPeerPick(result, fresh = true)
+                        configRepository.setAutoPickPending(false)
+                    } catch (e: Exception) {
+                        TyrLogger.w(TAG, "Auto-pick failed: ${e.message}")
+                    }
+                }, "peer-pick").start()
+            }
 
         } catch (e: YggmailException) {
             TyrLogger.e(TAG, "Failed to start Yggmail service", e)
@@ -746,6 +777,7 @@ class YggmailService : Service() {
         connectionCheckRunnable = object : Runnable {
             override fun run() {
                 try {
+                    checkFailover(getPeerConnections())
                     val currentStatus = getConnectionStatus()
                     if (currentStatus != lastConnectionStatus) {
                         lastConnectionStatus = currentStatus
@@ -1024,6 +1056,58 @@ class YggmailService : Service() {
             } catch (e: Exception) {
                 TyrLogger.e(TAG,"Error updating peers", e)
             }
+        }
+    }
+
+    /**
+     * Rank public peers (blocks ~1 min). Call from a background thread, never from [serviceHandler]:
+     * the native side takes the core and releases its lock, so other calls keep working meanwhile.
+     */
+    fun runPeerPick(fresh: Boolean = false, onProgress: (String, Int, Int) -> Unit): JSONObject {
+        val mobile = yggmailMobile ?: throw IllegalStateException("service is not running")
+        isPickingPeers = true
+        try {
+            val catalog = PeerCatalog.fetch(this)
+            // Fresh (onboarding): the bootstrap defaults are not a choice to keep, so nothing counts as
+            // current and they compete as plain candidates - the result is always one peer plus a backup.
+            val enabled = if (fresh) emptyList() else configRepository.getEnabledPeers()
+            val disabled = if (fresh) emptyList() else configRepository.getAllPeersInfo().filter { !it.isEnabled }.map { it.uri } +
+                listOfNotNull(configRepository.getBackupPeer())
+            val listener = object : PickListener {
+                override fun onProgress(stage: String, done: UInt, total: UInt) =
+                    onProgress(stage, done.toInt(), total.toInt())
+            }
+            return JSONObject(mobile.pickPeers(catalog, enabled, disabled, listener))
+        } finally {
+            isPickingPeers = false
+        }
+    }
+
+    fun cancelPeerPick() {
+        yggmailMobile?.cancelPick()
+    }
+
+    /** Switch to the pick's winner (kept linked by the picker) and remember its backup. */
+    fun applyPeerPick(result: JSONObject, fresh: Boolean = false) {
+        val winner = result.optString("switch").ifEmpty { null }
+        configRepository.applyPickedPeer(winner, result.optString("backup").ifEmpty { null }, fresh)
+        TyrLogger.i(TAG, "Peer pick: ${result.optString("verdict")} winner=$winner backup=${configRepository.getBackupPeer()}")
+        // Always: the picker may have dropped probe links that were also configured peers.
+        hotReloadPeers()
+    }
+
+    /** Main peer down long enough: swap in the backup (no pings, only the link state we already have). */
+    private fun checkFailover(connections: List<PeerConnectionInfo>?) {
+        if (configRepository.getBackupPeer() == null) return
+        val main = configRepository.getEnabledPeers().singleOrNull() ?: return
+        val up = connections?.any { it.uri == main && it.up } ?: return
+        val now = SystemClock.elapsedRealtime()
+        mainPeerDownSince = if (up) 0L else mainPeerDownSince.takeIf { it > 0 } ?: now
+        if (failoverDue(mainPeerDownSince, now, lastFailoverAt) && configRepository.swapToBackup()) {
+            TyrLogger.w(TAG, "Failover: $main down, switching to ${configRepository.getEnabledPeers().firstOrNull()}")
+            lastFailoverAt = now
+            mainPeerDownSince = 0L
+            hotReloadPeers()
         }
     }
 
