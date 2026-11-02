@@ -7,3 +7,5 @@ build/
 # Gradle build cache and local logs
 .gradle/
 debug.txt
+# Release signing secrets (see app/build.gradle)
+keystore.properties

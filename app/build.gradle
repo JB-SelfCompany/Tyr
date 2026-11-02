@@ -45,6 +45,22 @@ android {
         }
     }
 
+    // Release signing is optional: with no keystore.properties (F-Droid/IzzyOnDroid
+    // reproducible builds, CI) the release APK stays unsigned exactly as before.
+    def keystorePropsFile = rootProject.file('keystore.properties')
+    if (keystorePropsFile.exists()) {
+        def keystoreProps = new Properties()
+        keystorePropsFile.withInputStream { keystoreProps.load(it) }
+        signingConfigs {
+            release {
+                storeFile file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias keystoreProps['keyAlias']
+                keyPassword keystoreProps['keyPassword']
+            }
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix ".dev"
@@ -54,6 +70,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         release {
+            if (keystorePropsFile.exists()) {
+                signingConfig signingConfigs.release
+            }
             manifestPlaceholders = [appLabel: "Tyr"]
             minifyEnabled true
             shrinkResources true
