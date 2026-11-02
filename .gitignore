@@ -6,6 +6,7 @@ build/
 .omc/
 # Gradle build cache and local logs
 .gradle/
+.kotlin/
 debug.txt
 # Release signing secrets (see app/build.gradle)
 keystore.properties

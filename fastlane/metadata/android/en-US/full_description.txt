@@ -9,7 +9,7 @@ Tyr is a revolutionary Android application that provides true peer-to-peer email
 • <b>Privacy First</b> - All data stays on your device. Encrypted configuration backup with AES-256-GCM encryption.
 • <b>DeltaChat Ready</b> - Seamless integration with DeltaChat for instant messaging over email.
 • <b>Cryptographic Identity</b> - Your email address is derived from your Ed25519 public key, ensuring authenticity.
-• <b>Mesh Networking</b> - Connect via public Yggdrasil peers or configure your own custom peers.
+• <b>Mesh Networking</b> - Connect via public Yggdrasil peers or configure your own custom peers. Automatic peer selection tests the public peers, keeps the fastest one plus a backup, and switches to the backup if the main peer goes down.
 • <b>Battery Optimized</b> - Sophisticated power management with timed wake locks and network monitoring.
 • <b>Secure by Design</b> - Password protection using Android Keystore with EncryptedSharedPreferences.
 • <b>Backup & Restore</b> - Export and import all settings with optional inclusion of your cryptographic keys.
