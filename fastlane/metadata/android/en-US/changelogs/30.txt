@@ -1,0 +1,5 @@
+• Works with the whole yggmail network again: mail is exchanged with Tyr 1.8.x, Tyr Desktop and yggmail over QUIC
+• Updates from 1.8.x and 1.9.0 keep your @yggmail address, mail and chats
+• Built-in chat is back
+• Updated Yggdrasil core: more reliable routing, safer key and handshake checks
+• Fixed: chat messages not appearing, duplicate deliveries
