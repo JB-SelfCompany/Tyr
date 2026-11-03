@@ -1,0 +1,13 @@
+# Sources of app/src/main/jniLibs/*/libyggmail_mobile.so — update on every rebuild.
+# Layout the build expects (path dependencies, not URLs):
+#   <root>/Android            this repo
+#   <root>/Librarys/Yggmail-ng, Yggdrasil-ng, imap-rs, rustls-yggmail
+# Build: cd Librarys/Yggmail-ng && powershell -File build-android.ps1 -All
+#
+# repo            commit    note
+Yggmail-ng        f5c4aaa   https://github.com/JB-SelfCompany/Yggmail-ng
+Yggdrasil-ng      c3a3aa6   v0.3.2  https://git.shd.company/bubblegum/Yggdrasil-ng (mirror of Revertron/Yggdrasil-ng)
+imap-rs           b9011ab   https://github.com/JB-SelfCompany/imap-rs
+rustls-yggmail    dbef38a   rustls 0.23.46 + SNI patch  https://git.shd.company/bubblegum/rustls-yggmail
+toolchain         NDK 29.0.14206865, rustc 1.96.0, uniffi 0.31.1
+# Built for release 1.9.1 (tag 1.9.1).
