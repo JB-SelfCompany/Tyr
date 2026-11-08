@@ -1,0 +1,4 @@
+• Mail between Tyr 1.9.x devices is delivered again: it was slow or did not arrive at all
+• Mail reaches nodes running the original yggmail
+• Backup always keeps your keys and settings; mail and chat history are now optional
+• Fixed: empty (0-byte) backup files
