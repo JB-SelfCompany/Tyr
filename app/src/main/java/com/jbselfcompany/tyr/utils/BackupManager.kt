@@ -7,6 +7,7 @@ import android.util.Base64
 import com.jbselfcompany.tyr.utils.TyrLogger
 import com.jbselfcompany.tyr.data.ConfigRepository
 import org.json.JSONObject
+import uniffi.yggmail_mobile.exportIdentityDb
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
@@ -64,14 +65,19 @@ object BackupManager {
      * @param context Application context
      * @param outputStream Output stream to write backup to
      * @param backupPassword Password to encrypt the backup (must be at least 8 characters)
-     * @param includeDatabase Whether to include yggmail.db in the backup
+     * yggmail.db is always included: it holds the identity key. Without
+     * [includeMail] the mails and the outbound queue are stripped from it.
+     *
+     * @param includeMail Whether to keep the mail archive in yggmail.db
+     * @param includeChat Whether to include tyr_chat.db (chat history)
      * @return true if backup was successful, false otherwise
      */
     fun createBackup(
         context: Context,
         outputStream: OutputStream,
         backupPassword: String,
-        includeDatabase: Boolean = true
+        includeMail: Boolean,
+        includeChat: Boolean
     ): Boolean {
         if (backupPassword.length < 8) {
             TyrLogger.e(TAG,"Backup password must be at least 8 characters")
@@ -81,12 +87,8 @@ object BackupManager {
         return try {
             val configRepo = ConfigRepository(context)
 
-            val databaseData = if (includeDatabase) {
-                readDatabaseAsBase64(context)
-            } else {
-                null
-            }
-            val chatDatabaseData = readChatDatabaseAsBase64(context)
+            val databaseData = readDatabaseAsBase64(context, includeMail)
+            val chatDatabaseData = if (includeChat) readChatDatabaseAsBase64(context) else null
 
             val backupData = BackupData(
                 version = BACKUP_VERSION,
@@ -97,7 +99,7 @@ object BackupManager {
                 autoStart = configRepo.isAutoStartEnabled(),
                 mailAddress = configRepo.getMailAddress(),
                 publicKey = configRepo.getPublicKey(),
-                includesDatabase = includeDatabase,
+                includesDatabase = databaseData != null,
                 databaseData = databaseData,
                 onboardingCompleted = configRepo.isOnboardingCompleted(),
                 includesChatDatabase = chatDatabaseData != null,
@@ -149,7 +151,9 @@ object BackupManager {
 
             TyrLogger.i(TAG,"Backup created successfully (size: ${salt.size + iv.size + ciphertext.size} bytes)")
             true
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            // Throwable, not Exception: a large mail archive ends in OutOfMemoryError,
+            // which used to escape and leave a 0-byte file behind (issue #42).
             TyrLogger.e(TAG,"Failed to create backup", e)
             false
         }
@@ -271,24 +275,32 @@ object BackupManager {
      * are flushed from the -wal file into the main database file. Without this,
      * a raw file copy of the .db can be missing recent writes that are still
      * only in the write-ahead log.
+     *
+     * Without [includeMail] the native library writes a copy stripped of mails
+     * and queue (Android's own SQLite before API 30 cannot open the schema).
+     * Errors propagate: a backup that silently lost the key would be worse
+     * than a failed one.
      */
-    private fun readDatabaseAsBase64(context: Context): String? {
-        return try {
-            val dbFile = File(context.filesDir, "yggmail.db")
-            if (!dbFile.exists()) {
-                TyrLogger.w(TAG, "Database file does not exist")
-                return null
-            }
-
-            // Checkpoint and truncate the WAL so all data is in the main file.
-            checkpointDatabase(dbFile.absolutePath)
-
-            val bytes = dbFile.readBytes()
-            Base64.encodeToString(bytes, Base64.NO_WRAP)
-        } catch (e: Exception) {
-            TyrLogger.e(TAG, "Failed to read database", e)
-            null
+    private fun readDatabaseAsBase64(context: Context, includeMail: Boolean): String? {
+        val dbFile = File(context.filesDir, "yggmail.db")
+        if (!dbFile.exists()) {
+            TyrLogger.w(TAG, "Database file does not exist")
+            return null
         }
+
+        if (!includeMail) {
+            val export = File(context.cacheDir, "identity-export.db")
+            try {
+                exportIdentityDb(dbFile.absolutePath, export.absolutePath)
+                return Base64.encodeToString(export.readBytes(), Base64.NO_WRAP)
+            } finally {
+                export.delete()
+            }
+        }
+
+        // Checkpoint and truncate the WAL so all data is in the main file.
+        checkpointDatabase(dbFile.absolutePath)
+        return Base64.encodeToString(dbFile.readBytes(), Base64.NO_WRAP)
     }
 
     /**

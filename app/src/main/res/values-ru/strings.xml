@@ -254,8 +254,11 @@
     <string name="backup_password">Пароль резервной копии</string>
     <string name="backup_password_hint">Пароль для шифрования резервной копии (мин. 8 символов)</string>
     <string name="confirm_backup_password">Подтвердите пароль</string>
-    <string name="include_keys_database">Включить ключи Yggdrasil</string>
-    <string name="include_keys_description">Включить yggmail.db для сохранения email-адреса</string>
+    <string name="backup_keys_always">Ключи и настройки входят всегда — адрес сохранится.</string>
+    <string name="include_mail">Почта</string>
+    <string name="include_mail_description">Вся почта, хранящаяся в Tyr. Большой архив — большой файл.</string>
+    <string name="include_chat">История чата</string>
+    <string name="include_chat_description">Контакты и сообщения встроенного чата</string>
     <string name="backup_created">Резервная копия успешно создана</string>
     <string name="backup_restored">Резервная копия успешно восстановлена</string>
     <string name="backup_failed">Не удалось создать резервную копию</string>

@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.DocumentsContract
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,6 +13,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.checkbox.MaterialCheckBox
@@ -29,6 +31,9 @@ import com.jbselfcompany.tyr.ui.logs.LogsActivity
 import com.jbselfcompany.tyr.utils.BackupManager
 import com.jbselfcompany.tyr.utils.UpdateChecker
 import com.jbselfcompany.tyr.data.ConfigRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Settings fragment for managing Yggdrasil peers and service configuration.
@@ -77,7 +82,8 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
     }
 
     private var backupPassword: String = ""
-    private var backupIncludeDatabase: Boolean = true
+    private var backupIncludeMail: Boolean = false
+    private var backupIncludeChat: Boolean = true
 
     private val createBackupLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/octet-stream")
@@ -599,7 +605,8 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
         val dialogView = requireActivity().layoutInflater.inflate(R.layout.dialog_create_backup, null)
         val editPassword = dialogView.findViewById<TextInputEditText>(R.id.edit_backup_password)
         val editConfirmPassword = dialogView.findViewById<TextInputEditText>(R.id.edit_confirm_backup_password)
-        val checkboxIncludeDb = dialogView.findViewById<MaterialCheckBox>(R.id.checkbox_include_database)
+        val checkboxIncludeMail = dialogView.findViewById<MaterialCheckBox>(R.id.checkbox_include_mail)
+        val checkboxIncludeChat = dialogView.findViewById<MaterialCheckBox>(R.id.checkbox_include_chat)
 
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.create_backup)
@@ -607,7 +614,6 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
             .setPositiveButton(R.string.create_backup) { _, _ ->
                 val password = editPassword.text.toString()
                 val confirmPassword = editConfirmPassword.text.toString()
-                val includeDatabase = checkboxIncludeDb.isChecked
 
                 when {
                     password.isEmpty() -> {
@@ -621,7 +627,8 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
                     }
                     else -> {
                         backupPassword = password
-                        backupIncludeDatabase = includeDatabase
+                        backupIncludeMail = checkboxIncludeMail.isChecked
+                        backupIncludeChat = checkboxIncludeChat.isChecked
                         createBackupLauncher.launch(BackupManager.generateBackupFilename())
                     }
                 }
@@ -631,25 +638,34 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
     }
 
     private fun performBackup(uri: Uri) {
-        try {
-            requireContext().contentResolver.openOutputStream(uri)?.use { outputStream ->
-                val success = BackupManager.createBackup(
-                    context = requireContext(),
-                    outputStream = outputStream,
-                    backupPassword = backupPassword,
-                    includeDatabase = backupIncludeDatabase
-                )
-
-                if (success) {
-                    Toast.makeText(requireContext(), R.string.backup_created, Toast.LENGTH_LONG).show()
-                } else {
-                    Toast.makeText(requireContext(), R.string.backup_failed, Toast.LENGTH_SHORT).show()
+        val context = requireContext().applicationContext
+        val password = backupPassword
+        backupPassword = ""
+        viewLifecycleOwner.lifecycleScope.launch {
+            // Off the UI thread: a full backup reads and encrypts the whole archive.
+            val success = withContext(Dispatchers.IO) {
+                val ok = try {
+                    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                        BackupManager.createBackup(
+                            context = context,
+                            outputStream = outputStream,
+                            backupPassword = password,
+                            includeMail = backupIncludeMail,
+                            includeChat = backupIncludeChat
+                        )
+                    } ?: false
+                } catch (e: Exception) {
+                    false
                 }
+                // Don't leave an empty .tyrbackup behind that looks like a real one.
+                if (!ok) runCatching { DocumentsContract.deleteDocument(context.contentResolver, uri) }
+                ok
             }
-        } catch (e: Exception) {
-            Toast.makeText(requireContext(), R.string.backup_failed, Toast.LENGTH_SHORT).show()
-        } finally {
-            backupPassword = ""
+            Toast.makeText(
+                context,
+                if (success) R.string.backup_created else R.string.backup_failed,
+                if (success) Toast.LENGTH_LONG else Toast.LENGTH_SHORT
+            ).show()
         }
     }
 

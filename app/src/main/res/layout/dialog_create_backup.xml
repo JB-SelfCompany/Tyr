@@ -36,20 +36,43 @@
 
     </com.google.android.material.textfield.TextInputLayout>
 
-    <com.google.android.material.checkbox.MaterialCheckBox
-        android:id="@+id/checkbox_include_database"
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:checked="true"
-        android:text="@string/include_keys_database" />
+        android:text="@string/backup_keys_always"
+        android:textSize="12sp"
+        android:textColor="?android:attr/textColorSecondary" />
+
+    <com.google.android.material.checkbox.MaterialCheckBox
+        android:id="@+id/checkbox_include_mail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:checked="false"
+        android:text="@string/include_mail" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="48dp"
-        android:layout_marginTop="4dp"
-        android:text="@string/include_keys_description"
+        android:text="@string/include_mail_description"
+        android:textSize="12sp"
+        android:textColor="?android:attr/textColorSecondary" />
+
+    <com.google.android.material.checkbox.MaterialCheckBox
+        android:id="@+id/checkbox_include_chat"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:checked="true"
+        android:text="@string/include_chat" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="48dp"
+        android:text="@string/include_chat_description"
         android:textSize="12sp"
         android:textColor="?android:attr/textColorSecondary" />
 
