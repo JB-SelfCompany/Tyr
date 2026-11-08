@@ -5,9 +5,9 @@
 # Build: cd Librarys/Yggmail-ng && powershell -File build-android.ps1 -All
 #
 # repo            commit    note
-Yggmail-ng        f5c4aaa   https://git.shd.company/bubblegum/Yggmail-ng
+Yggmail-ng        b9219cb   branch fix/issues-41-42  https://git.shd.company/bubblegum/Yggmail-ng
 Yggdrasil-ng      c3a3aa6   v0.3.2  https://git.shd.company/bubblegum/Yggdrasil-ng (mirror of Revertron/Yggdrasil-ng)
-imap-rs           b9011ab   https://git.shd.company/bubblegum/imap-rs
+imap-rs           12682f6   https://git.shd.company/bubblegum/imap-rs
 rustls-yggmail    dbef38a   rustls 0.23.46 + SNI patch  https://git.shd.company/bubblegum/rustls-yggmail
 toolchain         NDK 29.0.14206865, rustc 1.96.0, uniffi 0.31.1
-# Built for release 1.9.1 (tag 1.9.1).
+# Built for the fixes to Tyr#41/#42 (after 1.9.1).

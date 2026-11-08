@@ -658,6 +658,8 @@ internal object IntegrityCheckingUniffiLib {
         uniffiCheckContractApiVersion(this)
         uniffiCheckApiChecksums(this)
     }
+    external fun uniffi_yggmail_mobile_checksum_func_export_identity_db(
+    ): Short
     external fun uniffi_yggmail_mobile_checksum_method_yggmailmobile_cancel_pick(
     ): Short
     external fun uniffi_yggmail_mobile_checksum_method_yggmailmobile_clear_outbound_queue(
@@ -781,6 +783,8 @@ internal object UniffiLib {
     ): Unit
     external fun uniffi_yggmail_mobile_fn_init_callback_vtable_picklistener(`vtable`: UniffiVTableCallbackInterfacePickListener,
     ): Unit
+    external fun uniffi_yggmail_mobile_fn_func_export_identity_db(`srcPath`: RustBuffer.ByValue,`destPath`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     external fun ffi_yggmail_mobile_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun ffi_yggmail_mobile_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -900,6 +904,9 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
 }
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
+    if (lib.uniffi_yggmail_mobile_checksum_func_export_identity_db() != 8001.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_yggmail_mobile_checksum_method_yggmailmobile_cancel_pick() != 56853.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -2339,4 +2346,14 @@ public object FfiConverterSequenceTypeMailSummary: FfiConverterRustBuffer<List<M
         }
     }
 }
+    @Throws(YggmailException::class) fun `exportIdentityDb`(`srcPath`: kotlin.String, `destPath`: kotlin.String)
+        = 
+    uniffiRustCallWithError(YggmailException) { _status ->
+    UniffiLib.uniffi_yggmail_mobile_fn_func_export_identity_db(
+    
+        FfiConverterString.lower(`srcPath`),FfiConverterString.lower(`destPath`),_status)
+}
+    
+    
+
 
