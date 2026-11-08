@@ -10,3 +10,6 @@ build/
 debug.txt
 # Release signing secrets (see app/build.gradle)
 keystore.properties
+
+# Internal development notes (plans, specs)
+/docs/
