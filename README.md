@@ -137,9 +137,8 @@ from [yggmail-ng](https://github.com/JB-SelfCompany/Yggmail-ng) you additionally
 - `cargo install cargo-ndk`
 - Android NDK with `ANDROID_NDK_HOME` set
 
-```bash
-cd Yggmail-ng && ./build-android.sh        # then copy the .so + bindings per the script's hint
-```
+The build commands and where to copy the `.so` files and bindings are in the
+[yggmail-ng README](https://github.com/JB-SelfCompany/Yggmail-ng#android-library).
 
 ## Technical details
 

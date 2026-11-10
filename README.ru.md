@@ -136,9 +136,8 @@ cd Tyr
 - `cargo install cargo-ndk`
 - Android NDK с заданной `ANDROID_NDK_HOME`
 
-```bash
-cd Yggmail-ng && ./build-android.sh        # затем скопируйте .so + биндинги по подсказке скрипта
-```
+Команды сборки и куда копировать `.so` и биндинги — в
+[README yggmail-ng](https://github.com/JB-SelfCompany/Yggmail-ng#android-library).
 
 ## Технические детали
 
