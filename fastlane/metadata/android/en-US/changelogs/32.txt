@@ -1,0 +1,3 @@
+• Mail no longer waits behind messages to unreachable contacts: chats with new contacts connect in seconds instead of 20+ minutes
+• Peers: choose any public peer yourself, by country (Add peer → Choose from the public list)
+• Peer addresses with ?key= are accepted
