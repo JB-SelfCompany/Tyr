@@ -14,3 +14,6 @@ keystore.properties
 # Internal development notes (plans, specs)
 /docs/
 CLAUDE.md
+
+# Local release notes for the release PC
+/changelog.txt
