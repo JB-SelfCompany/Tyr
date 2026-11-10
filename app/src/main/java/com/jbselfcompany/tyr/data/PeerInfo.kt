@@ -44,11 +44,12 @@ data class PeerInfo(
             if (rest.contains("..")) return false
             // Unix socket paths need only be non-empty
             if (protocol == "unix://") return true
-            // Network protocols require host:port
-            val portSeparator = rest.lastIndexOf(':')
+            // Network protocols require host:port. Only the authority holds it: a query such as
+            // ?key=… (pinned peer key) or a socks:// target path after it is not the port.
+            val authority = rest.substringBefore('/').substringBefore('?')
+            val portSeparator = authority.lastIndexOf(':')
             if (portSeparator <= 0) return false
-            val portStr = rest.substring(portSeparator + 1).substringBefore('/')
-            val port = portStr.toIntOrNull() ?: return false
+            val port = authority.substring(portSeparator + 1).toIntOrNull() ?: return false
             return port in 1..65535
         }
 
