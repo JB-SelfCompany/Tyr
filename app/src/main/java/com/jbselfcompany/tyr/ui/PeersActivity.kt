@@ -25,6 +25,7 @@ import com.jbselfcompany.tyr.databinding.ActivityPeersBinding
 import com.jbselfcompany.tyr.service.ServiceStatus
 import com.jbselfcompany.tyr.service.ServiceStatusListener
 import com.jbselfcompany.tyr.service.YggmailService
+import com.jbselfcompany.tyr.utils.PeerCatalog
 
 class PeersActivity : BaseActivity(), ServiceStatusListener {
 
@@ -141,11 +142,80 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
                         pickBestPeer()
                         true
                     }
+                    R.id.action_choose_from_list -> {
+                        chooseFromCatalog()
+                        true
+                    }
                     else -> false
                 }
             }
             popup.show()
         }
+    }
+
+    /** The whole public peer list: pick a country (or all), then tick any number of its peers. */
+    private fun chooseFromCatalog() {
+        val loading = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.peer_list_title)
+            .setMessage(R.string.peer_pick_loading)
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+        Thread({
+            val result = runCatching { PeerCatalog.byCountry(PeerCatalog.fetch(this)) }
+            mainHandler.post {
+                if (!loading.isShowing || isFinishing) return@post // cancelled meanwhile
+                loading.dismiss()
+                result.fold(
+                    onSuccess = ::showCatalogCountries,
+                    onFailure = { Toast.makeText(this, getString(R.string.peer_list_failed, it.message ?: ""), Toast.LENGTH_LONG).show() }
+                )
+            }
+        }, "peer-catalog").start()
+    }
+
+    private fun showCatalogCountries(byCountry: Map<String, List<PeerCatalog.Entry>>) {
+        val all = PeerCatalog.sorted(byCountry.values.flatten())
+        val names = listOf(getString(R.string.peer_list_all_countries)) + byCountry.keys
+        val lists = listOf(all) + byCountry.values
+        val labels = names.zip(lists) { name, list -> "$name (${list.count { it.up }}/${list.size})" }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.peer_list_title)
+            .setItems(labels.toTypedArray()) { _, i -> showCatalogPeers(names[i], lists[i], showCountry = i == 0) }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun showCatalogPeers(title: String, entries: List<PeerCatalog.Entry>, showCountry: Boolean) {
+        // Already in the list: nothing to add, so not offered.
+        val offer = entries.filter { e -> peers.none { it.uri == e.uri } }
+        if (offer.isEmpty()) {
+            Toast.makeText(this, R.string.peer_list_nothing_new, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val labels = offer.map { e ->
+            val state = if (!e.up) getString(R.string.peer_list_offline) else e.ms?.let { "$it ms" } ?: ""
+            listOfNotNull(e.uri, e.country.takeIf { showCountry }, state.ifEmpty { null }).joinToString(" · ")
+        }
+        val checked = BooleanArray(offer.size)
+        MaterialAlertDialogBuilder(this)
+            .setTitle(title)
+            .setMultiChoiceItems(labels.toTypedArray(), checked) { _, i, on -> checked[i] = on }
+            .setPositiveButton(R.string.add) { _, _ ->
+                val chosen = offer.filterIndexed { i, _ -> checked[i] }
+                chosen.forEach { e ->
+                    val peer = PeerInfo(e.uri, isEnabled = true, tag = PeerInfo.PeerTag.CUSTOM)
+                    peers.add(peer)
+                    configRepository.savePeer(peer)
+                }
+                if (chosen.isNotEmpty()) {
+                    adapter.notifyDataSetChanged()
+                    hasUnsavedChanges = true
+                    updateApplyButtonVisibility()
+                    Toast.makeText(this, R.string.peers_saved, Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     /** Rank public peers on a worker thread; show progress, then the top and an Apply button. */

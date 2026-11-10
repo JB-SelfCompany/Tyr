@@ -132,6 +132,12 @@
     <string name="auto_pick_peer">Pick a peer automatically</string>
     <string name="auto_pick_peer_description">After the first start, Tyr tests public peers and keeps the fastest one, plus a backup</string>
     <string name="peer_pick_best">Pick the best peer</string>
+    <string name="peer_choose_from_list">Choose from the public list</string>
+    <string name="peer_list_title">Public peers</string>
+    <string name="peer_list_all_countries">All countries</string>
+    <string name="peer_list_offline">offline</string>
+    <string name="peer_list_nothing_new">All of these peers are already in your list</string>
+    <string name="peer_list_failed">Could not load the peer list: %1$s</string>
     <string name="peer_pick_loading">Downloading the public peer list…</string>
     <string name="peer_pick_stage_provider">Checking peers through your provider:</string>
     <string name="peer_pick_stage_yggdrasil">Checking peers through Yggdrasil:</string>

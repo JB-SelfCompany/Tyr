@@ -4,6 +4,9 @@
         android:id="@+id/action_pick_peer"
         android:title="@string/peer_pick_best" />
     <item
+        android:id="@+id/action_choose_from_list"
+        android:title="@string/peer_choose_from_list" />
+    <item
         android:id="@+id/action_add_manually"
         android:title="@string/peer_add_manually"
         android:icon="@android:drawable/ic_input_add" />

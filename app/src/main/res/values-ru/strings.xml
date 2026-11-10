@@ -133,6 +133,12 @@
     <string name="auto_pick_peer">Подобрать пир автоматически</string>
     <string name="auto_pick_peer_description">После первого запуска Tyr проверит публичные пиры и оставит самый быстрый, плюс запасной</string>
     <string name="peer_pick_best">Подобрать лучший пир</string>
+    <string name="peer_choose_from_list">Выбрать из публичного списка</string>
+    <string name="peer_list_title">Публичные пиры</string>
+    <string name="peer_list_all_countries">Все страны</string>
+    <string name="peer_list_offline">не в сети</string>
+    <string name="peer_list_nothing_new">Все эти пиры уже есть в вашем списке</string>
+    <string name="peer_list_failed">Не удалось загрузить список пиров: %1$s</string>
     <string name="peer_pick_loading">Загрузка списка публичных пиров…</string>
     <string name="peer_pick_stage_provider">Проверка пиров через провайдера:</string>
     <string name="peer_pick_stage_yggdrasil">Проверка пиров через Yggdrasil:</string>
