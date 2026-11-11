@@ -5,12 +5,12 @@ plugins {
 
 // ── Version control ───────────────────────────────────────────────────────────
 // Release: bump for production releases (IzzyOnDroid / F-Droid)
-def RELEASE_VERSION_CODE = 32
-def RELEASE_VERSION_NAME = "1.9.2.1"
+def RELEASE_VERSION_CODE = 33
+def RELEASE_VERSION_NAME = "1.9.2.2"
 
 // Dev (signed debug): bump independently of release
-def DEV_VERSION_CODE = 32
-def DEV_VERSION_NAME = "1.9.2.1-dev"
+def DEV_VERSION_CODE = 33
+def DEV_VERSION_NAME = "1.9.2.2-dev"
 // ─────────────────────────────────────────────────────────────────────────────
 
 android {

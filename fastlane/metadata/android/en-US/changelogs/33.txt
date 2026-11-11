@@ -1,0 +1,1 @@
+• Mail to an unreachable contact no longer holds up messages to everyone else: chats connect and messages arrive in seconds
