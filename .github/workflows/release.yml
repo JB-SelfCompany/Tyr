@@ -1,0 +1,87 @@
+# Push a version tag (e.g. 1.9.2.3) -> signed APKs on a GitHub Release.
+# Secrets: KEYSTORE_BASE64 (base64 of the .jks), KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD.
+name: Release
+
+on:
+  push:
+    tags: ['[0-9]*']
+  workflow_dispatch: # for a tag pushed before this workflow existed
+    inputs:
+      tag:
+        description: Existing tag to release
+        required: true
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Check tag matches build.gradle
+        run: |
+          name=$(sed -n 's/^def RELEASE_VERSION_NAME = "\(.*\)"/\1/p' app/build.gradle)
+          code=$(sed -n 's/^def RELEASE_VERSION_CODE = \([0-9]*\)/\1/p' app/build.gradle)
+          [ "$name" = "$TAG" ] || { echo "::error::tag $TAG != RELEASE_VERSION_NAME $name"; exit 1; }
+          test -f "fastlane/metadata/android/en-US/changelogs/$code.txt" || { echo "::error::no en-US changelog $code.txt"; exit 1; }
+          echo "VERSION_CODE=$code" >> "$GITHUB_ENV"
+
+      - name: Write signing config
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          [ -n "$KEYSTORE_BASE64" ] || { echo "::error::KEYSTORE_BASE64 secret is not set"; exit 1; }
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          cat > keystore.properties <<EOF
+          storeFile=$RUNNER_TEMP/release.jks
+          storePassword=$KEYSTORE_PASSWORD
+          keyAlias=$KEY_ALIAS
+          keyPassword=$KEY_PASSWORD
+          EOF
+
+      - name: Build
+        run: ./gradlew testDebugUnitTest assembleRelease --console=plain
+
+      - name: Verify signing certificate
+        env:
+          CERT: 5B:AE:87:76:77:27:DE:3D:39:60:01:25:F6:26:3E:51:5A:69:87:F1:FA:A9:72:52:75:98:A9:B1:FD:A4:F6:9E
+        run: |
+          want=$(echo "$CERT" | tr -d : | tr A-F a-f)
+          apksigner=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/apksigner
+          for apk in app/build/outputs/apk/release/*.apk; do
+            "$apksigner" verify --print-certs "$apk" | grep -q "SHA-256 digest: $want" \
+              || { echo "::error::$apk is not signed with the release key"; exit 1; }
+          done
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prev=$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || true)
+          {
+            echo "## What's New"; echo
+            sed 's/^• /- /' "fastlane/metadata/android/en-US/changelogs/$VERSION_CODE.txt"
+            if [ -n "$prev" ]; then
+              printf '\n**Full Changelog**: %s/compare/%s...%s\n' "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "$prev" "$TAG"
+            fi
+          } > notes.md
+          gh release create "$TAG" app/build/outputs/apk/release/*.apk \
+            --title "$TAG" --notes-file notes.md --verify-tag
