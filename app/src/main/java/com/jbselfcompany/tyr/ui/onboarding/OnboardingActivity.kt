@@ -93,6 +93,7 @@ class OnboardingActivity :
             2 -> {
                 binding.buttonNext.text = getString(R.string.finish)
             }
+
             else -> {
                 binding.buttonNext.text = getString(R.string.next)
             }
@@ -118,6 +119,7 @@ class OnboardingActivity :
                         ).show()
                         false
                     }
+
                     password.length < 6 -> {
                         Toast.makeText(
                             this,
@@ -126,6 +128,7 @@ class OnboardingActivity :
                         ).show()
                         false
                     }
+
                     password != confirmPassword -> {
                         Toast.makeText(
                             this,
@@ -134,6 +137,7 @@ class OnboardingActivity :
                         ).show()
                         false
                     }
+
                     else -> {
                         try {
                             configRepository.savePassword(password)
@@ -149,6 +153,7 @@ class OnboardingActivity :
                     }
                 }
             }
+
             is OnboardingPeersFragment -> {
                 val useDefault = currentFragment.isUsingDefaultPeers()
                 val manualPeerUrl = currentFragment.getManualPeerUrl()
@@ -201,6 +206,7 @@ class OnboardingActivity :
 
                 true
             }
+
             else -> true
         }
     }

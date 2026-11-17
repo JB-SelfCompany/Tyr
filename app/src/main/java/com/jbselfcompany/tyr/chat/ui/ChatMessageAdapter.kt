@@ -79,9 +79,11 @@ class ChatMessageAdapter(
             msgCal.get(Calendar.YEAR) == todayCal.get(Calendar.YEAR) &&
                 msgCal.get(Calendar.DAY_OF_YEAR) == todayCal.get(Calendar.DAY_OF_YEAR) ->
                 context.getString(R.string.chat_date_today)
+
             msgCal.get(Calendar.YEAR) == todayCal.get(Calendar.YEAR) &&
                 msgCal.get(Calendar.DAY_OF_YEAR) == todayCal.get(Calendar.DAY_OF_YEAR) - 1 ->
                 context.getString(R.string.chat_date_yesterday)
+
             else ->
                 SimpleDateFormat("d MMMM yyyy", Locale.getDefault()).format(Date(ts))
         }
@@ -118,8 +120,10 @@ class ChatMessageAdapter(
                 return when {
                     old is ChatListItem.DateItem && new is ChatListItem.DateItem ->
                         old.label == new.label
+
                     old is ChatListItem.MessageItem && new is ChatListItem.MessageItem ->
                         old.msg.id == new.msg.id
+
                     else -> false
                 }
             }
@@ -170,6 +174,7 @@ class ChatMessageAdapter(
             VIEW_SENT -> SentViewHolder(
                 ItemMessageSentBinding.inflate(LayoutInflater.from(parent.context), parent, false)
             )
+
             VIEW_RECEIVED -> ReceivedViewHolder(
                 ItemMessageReceivedBinding.inflate(
                     LayoutInflater.from(parent.context),
@@ -177,6 +182,7 @@ class ChatMessageAdapter(
                     false
                 )
             )
+
             else -> DateSeparatorViewHolder(
                 LayoutInflater.from(
                     parent.context
@@ -190,6 +196,7 @@ class ChatMessageAdapter(
                 is SentViewHolder -> holder.bind(item.msg)
                 is ReceivedViewHolder -> holder.bind(item.msg)
             }
+
             is ChatListItem.DateItem -> (holder as DateSeparatorViewHolder).bind(item.label)
         }
     }
@@ -234,11 +241,13 @@ class ChatMessageAdapter(
                 ChatMessage.STATUS_SENDING -> {
                     binding.imageStatus.visibility = View.INVISIBLE
                 }
+
                 ChatMessage.STATUS_ERROR -> {
                     binding.imageStatus.setImageResource(R.drawable.ic_error)
                     binding.imageStatus.alpha = 1f
                     binding.imageStatus.visibility = View.VISIBLE
                 }
+
                 else -> {
                     binding.imageStatus.setImageResource(R.drawable.ic_check_single)
                     binding.imageStatus.alpha = 0.8f

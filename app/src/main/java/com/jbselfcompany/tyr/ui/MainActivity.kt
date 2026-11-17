@@ -361,11 +361,13 @@ class MainActivity :
                         .setPositiveButton(R.string.ok, null)
                         .show()
                 }
+
                 installedApps.size == 1 -> {
                     // Only one app installed - open it directly
                     val packageName = installedApps.keys.first()
                     openEmailClient(packageName, dcloginUrl)
                 }
+
                 else -> {
                     // Multiple apps installed - show selection dialog
                     showAppSelectionDialog(installedApps, dcloginUrl)
@@ -603,14 +605,17 @@ class MainActivity :
                     binding.contentSettings.visibility = View.GONE
                     true
                 }
+
                 R.id.nav_chat -> {
                     showChatTab()
                     true
                 }
+
                 R.id.nav_settings -> {
                     showSettingsTab()
                     true
                 }
+
                 else -> false
             }
         }
@@ -648,6 +653,7 @@ class MainActivity :
                     binding.textStatus.setTextColor(getColor(R.color.status_starting))
                     binding.progressBar.visibility = View.VISIBLE
                 }
+
                 ServiceStatus.RUNNING -> {
                     binding.textStatus.text = getString(R.string.status_running)
                     binding.textStatus.setTextColor(getColor(R.color.status_running))
@@ -655,16 +661,19 @@ class MainActivity :
                     // Update mail address when service starts
                     updateUI()
                 }
+
                 ServiceStatus.STOPPING -> {
                     binding.textStatus.text = getString(R.string.status_stopping)
                     binding.textStatus.setTextColor(getColor(R.color.status_stopping))
                     binding.progressBar.visibility = View.VISIBLE
                 }
+
                 ServiceStatus.STOPPED -> {
                     binding.textStatus.text = getString(R.string.status_stopped)
                     binding.textStatus.setTextColor(getColor(R.color.status_stopped))
                     binding.progressBar.visibility = View.GONE
                 }
+
                 ServiceStatus.ERROR -> {
                     binding.textStatus.text = getString(R.string.status_error, error ?: "")
                     binding.textStatus.setTextColor(getColor(R.color.status_error))

@@ -295,6 +295,7 @@ class LogsActivity : BaseActivity() {
             finish()
             true
         }
+
         else -> super.onOptionsItemSelected(item)
     }
 

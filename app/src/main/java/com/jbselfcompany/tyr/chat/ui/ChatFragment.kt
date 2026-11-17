@@ -85,6 +85,7 @@ class ChatFragment : Fragment() {
                             showMyProfileDialog()
                             true
                         }
+
                         else -> false
                     }
             },
@@ -121,12 +122,14 @@ class ChatFragment : Fragment() {
                         R.string.chat_cannot_add_self,
                         Snackbar.LENGTH_SHORT
                     ).show()
+
                 chatRepository.contactExists(address) ->
                     Snackbar.make(
                         binding.root,
                         R.string.chat_contact_already_exists,
                         Snackbar.LENGTH_SHORT
                     ).show()
+
                 else -> {
                     chatRepository.addContact(ChatContact(address = address, name = name))
                     refreshContactList()
@@ -306,6 +309,7 @@ class ChatFragment : Fragment() {
                                 newlyReceived.add(msg)
                                 added++
                             }
+
                             acceptFromNonContacts -> {
                                 // Store as pending contact — user decides in ConversationActivity
                                 // Use sender's nickname if available
@@ -313,7 +317,7 @@ class ChatFragment : Fragment() {
                                     ChatContact(
                                         address = msg.fromAddr,
                                         name =
-                                        nicknameMap[msg.fromAddr] ?: ""
+                                            nicknameMap[msg.fromAddr] ?: ""
                                     )
                                 )
                                 // Insert as unread (isRead=false) so badge counts it

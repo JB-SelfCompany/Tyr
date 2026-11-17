@@ -3,28 +3,27 @@
     <file name="src/main/java/com/jbselfcompany/tyr/chat/network/ImapFetcher.kt">
         <error line="38" column="101" source="standard:max-line-length" />
         <error line="246" column="101" source="standard:max-line-length" />
-        <error line="662" column="101" source="standard:max-line-length" />
-        <error line="877" column="101" source="standard:max-line-length" />
-        <error line="1105" column="101" source="standard:max-line-length" />
+        <error line="680" column="101" source="standard:max-line-length" />
+        <error line="902" column="101" source="standard:max-line-length" />
+        <error line="1143" column="101" source="standard:max-line-length" />
     </file>
     <file name="src/main/java/com/jbselfcompany/tyr/chat/ui/ConversationActivity.kt">
-        <error line="646" column="101" source="standard:max-line-length" />
-        <error line="647" column="101" source="standard:max-line-length" />
+        <error line="648" column="101" source="standard:max-line-length" />
+        <error line="649" column="101" source="standard:max-line-length" />
     </file>
     <file name="src/main/java/com/jbselfcompany/tyr/service/YggmailService.kt">
-        <error line="67" column="1" source="standard:indent" />
         <error line="75" column="101" source="standard:max-line-length" />
-        <error line="965" column="26" source="standard:value-parameter-comment" />
-        <error line="1285" column="101" source="standard:max-line-length" />
-        <error line="1312" column="101" source="standard:max-line-length" />
-        <error line="1370" column="101" source="standard:max-line-length" />
+        <error line="975" column="26" source="standard:value-parameter-comment" />
+        <error line="1296" column="101" source="standard:max-line-length" />
+        <error line="1323" column="101" source="standard:max-line-length" />
+        <error line="1383" column="101" source="standard:max-line-length" />
     </file>
     <file name="src/main/java/com/jbselfcompany/tyr/ui/MainActivity.kt">
-        <error line="982" column="100" source="standard:max-line-length" />
+        <error line="991" column="100" source="standard:max-line-length" />
     </file>
     <file name="src/main/java/com/jbselfcompany/tyr/ui/settings/SettingsFragment.kt">
-        <error line="346" column="101" source="standard:max-line-length" />
-        <error line="488" column="101" source="standard:max-line-length" />
+        <error line="347" column="101" source="standard:max-line-length" />
+        <error line="505" column="101" source="standard:max-line-length" />
     </file>
     <file name="src/main/java/com/jbselfcompany/tyr/utils/NetworkStatsMonitor.kt">
         <error line="20" column="101" source="standard:max-line-length" />

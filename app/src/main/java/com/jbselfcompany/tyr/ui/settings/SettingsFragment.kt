@@ -341,17 +341,21 @@ class SettingsFragment :
             ID_AUTO_START -> {
                 configRepository.setAutoStartEnabled(isChecked)
             }
+
             ID_ENABLE_LOG_COLLECTION -> {
                 configRepository.setLogCollectionEnabled(isChecked)
                 val msgRes = if (isChecked) R.string.log_collection_enabled else R.string.log_collection_disabled_snackbar
                 Snackbar.make(requireView(), msgRes, Snackbar.LENGTH_SHORT).show()
             }
+
             ID_UPDATE_CHECK_ENABLED -> {
                 configRepository.setUpdateCheckEnabled(isChecked)
             }
+
             ID_ACCEPT_NON_CONTACTS -> {
                 configRepository.setAcceptMessagesFromNonContacts(isChecked)
             }
+
             ID_BLOCK_SCREENSHOTS -> {
                 configRepository.setBlockScreenshots(isChecked)
             }
@@ -363,15 +367,25 @@ class SettingsFragment :
             ID_CONFIGURE_PEERS -> startActivity(
                 Intent(requireContext(), com.jbselfcompany.tyr.ui.PeersActivity::class.java)
             )
+
             ID_CHANGE_PASSWORD -> showChangePasswordDialog()
+
             ID_REGENERATE_KEYS -> showRegenerateKeysDialog()
+
             ID_BACKUP_RESTORE -> showBackupRestoreOptions()
+
             ID_LANGUAGE -> showLanguageDialog()
+
             ID_THEME -> showThemeDialog()
+
             ID_COLLECT_LOGS -> startActivity(Intent(requireContext(), LogsActivity::class.java))
+
             ID_CLEAR_LOGS -> showClearLogsDialog()
+
             ID_UPDATE_CHECK_INTERVAL -> showUpdateIntervalDialog()
+
             ID_UPDATE_CHECK_NOW -> checkForUpdatesNow()
+
             ID_ABOUT_APP -> startActivity(Intent(requireContext(), AboutActivity::class.java))
         }
     }
@@ -461,6 +475,7 @@ class SettingsFragment :
                             Toast.LENGTH_SHORT
                         ).show()
                     }
+
                     newPassword.length < 6 -> {
                         Toast.makeText(
                             requireContext(),
@@ -468,6 +483,7 @@ class SettingsFragment :
                             Toast.LENGTH_SHORT
                         ).show()
                     }
+
                     newPassword != confirmPassword -> {
                         Toast.makeText(
                             requireContext(),
@@ -475,6 +491,7 @@ class SettingsFragment :
                             Toast.LENGTH_SHORT
                         ).show()
                     }
+
                     else -> {
                         try {
                             configRepository.savePassword(newPassword)
@@ -666,6 +683,7 @@ class SettingsFragment :
                             Toast.LENGTH_SHORT
                         ).show()
                     }
+
                     password.length < 8 -> {
                         Toast.makeText(
                             requireContext(),
@@ -673,6 +691,7 @@ class SettingsFragment :
                             Toast.LENGTH_SHORT
                         ).show()
                     }
+
                     password != confirmPassword -> {
                         Toast.makeText(
                             requireContext(),
@@ -680,6 +699,7 @@ class SettingsFragment :
                             Toast.LENGTH_SHORT
                         ).show()
                     }
+
                     else -> {
                         backupPassword = password
                         backupIncludeMail = checkboxIncludeMail.isChecked

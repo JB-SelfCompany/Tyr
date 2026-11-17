@@ -61,6 +61,7 @@ class ChatContactAdapter(
                             // Not yet confirmed — hide the icon, matching the inner chat view
                             binding.imageMessageStatus.visibility = View.GONE
                         }
+
                         ChatMessage.STATUS_ERROR -> {
                             binding.imageMessageStatus.visibility = View.VISIBLE
                             binding.imageMessageStatus.setImageResource(R.drawable.ic_error)
@@ -68,6 +69,7 @@ class ChatContactAdapter(
                             binding.imageMessageStatus.contentDescription =
                                 ctx.getString(R.string.chat_message_error_desc)
                         }
+
                         else -> { // STATUS_SENT — delivery confirmed
                             binding.imageMessageStatus.visibility = View.VISIBLE
                             binding.imageMessageStatus.setImageResource(R.drawable.ic_check_single)
@@ -138,6 +140,7 @@ class ChatContactAdapter(
                 "HH:mm",
                 Locale.getDefault()
             ).format(Date(ts))
+
             else -> SimpleDateFormat("dd.MM", Locale.getDefault()).format(Date(ts))
         }
     }

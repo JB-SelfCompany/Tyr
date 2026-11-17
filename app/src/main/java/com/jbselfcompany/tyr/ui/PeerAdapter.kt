@@ -64,9 +64,11 @@ class PeerAdapter(
             peer.uri ==
                 com.jbselfcompany.tyr.TyrApplication.instance.configRepository.getBackupPeer() ->
                 holder.itemView.context.getString(R.string.peer_tag_backup)
+
             peer.tag == PeerInfo.PeerTag.DEFAULT -> holder.itemView.context.getString(
                 R.string.peer_tag_default
             )
+
             else -> holder.itemView.context.getString(R.string.peer_tag_custom)
         }
 

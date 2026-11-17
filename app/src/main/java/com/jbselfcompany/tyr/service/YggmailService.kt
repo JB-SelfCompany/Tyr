@@ -64,7 +64,7 @@ class YggmailService : Service() {
         const val ACTION_NEW_CHAT_MESSAGES = "com.jbselfcompany.tyr.NEW_CHAT_MESSAGES"
         private const val CHAT_POLL_INTERVAL_MS = 2 * 60 * 1000L
 
-            // 2 minutes
+        // 2 minutes
 
         /** A peer pick is running: its probe links are not real peers, the UI hides them. */
         @Volatile
@@ -252,6 +252,7 @@ class YggmailService : Service() {
                     TyrLogger.d(TAG, "[Battery] Device charging started")
                     updateNativeServicePowerState()
                 }
+
                 Intent.ACTION_POWER_DISCONNECTED -> {
                     isCharging = false
                     TyrLogger.d(TAG, "[Battery] Device on battery")
@@ -333,6 +334,7 @@ class YggmailService : Service() {
                     TyrLogger.w(TAG, "Service already running, ignoring START action")
                 }
             }
+
             ACTION_STOP -> {
                 // Post stopSelf() to happen AFTER stopYggmail completes on serviceHandler thread
                 // This prevents race condition where onDestroy() is called while stop is in progress
@@ -344,6 +346,7 @@ class YggmailService : Service() {
                     }
                 }
             }
+
             ACTION_SOFT_STOP -> {
                 // Soft stop - gracefully disconnect peers first, then stop
                 serviceHandler.post {
@@ -354,6 +357,7 @@ class YggmailService : Service() {
                     }
                 }
             }
+
             ACTION_RECONNECT_PEERS -> {
                 // Triggered by network change (WiFi <-> Mobile switch)
                 if (isRunning) {
@@ -369,6 +373,7 @@ class YggmailService : Service() {
                     }
                 }
             }
+
             ACTION_MAINTENANCE_CHECK -> {
                 // Triggered by MaintenanceReceiver — check peers and reconnect if needed
                 if (isRunning) {
@@ -404,6 +409,7 @@ class YggmailService : Service() {
                     }
                 }
             }
+
             else -> {
                 // Service restarted by system
                 if (!isRunning) {
@@ -774,9 +780,13 @@ class YggmailService : Service() {
      */
     private fun getConnectionStatus(): String = when (serviceStatus) {
         ServiceStatus.STARTING -> getString(R.string.connection_connecting)
+
         ServiceStatus.STOPPING -> getString(R.string.service_stopping)
+
         ServiceStatus.STOPPED -> getString(R.string.connection_offline)
+
         ServiceStatus.ERROR -> lastError ?: getString(R.string.service_error)
+
         ServiceStatus.RUNNING -> {
             val connections = getPeerConnections()
             val connected = connections?.filter { it.up } ?: emptyList()
@@ -1278,6 +1288,7 @@ class YggmailService : Service() {
                     is ImapFetcher.Result.Error -> {
                         TyrLogger.e(TAG, "Chat poll: IMAP fetch error: ${result.message}")
                     }
+
                     is ImapFetcher.Result.Success -> {
                         TyrLogger.i(
                             TAG,
@@ -1343,6 +1354,7 @@ class YggmailService : Service() {
                                     chatRepository.insertMessage(msg)
                                     newMessages.add(msg)
                                 }
+
                                 acceptNonContacts -> {
                                     // Store as pending contact with nickname if available
                                     TyrLogger.i(
@@ -1354,12 +1366,13 @@ class YggmailService : Service() {
                                         com.jbselfcompany.tyr.chat.data.ChatContact(
                                             address = msg.fromAddr,
                                             name =
-                                            nicknameMap[msg.fromAddr] ?: ""
+                                                nicknameMap[msg.fromAddr] ?: ""
                                         )
                                     )
                                     chatRepository.insertMessage(msg.copy(isRead = false))
                                     newMessages.add(msg)
                                 }
+
                                 else -> {
                                     // Sender not in contacts and acceptNonContacts=false.
                                     // Message is intentionally dropped per user settings.
@@ -1496,6 +1509,7 @@ class YggmailService : Service() {
             val lastMsg = messages.last()
             val content = when {
                 lastMsg.body.isNotBlank() -> lastMsg.body.take(100)
+
                 lastMsg.hasAttachment -> {
                     val isImage = lastMsg.attachmentMimeType?.startsWith("image/") == true
                     val name = lastMsg.attachmentName
@@ -1517,6 +1531,7 @@ class YggmailService : Service() {
                         }
                     }
                 }
+
                 else -> "\u2026"
             }
 

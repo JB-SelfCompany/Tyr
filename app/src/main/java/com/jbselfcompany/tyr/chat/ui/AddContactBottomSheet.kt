@@ -34,9 +34,12 @@ class AddContactBottomSheet : BottomSheetDialogFragment() {
                     ""
                 }
             }
+
             scanned.startsWith("mailto:", ignoreCase = true) ->
                 scanned.removePrefix("mailto:").substringBefore("?").trim()
+
             scanned.contains("@") -> scanned.trim()
+
             else -> ""
         }
         if (address.isNotEmpty() && address.endsWith("@yggmail")) {
@@ -70,6 +73,7 @@ class AddContactBottomSheet : BottomSheetDialogFragment() {
                         binding.sectionManual.visibility = View.VISIBLE
                         binding.sectionQr.visibility = View.GONE
                     }
+
                     1 -> {
                         binding.sectionManual.visibility = View.GONE
                         binding.sectionQr.visibility = View.VISIBLE

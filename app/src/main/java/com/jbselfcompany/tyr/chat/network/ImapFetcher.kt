@@ -504,22 +504,30 @@ class ImapFetcher(
                     when {
                         lower.startsWith("from:") ->
                             from = extractEmailAddr(l.substringAfter(":").trim())
+
                         lower.startsWith("to:") ->
                             to = extractEmailAddr(l.substringAfter(":").trim())
+
                         lower.startsWith("date:") ->
                             timestamp = parseImapDate(l.substringAfter(":").trim())
+
                         lower.startsWith("$CHAT_HEADER_KEY:") ->
                             isTyrChat = l.substringAfter(":").trim() == CHAT_HEADER_VALUE
+
                         lower.startsWith("$READ_RECEIPT_HEADER_KEY:") ->
                             readReceiptForUid = l.substringAfter(":").trim().toLongOrNull() ?: -1L
+
                         lower.startsWith("$READ_RECEIPT_TIMESTAMP_KEY:") ->
                             readReceiptForTimestamp =
                                 l.substringAfter(":").trim().toLongOrNull() ?: -1L
+
                         lower.startsWith("$DELIVERY_RECEIPT_TIMESTAMP_KEY:") ->
                             deliveryReceiptForTimestamp =
                                 l.substringAfter(":").trim().toLongOrNull() ?: -1L
+
                         lower.startsWith("$NICKNAME_HEADER_KEY:") ->
                             senderNickname = decodeHeaderValue(l.substringAfter(":").trim())
+
                         lower.startsWith("content-type:") ->
                             contentType = l.substringAfter(":").trim()
                     }
@@ -554,6 +562,7 @@ class ImapFetcher(
                                     }
                                 }
                             }
+
                             collectingBody -> {
                                 // Body stored in file — remember it for streaming MIME parse.
                                 bodyLiteralFile = literalFile
@@ -562,6 +571,7 @@ class ImapFetcher(
                                     "uid=$uid: body literal file set: ${literalFile.name} size=${literalFile.length()}"
                                 )
                             }
+
                             else -> {
                                 TyrLogger.w(
                                     TAG,
@@ -590,12 +600,14 @@ class ImapFetcher(
                                     }
                                 }
                             }
+
                             collectingBody -> {
                                 // Body literal: split on newlines; each line feeds parseMimeMultipart.
                                 for (bLine in blob.split('\n')) {
                                     bodyLines.add(bLine.trimEnd('\r'))
                                 }
                             }
+
                             else -> {
                                 TyrLogger.w(
                                     TAG,
@@ -612,6 +624,7 @@ class ImapFetcher(
                     uid < 0 && l.trim().matches(Regex("UID\\s+\\d+", RegexOption.IGNORE_CASE)) -> {
                         uid = l.trim().removePrefix("UID ").trim().toLongOrNull() ?: -1L
                     }
+
                     (
                         l.contains("BODY[HEADER", ignoreCase = true) ||
                             l.contains("BODY.PEEK[HEADER", ignoreCase = true)
@@ -620,6 +633,7 @@ class ImapFetcher(
                         collectingHeader = true
                         collectingBody = false
                     }
+
                     (
                         l.contains("BODY[TEXT]", ignoreCase = true) ||
                             l.contains("BODY.PEEK[TEXT]", ignoreCase = true)
@@ -628,12 +642,16 @@ class ImapFetcher(
                         collectingBody = true
                         collectingHeader = false
                     }
+
                     // go-imap closes the FETCH record with " )" (leading space) after a literal
                     l.trimStart() == ")" -> break
+
                     l.isEmpty() && collectingHeader -> {
                         collectingHeader = false
                     }
+
                     collectingHeader -> applyHeaderLine(l)
+
                     collectingBody -> bodyLines.add(l)
                 }
                 i++
@@ -692,6 +710,7 @@ class ImapFetcher(
                             attachmentsDir
                         )
                     }
+
                     lowerCT.startsWith("multipart/") -> {
                         TyrLogger.i(
                             TAG,
@@ -699,6 +718,7 @@ class ImapFetcher(
                         )
                         parseMimeMultipart(bodyLines, contentType, uid, attachmentsDir)
                     }
+
                     bodyLiteralFile != null -> {
                         // Plain text stored in file (unlikely but handle gracefully).
                         val raw = bodyLiteralFile!!.readText(Charsets.ISO_8859_1).trim()
@@ -709,6 +729,7 @@ class ImapFetcher(
                         }
                         MimeParsed(body, null, null, null, 0L)
                     }
+
                     else -> {
                         val raw = bodyLines.joinToString("\n").trim()
                         val body = if (lowerCT.contains("utf-8") || lowerCT.contains("utf8")) {
@@ -774,6 +795,7 @@ class ImapFetcher(
                     val encoded = match.groupValues[3]
                     when (encoding) {
                         "B" -> String(Base64.decode(encoded, Base64.DEFAULT), charset)
+
                         "Q" -> {
                             // Quoted-printable: underscore → space, =XX → byte
                             val qpBytes = mutableListOf<Byte>()
@@ -784,12 +806,14 @@ class ImapFetcher(
                                         qpBytes.add(0x20)
                                         i++
                                     }
+
                                     encoded[i] == '=' && i + 2 < encoded.length -> {
                                         qpBytes.add(
                                             encoded.substring(i + 1, i + 3).toInt(16).toByte()
                                         )
                                         i += 3
                                     }
+
                                     else -> {
                                         qpBytes.add(encoded[i].code.toByte())
                                         i++
@@ -798,6 +822,7 @@ class ImapFetcher(
                             }
                             String(qpBytes.toByteArray(), charset)
                         }
+
                         else -> match.value
                     }
                 } catch (e: Exception) {
@@ -924,6 +949,7 @@ class ImapFetcher(
                     trimmed == "--$boundary" -> {
                         startNewPart()
                     }
+
                     trimmed == "--$boundary--" -> {
                         if (collectingBase64) finishBase64Part()
                         if (collectingText) {
@@ -941,6 +967,7 @@ class ImapFetcher(
                         }
                         break
                     }
+
                     inPart && !headersDone -> {
                         val lower = lineStr.lowercase()
                         when {
@@ -957,6 +984,7 @@ class ImapFetcher(
                                     partCTLower.startsWith("text/plain") -> {
                                         collectingText = true
                                     }
+
                                     attachmentsDir != null &&
                                         (
                                             partCTLower.startsWith("image/") ||
@@ -985,6 +1013,7 @@ class ImapFetcher(
                                             "uid=$uid part[$partIdx]: streaming base64 attachment '$fileName' → ${outFile!!.name}"
                                         )
                                     }
+
                                     else -> {
                                         TyrLogger.d(
                                             TAG,
@@ -993,6 +1022,7 @@ class ImapFetcher(
                                     }
                                 }
                             }
+
                             // Folded header continuation
                             lineStr.isNotEmpty() && (lineStr[0] == ' ' || lineStr[0] == '\t') -> {
                                 val continuation = lineStr.trim()
@@ -1002,24 +1032,30 @@ class ImapFetcher(
                                     "cd" -> partCD += " $continuation"
                                 }
                             }
+
                             lower.startsWith("content-type:") -> {
                                 partCT = lineStr.substringAfter(":").trim()
                                 lastPartHeader = "ct"
                             }
+
                             lower.startsWith("content-transfer-encoding:") -> {
                                 partCTE = lineStr.substringAfter(":").trim()
                                 lastPartHeader = "cte"
                             }
+
                             lower.startsWith("content-disposition:") -> {
                                 partCD = lineStr.substringAfter(":").trim()
                                 lastPartHeader = "cd"
                             }
+
                             else -> lastPartHeader = ""
                         }
                     }
+
                     inPart && headersDone -> {
                         when {
                             collectingText -> textLines.add(lineStr)
+
                             collectingBase64 -> {
                                 val stripped = lineStr.trimEnd()
                                 if (stripped.isNotEmpty()) {
@@ -1084,12 +1120,14 @@ class ImapFetcher(
                     currentPart = mutableListOf()
                     inPart = true
                 }
+
                 trimmed == "--$boundary--" -> {
                     if (inPart && currentPart.isNotEmpty()) {
                         parts.add(currentPart.toList())
                     }
                     break
                 }
+
                 inPart -> currentPart.add(line)
             }
         }
@@ -1133,6 +1171,7 @@ class ImapFetcher(
                             headersDone = true
                             lastPartHeader = ""
                         }
+
                         // Folded header continuation line
                         line.isNotEmpty() && (line[0] == ' ' || line[0] == '\t') -> {
                             val continuation = line.trim()
@@ -1142,18 +1181,22 @@ class ImapFetcher(
                                 "cd" -> partCD += " $continuation"
                             }
                         }
+
                         lower.startsWith("content-type:") -> {
                             partCT = line.substringAfter(":").trim()
                             lastPartHeader = "ct"
                         }
+
                         lower.startsWith("content-transfer-encoding:") -> {
                             partCTE = line.substringAfter(":").trim()
                             lastPartHeader = "cte"
                         }
+
                         lower.startsWith("content-disposition:") -> {
                             partCD = line.substringAfter(":").trim()
                             lastPartHeader = "cd"
                         }
+
                         else -> lastPartHeader = ""
                     }
                 } else {
@@ -1184,6 +1227,7 @@ class ImapFetcher(
                         "uid=$uid part[$partIdx]: text/plain decoded, len=${textBody.length}"
                     )
                 }
+
                 attachmentsDir != null &&
                     (
                         partCTLower.startsWith("image/") ||
@@ -1234,6 +1278,7 @@ class ImapFetcher(
                         )
                     }
                 }
+
                 else -> {
                     TyrLogger.d(
                         TAG,
@@ -1268,6 +1313,7 @@ class ImapFetcher(
                         i++
                     }
                 }
+
                 else -> {
                     bytes.add(input[i].code.toByte())
                     i++

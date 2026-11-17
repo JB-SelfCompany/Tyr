@@ -36,6 +36,7 @@ class AboutActivity : BaseActivity() {
             finish()
             true
         }
+
         else -> super.onOptionsItemSelected(item)
     }
 

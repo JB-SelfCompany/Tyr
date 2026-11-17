@@ -50,10 +50,12 @@ class SettingsAdapter(private val items: List<Item>, private val listener: Liste
                 val view = inflater.inflate(R.layout.row_settings_header, parent, false)
                 HeaderVH(view)
             }
+
             TYPE_SWITCH -> {
                 val view = inflater.inflate(R.layout.row_settings_switch, parent, false)
                 SwitchVH(view)
             }
+
             else -> {
                 val view = inflater.inflate(R.layout.row_settings_plain, parent, false)
                 PlainVH(view)

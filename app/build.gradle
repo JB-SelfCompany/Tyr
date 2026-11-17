@@ -1,10 +1,10 @@
 plugins {
     id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
     id 'org.jlleitschuh.gradle.ktlint'
 }
 
 ktlint {
+    version = '1.8.0' // keep in sync with the standalone ktlint used by the Claude hook
     baseline = file('ktlint-baseline.xml') // pre-existing violations ktlintFormat can't fix
     filter { exclude { it.file.path.contains('uniffi') } } // generated UniFFI bindings
 }
@@ -20,8 +20,8 @@ def DEV_VERSION_NAME = "1.9.2.2-dev"
 // ─────────────────────────────────────────────────────────────────────────────
 
 android {
-    namespace 'com.jbselfcompany.tyr'
-    compileSdk 36
+    namespace = 'com.jbselfcompany.tyr'
+    compileSdk = 37
 
     dependenciesInfo {
         includeInApk = false
@@ -29,25 +29,24 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.jbselfcompany.tyr"
-        minSdk 23
-        targetSdk 33
-        versionCode RELEASE_VERSION_CODE
-        versionName RELEASE_VERSION_NAME
-        resourceConfigurations += ['en', 'ru']
+        applicationId = "com.jbselfcompany.tyr"
+        minSdk = 23
+        targetSdk = 33
+        versionCode = RELEASE_VERSION_CODE
+        versionName = RELEASE_VERSION_NAME
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
         }
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     splits {
         abi {
-            enable true
+            enable = true
             reset()
             include 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
-            universalApk true
+            universalApk = true
         }
     }
 
@@ -59,46 +58,46 @@ android {
         keystorePropsFile.withInputStream { keystoreProps.load(it) }
         signingConfigs {
             release {
-                storeFile file(keystoreProps['storeFile'])
-                storePassword keystoreProps['storePassword']
-                keyAlias keystoreProps['keyAlias']
-                keyPassword keystoreProps['keyPassword']
+                storeFile = file(keystoreProps['storeFile'])
+                storePassword = keystoreProps['storePassword']
+                keyAlias = keystoreProps['keyAlias']
+                keyPassword = keystoreProps['keyPassword']
             }
         }
     }
 
     buildTypes {
         debug {
-            applicationIdSuffix ".dev"
+            applicationIdSuffix = ".dev"
             manifestPlaceholders = [appLabel: "Tyr-dev"]
-            minifyEnabled false
-            shrinkResources false
+            minifyEnabled = false
+            shrinkResources = false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         release {
             if (keystorePropsFile.exists()) {
-                signingConfig signingConfigs.release
+                signingConfig = signingConfigs.release
             }
             manifestPlaceholders = [appLabel: "Tyr"]
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled = true
+            shrinkResources = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = '17'
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
-        viewBinding true
-        buildConfig true
+        viewBinding = true
+        buildConfig = true
     }
-    packagingOptions {
+    androidResources {
+        localeFilters += ['en', 'ru']
+    }
+    packaging {
         jniLibs {
-            useLegacyPackaging false
+            useLegacyPackaging = true // was extractNativeLibs="true" in the manifest (since 678af49)
         }
         resources {
             excludes += [
@@ -114,43 +113,47 @@ android {
             ]
         }
     }
+}
 
-    applicationVariants.all { variant ->
-        variant.outputs.all { output ->
-            def abiName = output.getFilter(com.android.build.OutputFile.ABI) ?: "universal"
-            if (variant.buildType.name == 'debug') {
-                output.versionCodeOverride = DEV_VERSION_CODE
-                output.versionNameOverride = DEV_VERSION_NAME
-                outputFileName = "Tyr-${DEV_VERSION_NAME}-${abiName}.apk"
-            } else {
-                outputFileName = "Tyr-${variant.versionName}-${abiName}.apk"
+// AGP 9 variant API: debug gets the dev version, every APK is named Tyr-<version>-<abi>.apk.
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        def debug = variant.buildType == 'debug'
+        variant.outputs.each { output ->
+            def abi = output.filters.find { it.filterType.name() == 'ABI' }?.identifier ?: 'universal'
+            if (debug) {
+                output.versionCode.set(DEV_VERSION_CODE)
+                output.versionName.set(DEV_VERSION_NAME)
             }
+            // ponytail: internal AGP class; no public API for APK names yet. Re-check on AGP major bumps.
+            ((com.android.build.api.variant.impl.VariantOutputImpl) output).outputFileName
+                .set("Tyr-${debug ? DEV_VERSION_NAME : RELEASE_VERSION_NAME}-${abi}.apk")
         }
     }
 }
 
 dependencies {
     // Yggmail library (Rust/UniFFI via JNA)
-    implementation 'net.java.dev.jna:jna:5.14.0@aar'
+    implementation 'net.java.dev.jna:jna:5.19.1@aar'
 
     // AndroidX libraries
-    implementation 'androidx.core:core-ktx:1.17.0'
-    implementation 'androidx.appcompat:appcompat:1.7.1'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.9.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
+    implementation 'androidx.core:core-ktx:1.19.1'
+    implementation 'androidx.appcompat:appcompat:1.8.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.11.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0'
     implementation 'androidx.preference:preference-ktx:1.2.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
-    implementation 'com.google.android.material:material:1.13.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.2'
+    implementation 'com.google.android.material:material:1.14.0'
     implementation 'androidx.viewpager2:viewpager2:1.1.0'
 
     // Security - Encrypted SharedPreferences
-    implementation 'androidx.security:security-crypto:1.1.0-alpha06'
+    implementation 'androidx.security:security-crypto:1.1.0-beta01'
 
     // EXIF metadata for image rotation correction
-    implementation 'androidx.exifinterface:exifinterface:1.3.7'
+    implementation 'androidx.exifinterface:exifinterface:1.4.2'
 
     // QR Code generation
-    implementation 'com.google.zxing:core:3.5.3'
+    implementation 'com.google.zxing:core:3.5.4'
 
     // QR Code scanning (camera-based)
     implementation 'com.journeyapps:zxing-android-embedded:4.3.0'

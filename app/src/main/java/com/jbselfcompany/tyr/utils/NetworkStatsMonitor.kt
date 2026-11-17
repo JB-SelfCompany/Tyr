@@ -176,12 +176,17 @@ class NetworkStatsMonitor(private val context: Context) {
             val capabilities = connectivityManager.getNetworkCapabilities(network)
             when {
                 capabilities == null -> "Unknown"
+
                 capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> "WiFi"
+
                 capabilities.hasTransport(
                     NetworkCapabilities.TRANSPORT_CELLULAR
                 ) -> context.getString(com.jbselfcompany.tyr.R.string.connection_type_mobile_data)
+
                 capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> "Ethernet"
+
                 capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN) -> "VPN"
+
                 else -> "Unknown"
             }
         } catch (e: Exception) {

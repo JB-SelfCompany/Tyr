@@ -87,10 +87,12 @@ class PeersActivity :
                 editPeer(position)
                 true
             }
+
             PeerAdapter.MENU_DELETE -> {
                 showDeleteConfirmation(position)
                 true
             }
+
             else -> super.onContextItemSelected(item)
         }
     }
@@ -137,14 +139,17 @@ class PeersActivity :
                         showAddPeerDialog()
                         true
                     }
+
                     R.id.action_pick_peer -> {
                         pickBestPeer()
                         true
                     }
+
                     R.id.action_choose_from_list -> {
                         chooseFromCatalog()
                         true
                     }
+
                     else -> false
                 }
             }
@@ -195,7 +200,7 @@ class PeersActivity :
                     names[i],
                     lists[i],
                     showCountry =
-                    i == 0
+                        i == 0
                 )
             }
             .setNegativeButton(R.string.cancel, null)
@@ -313,7 +318,9 @@ class PeersActivity :
                     getString(R.string.peer_pick_switch)
                 }
             }
+
             "current_best", "small_gain" -> getString(R.string.peer_pick_keep)
+
             else -> getString(R.string.peer_pick_none)
         }
         val rows = r.optJSONArray("rows") ?: org.json.JSONArray()
@@ -554,6 +561,7 @@ class PeersActivity :
             finish()
             true
         }
+
         else -> super.onOptionsItemSelected(item)
     }
 }

@@ -89,8 +89,11 @@ object LocaleHelper {
                 }
                 "${getSystemText(context)} ($systemName)"
             }
+
             ConfigRepository.LANGUAGE_ENGLISH -> "English"
+
             ConfigRepository.LANGUAGE_RUSSIAN -> "Русский"
+
             else -> languageCode
         }
 

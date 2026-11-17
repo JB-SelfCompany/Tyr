@@ -281,7 +281,7 @@ class ChatRepository(context: Context) {
             "WHERE $COL_FROM_ADDR = ? AND $COL_TO_ADDR = ? AND $COL_IS_SENT = 1 " +
             "AND ABS($COL_TIMESTAMP - ?) <= $toleranceMs" + statusClause +
             " ORDER BY ABS($COL_TIMESTAMP - ?) ASC LIMIT 1)"
-        db.writableDatabase.execSQL(sql, arrayOf(status, my, peer, timestamp, timestamp))
+        db.writableDatabase.execSQL(sql, arrayOf<Any>(status, my, peer, timestamp, timestamp))
     }
 
     fun getConversation(myAddress: String, peerAddress: String): List<ChatMessage> {

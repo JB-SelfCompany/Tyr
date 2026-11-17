@@ -213,10 +213,12 @@ class ConversationActivity : BaseActivity() {
             finish()
             true
         }
+
         R.id.action_contact_profile -> {
             showContactProfile()
             true
         }
+
         else -> super.onOptionsItemSelected(item)
     }
 
@@ -877,12 +879,13 @@ class ConversationActivity : BaseActivity() {
                                 newlyReceived.add(msg)
                                 changed = true
                             }
+
                             acceptFromNonContacts -> {
                                 chatRepository.addPendingContact(
                                     ChatContact(
                                         address = msg.fromAddr,
                                         name =
-                                        nicknameMap[msg.fromAddr] ?: ""
+                                            nicknameMap[msg.fromAddr] ?: ""
                                     )
                                 )
                                 chatRepository.insertMessage(msg.copy(isRead = false))
