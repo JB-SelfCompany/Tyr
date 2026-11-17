@@ -1,6 +1,6 @@
 .idea/
 local.properties
-release/
+/release/
 debug/
 build/
 .omc/
@@ -17,3 +17,4 @@ CLAUDE.md
 
 # Local release notes for the release PC
 /changelog.txt
+.claude/
