@@ -58,7 +58,7 @@ jobs:
           EOF
 
       - name: Build
-        run: ./gradlew testDebugUnitTest assembleRelease --console=plain
+        run: bash ./gradlew testDebugUnitTest assembleRelease --console=plain # older tags lack +x on gradlew
 
       - name: Verify signing certificate
         env:
