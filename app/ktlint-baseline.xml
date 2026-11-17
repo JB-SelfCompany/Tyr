@@ -14,9 +14,9 @@
     <file name="src/main/java/com/jbselfcompany/tyr/service/YggmailService.kt">
         <error line="75" column="101" source="standard:max-line-length" />
         <error line="975" column="26" source="standard:value-parameter-comment" />
-        <error line="1296" column="101" source="standard:max-line-length" />
-        <error line="1323" column="101" source="standard:max-line-length" />
-        <error line="1383" column="101" source="standard:max-line-length" />
+        <error line="1293" column="101" source="standard:max-line-length" />
+        <error line="1320" column="101" source="standard:max-line-length" />
+        <error line="1380" column="101" source="standard:max-line-length" />
     </file>
     <file name="src/main/java/com/jbselfcompany/tyr/ui/MainActivity.kt">
         <error line="991" column="100" source="standard:max-line-length" />

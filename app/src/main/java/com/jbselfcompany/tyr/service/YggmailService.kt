@@ -984,25 +984,22 @@ class YggmailService : Service() {
         val connected: Boolean
             get() = up
 
-        private fun extractHostFromUri(uri: String): String = try {
-            // Extract host from URI like "tls://1.2.3.4:7743" or "tcp://[::1]:7743"
-            val withoutScheme = uri.substringAfter("://")
-            if (withoutScheme.startsWith("[")) {
-                // IPv6 address
-                withoutScheme.substringAfter("[").substringBefore("]")
+        // Only the authority holds host:port; a query (?key=… pinned peer key) or a path
+        // (socks:// target) after it is not part of it. Same rule as PeerInfo.isValidPeerUrl.
+        private fun authority(uri: String) =
+            uri.substringAfter("://").substringBefore('/').substringBefore('?')
+
+        private fun extractHostFromUri(uri: String): String {
+            val authority = authority(uri)
+            return if (authority.startsWith("[")) {
+                authority.substringAfter("[").substringBefore("]") // IPv6
             } else {
-                // IPv4 address or hostname
-                withoutScheme.substringBefore(":")
+                authority.substringBefore(":")
             }
-        } catch (e: Exception) {
-            uri
         }
 
-        private fun extractPortFromUri(uri: String): Int = try {
-            uri.substringAfterLast(":").toIntOrNull() ?: 0
-        } catch (e: Exception) {
-            0
-        }
+        private fun extractPortFromUri(uri: String): Int =
+            authority(uri).substringAfterLast(":").toIntOrNull() ?: 0
     }
 
     /**
