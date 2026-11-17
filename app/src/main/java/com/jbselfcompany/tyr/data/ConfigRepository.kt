@@ -77,7 +77,10 @@ class ConfigRepository(private val context: Context) {
         const val THEME_DARK = "dark"
     }
 
-    private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = context.getSharedPreferences(
+        PREFS_NAME,
+        Context.MODE_PRIVATE
+    )
 
     init {
         migratePlaintextPassword()
@@ -91,8 +94,10 @@ class ConfigRepository(private val context: Context) {
         try {
             // Check if there's a plaintext password that needs migration
             val plaintextPassword = prefs.getString(KEY_PASSWORD_HASH, null)
-            if (!plaintextPassword.isNullOrEmpty() && !SecurePreferences.contains(context, KEY_PASSWORD_ENCRYPTED)) {
-                TyrLogger.i(TAG,"Migrating plaintext password to encrypted storage")
+            if (!plaintextPassword.isNullOrEmpty() &&
+                !SecurePreferences.contains(context, KEY_PASSWORD_ENCRYPTED)
+            ) {
+                TyrLogger.i(TAG, "Migrating plaintext password to encrypted storage")
 
                 // Save to encrypted storage
                 SecurePreferences.putString(context, KEY_PASSWORD_ENCRYPTED, plaintextPassword)
@@ -100,10 +105,10 @@ class ConfigRepository(private val context: Context) {
                 // Remove from plaintext storage
                 prefs.edit { remove(KEY_PASSWORD_HASH) }
 
-                TyrLogger.i(TAG,"Password migration completed successfully")
+                TyrLogger.i(TAG, "Password migration completed successfully")
             }
         } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error during password migration", e)
+            TyrLogger.e(TAG, "Error during password migration", e)
         }
     }
 
@@ -120,30 +125,30 @@ class ConfigRepository(private val context: Context) {
             // Get old peers
             val oldPeersString = prefs.getString(KEY_PEERS, null)
             if (!oldPeersString.isNullOrEmpty()) {
-                TyrLogger.i(TAG,"Migrating peers to v2 format")
+                TyrLogger.i(TAG, "Migrating peers to v2 format")
 
                 val oldPeers = oldPeersString.split("\n")
                     .map { it.trim() }
                     .filter { it.isNotEmpty() }
 
                 // Convert to new format (all enabled, all custom)
-                val newPeers = oldPeers.map { PeerInfo(it, isEnabled = true, tag = PeerInfo.PeerTag.CUSTOM) }
+                val newPeers = oldPeers.map {
+                    PeerInfo(it, isEnabled = true, tag = PeerInfo.PeerTag.CUSTOM)
+                }
 
                 savePeersV2(newPeers)
 
-                TyrLogger.i(TAG,"Peer migration completed successfully: ${newPeers.size} peers")
+                TyrLogger.i(TAG, "Peer migration completed successfully: ${newPeers.size} peers")
             } else {
                 // No old peers, just mark as migrated with empty list
                 savePeersV2(emptyList())
             }
         } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error during peer migration", e)
+            TyrLogger.e(TAG, "Error during peer migration", e)
         }
     }
 
-    fun isOnboardingCompleted(): Boolean {
-        return prefs.getBoolean(KEY_ONBOARDING_COMPLETED, false)
-    }
+    fun isOnboardingCompleted(): Boolean = prefs.getBoolean(KEY_ONBOARDING_COMPLETED, false)
 
     fun setOnboardingCompleted(completed: Boolean) {
         prefs.edit { putBoolean(KEY_ONBOARDING_COMPLETED, completed) }
@@ -156,9 +161,9 @@ class ConfigRepository(private val context: Context) {
     fun savePassword(password: String) {
         try {
             SecurePreferences.putString(context, KEY_PASSWORD_ENCRYPTED, password)
-            TyrLogger.d(TAG,"Password saved securely")
+            TyrLogger.d(TAG, "Password saved securely")
         } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error saving password", e)
+            TyrLogger.e(TAG, "Error saving password", e)
             throw e
         }
     }
@@ -166,27 +171,21 @@ class ConfigRepository(private val context: Context) {
     /**
      * Get saved password (decrypted)
      */
-    fun getPassword(): String? {
-        return try {
-            SecurePreferences.getString(context, KEY_PASSWORD_ENCRYPTED, null)
-        } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error retrieving password", e)
-            null
-        }
+    fun getPassword(): String? = try {
+        SecurePreferences.getString(context, KEY_PASSWORD_ENCRYPTED, null)
+    } catch (e: Exception) {
+        TyrLogger.e(TAG, "Error retrieving password", e)
+        null
     }
 
-    fun hasPassword(): Boolean {
-        return try {
-            SecurePreferences.contains(context, KEY_PASSWORD_ENCRYPTED)
-        } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error checking password", e)
-            false
-        }
+    fun hasPassword(): Boolean = try {
+        SecurePreferences.contains(context, KEY_PASSWORD_ENCRYPTED)
+    } catch (e: Exception) {
+        TyrLogger.e(TAG, "Error checking password", e)
+        false
     }
 
-    fun isUsingDefaultPeers(): Boolean {
-        return prefs.getBoolean(KEY_USE_DEFAULT_PEERS, true)
-    }
+    fun isUsingDefaultPeers(): Boolean = prefs.getBoolean(KEY_USE_DEFAULT_PEERS, true)
 
     fun setUseDefaultPeers(useDefault: Boolean) {
         prefs.edit { putBoolean(KEY_USE_DEFAULT_PEERS, useDefault) }
@@ -203,7 +202,7 @@ class ConfigRepository(private val context: Context) {
             }
             prefs.edit { putString(KEY_PEERS_V2, jsonArray.toString()) }
         } catch (e: JSONException) {
-            TyrLogger.e(TAG,"Error saving peers v2", e)
+            TyrLogger.e(TAG, "Error saving peers v2", e)
         }
     }
 
@@ -211,24 +210,22 @@ class ConfigRepository(private val context: Context) {
      * Get all peers (with enabled/disabled state)
      * Returns only custom saved peers, does NOT return defaults
      */
-    fun getAllPeersInfo(): List<PeerInfo> {
-        return try {
-            val peersJson = prefs.getString(KEY_PEERS_V2, null)
-            if (peersJson.isNullOrEmpty()) {
-                // Return empty list - defaults should be handled by getEnabledPeers()
-                emptyList()
-            } else {
-                val jsonArray = JSONArray(peersJson)
-                val peersList = mutableListOf<PeerInfo>()
-                for (i in 0 until jsonArray.length()) {
-                    peersList.add(PeerInfo.fromJson(jsonArray.getJSONObject(i)))
-                }
-                peersList
-            }
-        } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error getting peers v2", e)
+    fun getAllPeersInfo(): List<PeerInfo> = try {
+        val peersJson = prefs.getString(KEY_PEERS_V2, null)
+        if (peersJson.isNullOrEmpty()) {
+            // Return empty list - defaults should be handled by getEnabledPeers()
             emptyList()
+        } else {
+            val jsonArray = JSONArray(peersJson)
+            val peersList = mutableListOf<PeerInfo>()
+            for (i in 0 until jsonArray.length()) {
+                peersList.add(PeerInfo.fromJson(jsonArray.getJSONObject(i)))
+            }
+            peersList
         }
+    } catch (e: Exception) {
+        TyrLogger.e(TAG, "Error getting peers v2", e)
+        emptyList()
     }
 
     /**
@@ -280,9 +277,7 @@ class ConfigRepository(private val context: Context) {
      * Returns only enabled peers as strings
      */
     @Deprecated("Use getAllPeersInfo() instead")
-    fun getPeers(): List<String> {
-        return getEnabledPeers()
-    }
+    fun getPeers(): List<String> = getEnabledPeers()
 
     /**
      * Get only enabled peers as strings
@@ -313,9 +308,7 @@ class ConfigRepository(private val context: Context) {
      * Legacy method: Get custom peers (only returns saved custom peers, not defaults)
      */
     @Deprecated("Use getAllPeersInfo() instead")
-    fun getCustomPeers(): List<String> {
-        return getAllPeersInfo().map { it.uri }
-    }
+    fun getCustomPeers(): List<String> = getAllPeersInfo().map { it.uri }
 
     /** Standby peer for the enabled one; never connected until a failover. */
     fun getBackupPeer(): String? = prefs.getString(KEY_BACKUP_PEER, null)
@@ -336,9 +329,20 @@ class ConfigRepository(private val context: Context) {
         val main = winner ?: getEnabledPeers().firstOrNull()
         val standby = backup?.takeIf { it.isNotBlank() && it != main }
         if (winner != null) {
-            val others = if (fresh) emptyList() else getAllPeersInfo().filter { it.uri != winner }.map { it.copy(isEnabled = false) }
-            val parked = standby?.takeIf { s -> others.none { it.uri == s } }?.let { PeerInfo(it, isEnabled = false, tag = PeerInfo.PeerTag.CUSTOM) }
-            savePeersV2(listOf(PeerInfo(winner, isEnabled = true, tag = PeerInfo.PeerTag.CUSTOM)) + others + listOfNotNull(parked))
+            val others = if (fresh) {
+                emptyList()
+            } else {
+                getAllPeersInfo().filter {
+                    it.uri != winner
+                }.map { it.copy(isEnabled = false) }
+            }
+            val parked = standby?.takeIf { s ->
+                others.none { it.uri == s }
+            }?.let { PeerInfo(it, isEnabled = false, tag = PeerInfo.PeerTag.CUSTOM) }
+            savePeersV2(
+                listOf(PeerInfo(winner, isEnabled = true, tag = PeerInfo.PeerTag.CUSTOM)) + others +
+                    listOfNotNull(parked)
+            )
             setUseDefaultPeers(false)
         }
         prefs.edit { putString(KEY_BACKUP_PEER, standby) }
@@ -351,29 +355,21 @@ class ConfigRepository(private val context: Context) {
         return true
     }
 
-    fun getPeersString(): String {
-        return getEnabledPeers().joinToString(",")
-    }
+    fun getPeersString(): String = getEnabledPeers().joinToString(",")
 
-    fun isServiceEnabled(): Boolean {
-        return prefs.getBoolean(KEY_SERVICE_ENABLED, true)
-    }
+    fun isServiceEnabled(): Boolean = prefs.getBoolean(KEY_SERVICE_ENABLED, true)
 
     fun setServiceEnabled(enabled: Boolean) {
         prefs.edit { putBoolean(KEY_SERVICE_ENABLED, enabled) }
     }
 
-    fun isAutoStartEnabled(): Boolean {
-        return prefs.getBoolean(KEY_AUTO_START, true)
-    }
+    fun isAutoStartEnabled(): Boolean = prefs.getBoolean(KEY_AUTO_START, true)
 
     fun setAutoStartEnabled(enabled: Boolean) {
         prefs.edit { putBoolean(KEY_AUTO_START, enabled) }
     }
 
-    fun isLogCollectionEnabled(): Boolean {
-        return prefs.getBoolean(KEY_LOG_COLLECTION_ENABLED, false)
-    }
+    fun isLogCollectionEnabled(): Boolean = prefs.getBoolean(KEY_LOG_COLLECTION_ENABLED, false)
 
     /**
      * Set log collection enabled/disabled.
@@ -394,17 +390,13 @@ class ConfigRepository(private val context: Context) {
         prefs.edit { putString(KEY_MAIL_ADDRESS, address) }
     }
 
-    fun getMailAddress(): String? {
-        return prefs.getString(KEY_MAIL_ADDRESS, null)
-    }
+    fun getMailAddress(): String? = prefs.getString(KEY_MAIL_ADDRESS, null)
 
     fun savePublicKey(pubkey: String) {
         prefs.edit { putString(KEY_PUBLIC_KEY, pubkey) }
     }
 
-    fun getPublicKey(): String? {
-        return prefs.getString(KEY_PUBLIC_KEY, null)
-    }
+    fun getPublicKey(): String? = prefs.getString(KEY_PUBLIC_KEY, null)
 
     fun clearKeys() {
         prefs.edit {
@@ -419,7 +411,7 @@ class ConfigRepository(private val context: Context) {
         try {
             SecurePreferences.clear(context)
         } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error clearing secure storage", e)
+            TyrLogger.e(TAG, "Error clearing secure storage", e)
         }
     }
 
@@ -427,9 +419,7 @@ class ConfigRepository(private val context: Context) {
      * Get saved language preference
      * Returns LANGUAGE_SYSTEM by default
      */
-    fun getLanguage(): String {
-        return prefs.getString(KEY_LANGUAGE, LANGUAGE_SYSTEM) ?: LANGUAGE_SYSTEM
-    }
+    fun getLanguage(): String = prefs.getString(KEY_LANGUAGE, LANGUAGE_SYSTEM) ?: LANGUAGE_SYSTEM
 
     fun setLanguage(language: String) {
         prefs.edit { putString(KEY_LANGUAGE, language) }
@@ -439,9 +429,7 @@ class ConfigRepository(private val context: Context) {
      * Get saved theme preference
      * Returns THEME_SYSTEM by default
      */
-    fun getTheme(): String {
-        return prefs.getString(KEY_THEME, THEME_SYSTEM) ?: THEME_SYSTEM
-    }
+    fun getTheme(): String = prefs.getString(KEY_THEME, THEME_SYSTEM) ?: THEME_SYSTEM
 
     fun setTheme(theme: String) {
         prefs.edit { putString(KEY_THEME, theme) }
@@ -451,8 +439,7 @@ class ConfigRepository(private val context: Context) {
     // Update Check Settings
     // ============================================
 
-    fun isUpdateCheckEnabled(): Boolean =
-        prefs.getBoolean(KEY_UPDATE_CHECK_ENABLED, true)
+    fun isUpdateCheckEnabled(): Boolean = prefs.getBoolean(KEY_UPDATE_CHECK_ENABLED, true)
 
     fun setUpdateCheckEnabled(enabled: Boolean) {
         prefs.edit { putBoolean(KEY_UPDATE_CHECK_ENABLED, enabled) }
@@ -466,15 +453,13 @@ class ConfigRepository(private val context: Context) {
         prefs.edit { putInt(KEY_UPDATE_CHECK_INTERVAL_HOURS, hours) }
     }
 
-    fun getLastUpdateCheckTime(): Long =
-        prefs.getLong(KEY_LAST_UPDATE_CHECK_TIME, 0L)
+    fun getLastUpdateCheckTime(): Long = prefs.getLong(KEY_LAST_UPDATE_CHECK_TIME, 0L)
 
     fun setLastUpdateCheckTime(time: Long) {
         prefs.edit { putLong(KEY_LAST_UPDATE_CHECK_TIME, time) }
     }
 
-    fun getDismissedUpdateVersion(): String? =
-        prefs.getString(KEY_DISMISSED_UPDATE_VERSION, null)
+    fun getDismissedUpdateVersion(): String? = prefs.getString(KEY_DISMISSED_UPDATE_VERSION, null)
 
     fun setDismissedUpdateVersion(version: String) {
         prefs.edit { putString(KEY_DISMISSED_UPDATE_VERSION, version) }
@@ -505,8 +490,7 @@ class ConfigRepository(private val context: Context) {
         prefs.edit { putBoolean(KEY_ACCEPT_MESSAGES_FROM_NON_CONTACTS, enabled) }
     }
 
-    fun getBlockScreenshots(): Boolean =
-        prefs.getBoolean(KEY_BLOCK_SCREENSHOTS, false)
+    fun getBlockScreenshots(): Boolean = prefs.getBoolean(KEY_BLOCK_SCREENSHOTS, false)
 
     fun setBlockScreenshots(enabled: Boolean) {
         prefs.edit { putBoolean(KEY_BLOCK_SCREENSHOTS, enabled) }
@@ -534,8 +518,7 @@ class ConfigRepository(private val context: Context) {
      * This value never decreases — it is independent of the messages table,
      * so deleting a contact's messages cannot cause old UIDs to be re-fetched.
      */
-    fun getLastSeenImapUid(): Long =
-        prefs.getLong(KEY_LAST_SEEN_IMAP_UID, 0L)
+    fun getLastSeenImapUid(): Long = prefs.getLong(KEY_LAST_SEEN_IMAP_UID, 0L)
 
     /**
      * Update the watermark. Only advances — never goes backwards.
@@ -545,5 +528,4 @@ class ConfigRepository(private val context: Context) {
             prefs.edit { putLong(KEY_LAST_SEEN_IMAP_UID, uid) }
         }
     }
-
 }

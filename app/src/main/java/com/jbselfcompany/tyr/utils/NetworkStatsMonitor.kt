@@ -3,12 +3,10 @@ package com.jbselfcompany.tyr.utils
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.net.TrafficStats
 import android.os.Handler
 import android.os.Looper
 import com.jbselfcompany.tyr.TyrApplication
 import com.jbselfcompany.tyr.utils.TyrLogger
-import kotlin.math.roundToInt
 
 /**
  * Monitor Yggdrasil peer connections and network statistics.
@@ -20,6 +18,7 @@ class NetworkStatsMonitor(private val context: Context) {
     companion object {
         private const val TAG = "NetworkStatsMonitor"
         private const val UPDATE_INTERVAL_MS = 10000L // Update every 10 seconds (battery optimization)
+
         // Delay for a follow-up poll after monitoring starts, to catch peers that
         // finish reconnecting after a QUIC config change (Doze exit / active state change).
         private const val RECONNECT_CATCHUP_DELAY_MS = 3000L
@@ -45,7 +44,9 @@ class NetworkStatsMonitor(private val context: Context) {
     private val handler = Handler(Looper.getMainLooper())
     private var backgroundThread: android.os.HandlerThread? = null
     private var backgroundHandler: Handler? = null
-    private val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    private val connectivityManager = context.getSystemService(
+        Context.CONNECTIVITY_SERVICE
+    ) as ConnectivityManager
 
     private var isMonitoring = false
     private var measureLatency = true // Only measure latency when app is active
@@ -158,7 +159,6 @@ class NetworkStatsMonitor(private val context: Context) {
             handler.post {
                 listener?.onStatsUpdated(stats)
             }
-
         } catch (e: Exception) {
             TyrLogger.e(TAG, "Error updating network stats", e)
         }
@@ -177,7 +177,9 @@ class NetworkStatsMonitor(private val context: Context) {
             when {
                 capabilities == null -> "Unknown"
                 capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> "WiFi"
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> context.getString(com.jbselfcompany.tyr.R.string.connection_type_mobile_data)
+                capabilities.hasTransport(
+                    NetworkCapabilities.TRANSPORT_CELLULAR
+                ) -> context.getString(com.jbselfcompany.tyr.R.string.connection_type_mobile_data)
                 capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> "Ethernet"
                 capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN) -> "VPN"
                 else -> "Unknown"

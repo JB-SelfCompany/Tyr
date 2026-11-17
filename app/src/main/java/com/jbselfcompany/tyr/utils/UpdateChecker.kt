@@ -2,9 +2,9 @@ package com.jbselfcompany.tyr.utils
 
 import android.content.Context
 import com.jbselfcompany.tyr.utils.TyrLogger
-import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import org.json.JSONObject
 
 class UpdateChecker(private val context: Context) {
 
@@ -35,7 +35,7 @@ class UpdateChecker(private val context: Context) {
             connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
 
             if (connection.responseCode != HttpURLConnection.HTTP_OK) {
-                TyrLogger.w(TAG,"GitHub API returned ${connection.responseCode}")
+                TyrLogger.w(TAG, "GitHub API returned ${connection.responseCode}")
                 return null
             }
 
@@ -58,7 +58,7 @@ class UpdateChecker(private val context: Context) {
                 isFdroidInstall = isFdroidInstall()
             )
         } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error checking for updates", e)
+            TyrLogger.e(TAG, "Error checking for updates", e)
             null
         }
     }
@@ -76,25 +76,25 @@ class UpdateChecker(private val context: Context) {
             }
             false
         } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error comparing versions '$latest' vs '$current'", e)
+            TyrLogger.e(TAG, "Error comparing versions '$latest' vs '$current'", e)
             false
         }
     }
 
-    fun isFdroidInstall(): Boolean {
-        return try {
-            val installer = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-                context.packageManager
-                    .getInstallSourceInfo(context.packageName)
-                    .installingPackageName
-            } else {
-                @Suppress("DEPRECATION")
-                context.packageManager.getInstallerPackageName(context.packageName)
-            }
-            installer != null && installer in FDROID_INSTALLERS
-        } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error detecting installer", e)
-            false
+    fun isFdroidInstall(): Boolean = try {
+        val installer = if (android.os.Build.VERSION.SDK_INT >=
+            android.os.Build.VERSION_CODES.R
+        ) {
+            context.packageManager
+                .getInstallSourceInfo(context.packageName)
+                .installingPackageName
+        } else {
+            @Suppress("DEPRECATION")
+            context.packageManager.getInstallerPackageName(context.packageName)
         }
+        installer != null && installer in FDROID_INSTALLERS
+    } catch (e: Exception) {
+        TyrLogger.e(TAG, "Error detecting installer", e)
+        false
     }
 }

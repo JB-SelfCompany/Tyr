@@ -91,7 +91,9 @@ class NetworkChangeReceiver(private val context: Context) : ConnectivityManager.
      * Register network callback for WiFi, Cellular, and Ethernet
      */
     fun register() {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val connectivityManager = context.getSystemService(
+            Context.CONNECTIVITY_SERVICE
+        ) as ConnectivityManager
 
         val request = NetworkRequest.Builder()
             .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
@@ -111,7 +113,9 @@ class NetworkChangeReceiver(private val context: Context) : ConnectivityManager.
      * Unregister network callback
      */
     fun unregister() {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val connectivityManager = context.getSystemService(
+            Context.CONNECTIVITY_SERVICE
+        ) as ConnectivityManager
 
         // Clean up pending callbacks
         pendingNetworkAvailableCheck?.let { handler.removeCallbacks(it) }
@@ -131,13 +135,16 @@ class NetworkChangeReceiver(private val context: Context) : ConnectivityManager.
      * Check if device has any network connectivity
      */
     private fun hasNetworkConnectivity(context: Context): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val connectivityManager = context.getSystemService(
+            Context.CONNECTIVITY_SERVICE
+        ) as ConnectivityManager
         val network = connectivityManager.activeNetwork
         val capabilities = connectivityManager.getNetworkCapabilities(network)
-        return capabilities != null && (
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-        )
+        return capabilities != null &&
+            (
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+                )
     }
 }

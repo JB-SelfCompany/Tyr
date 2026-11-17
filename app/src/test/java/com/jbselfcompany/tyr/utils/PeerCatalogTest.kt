@@ -14,8 +14,18 @@ class PeerCatalogTest {
     fun onlinePeersComeFirstThenFastest() {
         val e = { uri: String, up: Boolean, ms: Int? -> PeerCatalog.Entry(uri, "X", up, ms) }
         val sorted = PeerCatalog.sorted(
-            listOf(e("tcp://down", false, 5), e("tcp://slow", true, 300), e("tcp://unknown", true, null), e("tcp://fast", true, 20))
+            listOf(
+                e("tcp://down", false, 5),
+                e("tcp://slow", true, 300),
+                e("tcp://unknown", true, null),
+                e("tcp://fast", true, 20)
+            )
         )
-        assertEquals(listOf("tcp://fast", "tcp://slow", "tcp://unknown", "tcp://down"), sorted.map { it.uri })
+        assertEquals(
+            listOf("tcp://fast", "tcp://slow", "tcp://unknown", "tcp://down"),
+            sorted.map {
+                it.uri
+            }
+        )
     }
 }

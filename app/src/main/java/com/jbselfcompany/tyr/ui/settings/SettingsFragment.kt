@@ -22,15 +22,14 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.jbselfcompany.tyr.R
 import com.jbselfcompany.tyr.TyrApplication
+import com.jbselfcompany.tyr.data.ConfigRepository
 import com.jbselfcompany.tyr.databinding.FragmentSettingsBinding
 import com.jbselfcompany.tyr.service.YggmailService
-import com.jbselfcompany.tyr.ui.SettingsAdapter
 import com.jbselfcompany.tyr.ui.AboutActivity
-import com.jbselfcompany.tyr.ui.MainActivity
+import com.jbselfcompany.tyr.ui.SettingsAdapter
 import com.jbselfcompany.tyr.ui.logs.LogsActivity
 import com.jbselfcompany.tyr.utils.BackupManager
 import com.jbselfcompany.tyr.utils.UpdateChecker
-import com.jbselfcompany.tyr.data.ConfigRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,7 +39,9 @@ import kotlinx.coroutines.withContext
  * Embedded in MainActivity for instant tab switching (no Activity transition delay).
  * Direct port of SettingsActivity logic to Fragment lifecycle.
  */
-class SettingsFragment : Fragment(), SettingsAdapter.Listener {
+class SettingsFragment :
+    Fragment(),
+    SettingsAdapter.Listener {
 
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
@@ -97,7 +98,11 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
         uri?.let { showRestoreBackupDialog(it) }
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         _binding = FragmentSettingsBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -355,7 +360,9 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
 
     override fun onItemClicked(id: Int) {
         when (id) {
-            ID_CONFIGURE_PEERS -> startActivity(Intent(requireContext(), com.jbselfcompany.tyr.ui.PeersActivity::class.java))
+            ID_CONFIGURE_PEERS -> startActivity(
+                Intent(requireContext(), com.jbselfcompany.tyr.ui.PeersActivity::class.java)
+            )
             ID_CHANGE_PASSWORD -> showChangePasswordDialog()
             ID_REGENERATE_KEYS -> showRegenerateKeysDialog()
             ID_BACKUP_RESTORE -> showBackupRestoreOptions()
@@ -430,9 +437,14 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
     }
 
     private fun showChangePasswordDialog() {
-        val dialogView = requireActivity().layoutInflater.inflate(R.layout.dialog_change_password, null)
+        val dialogView = requireActivity().layoutInflater.inflate(
+            R.layout.dialog_change_password,
+            null
+        )
         val editNewPassword = dialogView.findViewById<TextInputEditText>(R.id.edit_new_password)
-        val editConfirmPassword = dialogView.findViewById<TextInputEditText>(R.id.edit_confirm_password)
+        val editConfirmPassword = dialogView.findViewById<TextInputEditText>(
+            R.id.edit_confirm_password
+        )
 
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.change_password)
@@ -443,23 +455,43 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
 
                 when {
                     newPassword.isEmpty() -> {
-                        Toast.makeText(requireContext(), R.string.error_password_empty, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            requireContext(),
+                            R.string.error_password_empty,
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                     newPassword.length < 6 -> {
-                        Toast.makeText(requireContext(), R.string.error_password_short, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            requireContext(),
+                            R.string.error_password_short,
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                     newPassword != confirmPassword -> {
-                        Toast.makeText(requireContext(), R.string.error_password_mismatch, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            requireContext(),
+                            R.string.error_password_mismatch,
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                     else -> {
                         try {
                             configRepository.savePassword(newPassword)
-                            Toast.makeText(requireContext(), R.string.password_changed, Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                requireContext(),
+                                R.string.password_changed,
+                                Toast.LENGTH_SHORT
+                            ).show()
 
                             // Apply new password to running service without restart
                             TyrApplication.instance.yggmailServiceBinder?.getService()?.hotReloadPassword()
                         } catch (e: Exception) {
-                            Toast.makeText(requireContext(), R.string.error_save_password, Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                requireContext(),
+                                R.string.error_save_password,
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
                     }
                 }
@@ -588,10 +620,12 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
     private fun showBackupRestoreOptions() {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.backup_restore)
-            .setItems(arrayOf(
-                getString(R.string.create_backup),
-                getString(R.string.restore_backup)
-            )) { _, which ->
+            .setItems(
+                arrayOf(
+                    getString(R.string.create_backup),
+                    getString(R.string.restore_backup)
+                )
+            ) { _, which ->
                 when (which) {
                     0 -> showCreateBackupDialog()
                     1 -> selectBackupFile()
@@ -602,11 +636,20 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
     }
 
     private fun showCreateBackupDialog() {
-        val dialogView = requireActivity().layoutInflater.inflate(R.layout.dialog_create_backup, null)
+        val dialogView = requireActivity().layoutInflater.inflate(
+            R.layout.dialog_create_backup,
+            null
+        )
         val editPassword = dialogView.findViewById<TextInputEditText>(R.id.edit_backup_password)
-        val editConfirmPassword = dialogView.findViewById<TextInputEditText>(R.id.edit_confirm_backup_password)
-        val checkboxIncludeMail = dialogView.findViewById<MaterialCheckBox>(R.id.checkbox_include_mail)
-        val checkboxIncludeChat = dialogView.findViewById<MaterialCheckBox>(R.id.checkbox_include_chat)
+        val editConfirmPassword = dialogView.findViewById<TextInputEditText>(
+            R.id.edit_confirm_backup_password
+        )
+        val checkboxIncludeMail = dialogView.findViewById<MaterialCheckBox>(
+            R.id.checkbox_include_mail
+        )
+        val checkboxIncludeChat = dialogView.findViewById<MaterialCheckBox>(
+            R.id.checkbox_include_chat
+        )
 
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.create_backup)
@@ -617,13 +660,25 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
 
                 when {
                     password.isEmpty() -> {
-                        Toast.makeText(requireContext(), R.string.error_backup_password_empty, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            requireContext(),
+                            R.string.error_backup_password_empty,
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                     password.length < 8 -> {
-                        Toast.makeText(requireContext(), R.string.error_backup_password_short, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            requireContext(),
+                            R.string.error_backup_password_short,
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                     password != confirmPassword -> {
-                        Toast.makeText(requireContext(), R.string.error_backup_password_mismatch, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            requireContext(),
+                            R.string.error_backup_password_mismatch,
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                     else -> {
                         backupPassword = password
@@ -658,7 +713,11 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
                     false
                 }
                 // Don't leave an empty .tyrbackup behind that looks like a real one.
-                if (!ok) runCatching { DocumentsContract.deleteDocument(context.contentResolver, uri) }
+                if (!ok) {
+                    runCatching {
+                        DocumentsContract.deleteDocument(context.contentResolver, uri)
+                    }
+                }
                 ok
             }
             Toast.makeText(
@@ -674,7 +733,10 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
     }
 
     private fun showRestoreBackupDialog(uri: Uri) {
-        val dialogView = requireActivity().layoutInflater.inflate(R.layout.dialog_restore_backup, null)
+        val dialogView = requireActivity().layoutInflater.inflate(
+            R.layout.dialog_restore_backup,
+            null
+        )
         val editPassword = dialogView.findViewById<TextInputEditText>(R.id.edit_restore_password)
 
         MaterialAlertDialogBuilder(requireContext())
@@ -685,7 +747,11 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
                 val password = editPassword.text.toString()
 
                 if (password.isEmpty()) {
-                    Toast.makeText(requireContext(), R.string.error_backup_password_empty, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        R.string.error_backup_password_empty,
+                        Toast.LENGTH_SHORT
+                    ).show()
                     return@setPositiveButton
                 }
 
@@ -705,13 +771,21 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
                 )
 
                 if (success) {
-                    Toast.makeText(requireContext(), R.string.backup_restored, Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        requireContext(),
+                        R.string.backup_restored,
+                        Toast.LENGTH_LONG
+                    ).show()
 
                     if (YggmailService.isRunning) {
                         showRestartDialog()
                     }
                 } else {
-                    Toast.makeText(requireContext(), R.string.error_invalid_backup_password, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        R.string.error_invalid_backup_password,
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         } catch (e: Exception) {
@@ -815,7 +889,11 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
             Runtime.getRuntime().exec("logcat -c")
             Toast.makeText(requireContext(), R.string.logs_cleared, Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            Toast.makeText(requireContext(), R.string.error_clearing_logs, Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                requireContext(),
+                R.string.error_clearing_logs,
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -854,7 +932,11 @@ class SettingsFragment : Fragment(), SettingsAdapter.Listener {
                 if (!isAdded) return@runOnUiThread
                 showLoadingOverlay(false)
                 if (info == null) {
-                    Toast.makeText(requireContext(), R.string.update_check_failed, Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        requireContext(),
+                        R.string.update_check_failed,
+                        Toast.LENGTH_LONG
+                    ).show()
                     return@runOnUiThread
                 }
                 if (!info.hasUpdate) {

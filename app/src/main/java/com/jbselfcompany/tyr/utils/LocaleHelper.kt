@@ -79,8 +79,8 @@ object LocaleHelper {
     /**
      * Get display name for language code.
      */
-    fun getLanguageDisplayName(context: Context, languageCode: String): String {
-        return when (languageCode) {
+    fun getLanguageDisplayName(context: Context, languageCode: String): String =
+        when (languageCode) {
             ConfigRepository.LANGUAGE_SYSTEM -> {
                 val systemLang = getSystemLanguage()
                 val systemName = when (systemLang) {
@@ -93,38 +93,29 @@ object LocaleHelper {
             ConfigRepository.LANGUAGE_RUSSIAN -> "Русский"
             else -> languageCode
         }
-    }
 
     /**
      * Get display name for theme.
      */
-    fun getThemeDisplayName(context: Context, themeCode: String): String {
-        return when (themeCode) {
-            ConfigRepository.THEME_SYSTEM -> getSystemText(context)
-            ConfigRepository.THEME_LIGHT -> getLightText(context)
-            ConfigRepository.THEME_DARK -> getDarkText(context)
-            else -> themeCode
-        }
+    fun getThemeDisplayName(context: Context, themeCode: String): String = when (themeCode) {
+        ConfigRepository.THEME_SYSTEM -> getSystemText(context)
+        ConfigRepository.THEME_LIGHT -> getLightText(context)
+        ConfigRepository.THEME_DARK -> getDarkText(context)
+        else -> themeCode
     }
 
-    private fun getSystemText(context: Context): String {
-        return when (getSystemLanguage()) {
-            ConfigRepository.LANGUAGE_RUSSIAN -> "Системный"
-            else -> "System"
-        }
+    private fun getSystemText(context: Context): String = when (getSystemLanguage()) {
+        ConfigRepository.LANGUAGE_RUSSIAN -> "Системный"
+        else -> "System"
     }
 
-    private fun getLightText(context: Context): String {
-        return when (getSystemLanguage()) {
-            ConfigRepository.LANGUAGE_RUSSIAN -> "Светлая"
-            else -> "Light"
-        }
+    private fun getLightText(context: Context): String = when (getSystemLanguage()) {
+        ConfigRepository.LANGUAGE_RUSSIAN -> "Светлая"
+        else -> "Light"
     }
 
-    private fun getDarkText(context: Context): String {
-        return when (getSystemLanguage()) {
-            ConfigRepository.LANGUAGE_RUSSIAN -> "Темная"
-            else -> "Dark"
-        }
+    private fun getDarkText(context: Context): String = when (getSystemLanguage()) {
+        ConfigRepository.LANGUAGE_RUSSIAN -> "Темная"
+        else -> "Dark"
     }
 }

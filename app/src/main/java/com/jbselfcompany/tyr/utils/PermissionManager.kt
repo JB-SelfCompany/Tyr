@@ -16,8 +16,8 @@ import com.jbselfcompany.tyr.R
 
 object PermissionManager {
 
-    fun hasNotificationPermission(context: Context): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+    fun hasNotificationPermission(context: Context): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.POST_NOTIFICATIONS
@@ -26,17 +26,15 @@ object PermissionManager {
             // On Android 12 and below, notification permission is granted by default
             true
         }
-    }
 
-    fun isBatteryOptimizationDisabled(context: Context): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+    fun isBatteryOptimizationDisabled(context: Context): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
             powerManager.isIgnoringBatteryOptimizations(context.packageName)
         } else {
             // On Android 5 and below, battery optimization doesn't exist
             true
         }
-    }
 
     fun requestNotificationPermission(
         activity: Activity,
@@ -63,14 +61,17 @@ object PermissionManager {
                     .setTitle(R.string.permission_battery_title)
                     .setMessage(R.string.permission_battery_message)
                     .setPositiveButton(R.string.permission_settings) { _, _ ->
-                        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                        val intent = Intent(
+                            Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+                        ).apply {
                             data = Uri.parse("package:${activity.packageName}")
                         }
                         try {
                             activity.startActivity(intent)
                         } catch (e: Exception) {
                             // Fallback to general battery optimization settings
-                            val fallbackIntent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                            val fallbackIntent =
+                                Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
                             activity.startActivity(fallbackIntent)
                         }
                     }
@@ -80,7 +81,6 @@ object PermissionManager {
         }
     }
 
-    fun hasAllRequiredPermissions(context: Context): Boolean {
-        return hasNotificationPermission(context) && isBatteryOptimizationDisabled(context)
-    }
+    fun hasAllRequiredPermissions(context: Context): Boolean =
+        hasNotificationPermission(context) && isBatteryOptimizationDisabled(context)
 }

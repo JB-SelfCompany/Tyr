@@ -47,9 +47,11 @@ class ChatContactAdapter(
                 binding.imageMessageStatus.visibility = View.GONE
             } else if (last != null) {
                 val preview = buildPreviewText(ctx, last)
-                binding.textLastMessage.text = if (last.isSent)
+                binding.textLastMessage.text = if (last.isSent) {
                     ctx.getString(R.string.chat_last_message_you, preview)
-                else preview
+                } else {
+                    preview
+                }
                 binding.textLastTime.text = formatTime(last.timestamp)
 
                 // Show send status icon only for outgoing messages that have been confirmed sent
@@ -106,35 +108,45 @@ class ChatContactAdapter(
          * For messages with attachments, shows an emoji + file name (or generic label).
          * For text-only messages, shows the message body.
          */
-        private fun buildPreviewText(ctx: android.content.Context, msg: ChatMessage): String {
-            return if (msg.hasAttachment) {
+        private fun buildPreviewText(ctx: android.content.Context, msg: ChatMessage): String =
+            if (msg.hasAttachment) {
                 val isImage = msg.attachmentMimeType?.startsWith("image/") == true
                 val name = msg.attachmentName
                 if (isImage) {
-                    if (!name.isNullOrBlank()) "\uD83D\uDDBC $name"   // 🖼️
-                    else ctx.getString(R.string.chat_preview_photo)
+                    if (!name.isNullOrBlank()) {
+                        "\uD83D\uDDBC $name" // 🖼️
+                    } else {
+                        ctx.getString(R.string.chat_preview_photo)
+                    }
                 } else {
-                    if (!name.isNullOrBlank()) "\uD83D\uDCCE $name"   // 📎
-                    else ctx.getString(R.string.chat_preview_file)
+                    if (!name.isNullOrBlank()) {
+                        "\uD83D\uDCCE $name" // 📎
+                    } else {
+                        ctx.getString(R.string.chat_preview_file)
+                    }
                 }
             } else {
                 msg.body
             }
-        }
     }
 
     private fun formatTime(ts: Long): String {
         val now = System.currentTimeMillis()
         val diff = now - ts
         return when {
-            diff < 24 * 60 * 60 * 1000L -> SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(ts))
+            diff < 24 * 60 * 60 * 1000L -> SimpleDateFormat(
+                "HH:mm",
+                Locale.getDefault()
+            ).format(Date(ts))
             else -> SimpleDateFormat("dd.MM", Locale.getDefault()).format(Date(ts))
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = ItemChatContactBinding.inflate(
-            LayoutInflater.from(parent.context), parent, false
+            LayoutInflater.from(parent.context),
+            parent,
+            false
         )
         return ViewHolder(binding)
     }

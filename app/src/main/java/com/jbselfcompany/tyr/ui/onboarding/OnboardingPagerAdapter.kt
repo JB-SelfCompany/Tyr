@@ -8,12 +8,10 @@ class OnboardingPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(
 
     override fun getItemCount(): Int = 3
 
-    override fun createFragment(position: Int): Fragment {
-        return when (position) {
-            0 -> OnboardingWelcomeFragment()
-            1 -> OnboardingPasswordFragment()
-            2 -> OnboardingPeersFragment()
-            else -> throw IllegalArgumentException("Invalid position: $position")
-        }
+    override fun createFragment(position: Int): Fragment = when (position) {
+        0 -> OnboardingWelcomeFragment()
+        1 -> OnboardingPasswordFragment()
+        2 -> OnboardingPeersFragment()
+        else -> throw IllegalArgumentException("Invalid position: $position")
     }
 }

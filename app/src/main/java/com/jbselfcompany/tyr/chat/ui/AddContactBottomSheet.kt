@@ -8,11 +8,11 @@ import android.view.ViewGroup
 import android.widget.Toast
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.tabs.TabLayout
+import com.jbselfcompany.tyr.R
+import com.jbselfcompany.tyr.databinding.BottomSheetAddContactBinding
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
-import com.jbselfcompany.tyr.R
-import com.jbselfcompany.tyr.databinding.BottomSheetAddContactBinding
 
 class AddContactBottomSheet : BottomSheetDialogFragment() {
 
@@ -30,7 +30,9 @@ class AddContactBottomSheet : BottomSheetDialogFragment() {
                 val pubkey = uri.getQueryParameter("pubkey")?.trim() ?: ""
                 if (pubkey.length == 64 && pubkey.all { it in '0'..'9' || it in 'a'..'f' }) {
                     "$pubkey@yggmail"
-                } else ""
+                } else {
+                    ""
+                }
             }
             scanned.startsWith("mailto:", ignoreCase = true) ->
                 scanned.removePrefix("mailto:").substringBefore("?").trim()
@@ -41,12 +43,18 @@ class AddContactBottomSheet : BottomSheetDialogFragment() {
             binding.editAddressManual.setText(address)
             binding.tabLayout.selectTab(binding.tabLayout.getTabAt(0))
         } else {
-            Toast.makeText(requireContext(), R.string.chat_invalid_address_qr, Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                requireContext(),
+                R.string.chat_invalid_address_qr,
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View {
         _binding = BottomSheetAddContactBinding.inflate(inflater, container, false)
         return binding.root
@@ -91,9 +99,9 @@ class AddContactBottomSheet : BottomSheetDialogFragment() {
                 setDesiredBarcodeFormats(ScanOptions.QR_CODE)
                 setPrompt(getString(R.string.chat_scan_qr_hint))
                 setBeepEnabled(false)
-                setOrientationLocked(true)  // Lock to portrait, no rotation to landscape
-                setBarcodeImageEnabled(false)  // Skip saving barcode image for faster startup
-                setCameraId(0)  // Back camera, faster init
+                setOrientationLocked(true) // Lock to portrait, no rotation to landscape
+                setBarcodeImageEnabled(false) // Skip saving barcode image for faster startup
+                setCameraId(0) // Back camera, faster init
             }
             qrLauncher.launch(options)
         }

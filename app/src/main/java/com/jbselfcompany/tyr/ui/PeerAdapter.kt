@@ -21,7 +21,8 @@ class PeerAdapter(
 
     fun getContextMenuPosition(): Int = contextMenuPosition
 
-    inner class PeerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView),
+    inner class PeerViewHolder(itemView: View) :
+        RecyclerView.ViewHolder(itemView),
         View.OnCreateContextMenuListener {
         val peerText: TextView = itemView.findViewById(R.id.peer_text)
         val peerSwitch: SwitchCompat = itemView.findViewById(R.id.peer_switch)
@@ -60,9 +61,12 @@ class PeerAdapter(
         // Show tag label for all peers
         holder.peerTypeLabel.visibility = View.VISIBLE
         holder.peerTypeLabel.text = when {
-            peer.uri == com.jbselfcompany.tyr.TyrApplication.instance.configRepository.getBackupPeer() ->
+            peer.uri ==
+                com.jbselfcompany.tyr.TyrApplication.instance.configRepository.getBackupPeer() ->
                 holder.itemView.context.getString(R.string.peer_tag_backup)
-            peer.tag == PeerInfo.PeerTag.DEFAULT -> holder.itemView.context.getString(R.string.peer_tag_default)
+            peer.tag == PeerInfo.PeerTag.DEFAULT -> holder.itemView.context.getString(
+                R.string.peer_tag_default
+            )
             else -> holder.itemView.context.getString(R.string.peer_tag_custom)
         }
 

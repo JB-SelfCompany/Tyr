@@ -17,7 +17,9 @@ import com.jbselfcompany.tyr.ui.MainActivity
  * 1. Welcome screen
  * 2. Password setup
  */
-class OnboardingActivity : BaseActivity(), OnRestoreCompletedListener {
+class OnboardingActivity :
+    BaseActivity(),
+    OnRestoreCompletedListener {
 
     private lateinit var binding: ActivityOnboardingBinding
     private lateinit var adapter: OnboardingPagerAdapter
@@ -98,7 +100,9 @@ class OnboardingActivity : BaseActivity(), OnRestoreCompletedListener {
     }
 
     private fun validateCurrentStep(): Boolean {
-        val currentFragment = supportFragmentManager.findFragmentByTag("f${binding.viewPager.currentItem}")
+        val currentFragment = supportFragmentManager.findFragmentByTag(
+            "f${binding.viewPager.currentItem}"
+        )
 
         return when (currentFragment) {
             is OnboardingPasswordFragment -> {
@@ -107,15 +111,27 @@ class OnboardingActivity : BaseActivity(), OnRestoreCompletedListener {
 
                 when {
                     password.isEmpty() -> {
-                        Toast.makeText(this, R.string.error_password_empty, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this,
+                            R.string.error_password_empty,
+                            Toast.LENGTH_SHORT
+                        ).show()
                         false
                     }
                     password.length < 6 -> {
-                        Toast.makeText(this, R.string.error_password_short, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this,
+                            R.string.error_password_short,
+                            Toast.LENGTH_SHORT
+                        ).show()
                         false
                     }
                     password != confirmPassword -> {
-                        Toast.makeText(this, R.string.error_password_mismatch, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this,
+                            R.string.error_password_mismatch,
+                            Toast.LENGTH_SHORT
+                        ).show()
                         false
                     }
                     else -> {
@@ -123,7 +139,11 @@ class OnboardingActivity : BaseActivity(), OnRestoreCompletedListener {
                             configRepository.savePassword(password)
                             true
                         } catch (e: Exception) {
-                            Toast.makeText(this, R.string.error_save_password, Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                this,
+                                R.string.error_save_password,
+                                Toast.LENGTH_LONG
+                            ).show()
                             false
                         }
                     }
@@ -138,14 +158,22 @@ class OnboardingActivity : BaseActivity(), OnRestoreCompletedListener {
 
                 // Nothing selected at all
                 if (!useDefault && !autoPick && manualPeerUrl.isNullOrBlank()) {
-                    Toast.makeText(this, R.string.error_no_peers_selected, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this,
+                        R.string.error_no_peers_selected,
+                        Toast.LENGTH_SHORT
+                    ).show()
                     return false
                 }
 
                 // Validate and save manually entered peer
                 if (!manualPeerUrl.isNullOrBlank()) {
                     if (!com.jbselfcompany.tyr.data.PeerInfo.isValidPeerUrl(manualPeerUrl)) {
-                        Toast.makeText(this, R.string.error_invalid_peer_url, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this,
+                            R.string.error_invalid_peer_url,
+                            Toast.LENGTH_SHORT
+                        ).show()
                         return false
                     }
                     configRepository.savePeer(

@@ -3,8 +3,12 @@ package com.jbselfcompany.tyr.chat.data
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
-import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_ADDRESS
 import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_ADDED_AT
+import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_ADDRESS
+import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_ATTACHMENT_MIME
+import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_ATTACHMENT_NAME
+import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_ATTACHMENT_PATH
+import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_ATTACHMENT_SIZE
 import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_BODY
 import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_FROM_ADDR
 import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_ID
@@ -14,10 +18,6 @@ import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_IS_PENDING
 import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_IS_READ
 import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_IS_SENT
 import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_NAME
-import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_ATTACHMENT_MIME
-import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_ATTACHMENT_NAME
-import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_ATTACHMENT_PATH
-import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_ATTACHMENT_SIZE
 import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_STATUS
 import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_TIMESTAMP
 import com.jbselfcompany.tyr.chat.data.ChatDbHelper.Companion.COL_TO_ADDR
@@ -42,7 +42,10 @@ class ChatRepository(context: Context) {
         // CONFLICT_REPLACE removes an existing row (including declined block records) and
         // inserts the new one, allowing a previously-deleted contact to be re-added cleanly.
         return db.writableDatabase.insertWithOnConflict(
-            TABLE_CONTACTS, null, cv, android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE
+            TABLE_CONTACTS,
+            null,
+            cv,
+            android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE
         )
     }
 
@@ -55,7 +58,10 @@ class ChatRepository(context: Context) {
             put(COL_IS_PENDING, 1)
         }
         return db.writableDatabase.insertWithOnConflict(
-            TABLE_CONTACTS, null, cv, android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE
+            TABLE_CONTACTS,
+            null,
+            cv,
+            android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE
         )
     }
 
@@ -63,16 +69,22 @@ class ChatRepository(context: Context) {
     fun acceptPendingContact(address: String) {
         val cv = ContentValues().apply { put(COL_IS_PENDING, 0) }
         db.writableDatabase.update(
-            TABLE_CONTACTS, cv,
-            "$COL_ADDRESS = ?", arrayOf(address.trim().lowercase())
+            TABLE_CONTACTS,
+            cv,
+            "$COL_ADDRESS = ?",
+            arrayOf(address.trim().lowercase())
         )
     }
 
     fun isPendingContact(address: String): Boolean {
         db.readableDatabase.query(
-            TABLE_CONTACTS, arrayOf(COL_IS_PENDING),
-            "$COL_ADDRESS = ?", arrayOf(address.trim().lowercase()),
-            null, null, null
+            TABLE_CONTACTS,
+            arrayOf(COL_IS_PENDING),
+            "$COL_ADDRESS = ?",
+            arrayOf(address.trim().lowercase()),
+            null,
+            null,
+            null
         ).use { cursor ->
             if (cursor.moveToFirst()) return cursor.getInt(0) == 1
         }
@@ -82,8 +94,13 @@ class ChatRepository(context: Context) {
     fun getAllContacts(): List<ChatContact> {
         val result = mutableListOf<ChatContact>()
         db.readableDatabase.query(
-            TABLE_CONTACTS, null,
-            "$COL_IS_DECLINED = 0", null, null, null, "$COL_ADDED_AT ASC"
+            TABLE_CONTACTS,
+            null,
+            "$COL_IS_DECLINED = 0",
+            null,
+            null,
+            null,
+            "$COL_ADDED_AT ASC"
         ).use { cursor ->
             while (cursor.moveToNext()) result.add(cursor.toContact())
         }
@@ -92,9 +109,13 @@ class ChatRepository(context: Context) {
 
     fun getContact(address: String): ChatContact? {
         db.readableDatabase.query(
-            TABLE_CONTACTS, null,
-            "$COL_ADDRESS = ?", arrayOf(address.trim().lowercase()),
-            null, null, null
+            TABLE_CONTACTS,
+            null,
+            "$COL_ADDRESS = ?",
+            arrayOf(address.trim().lowercase()),
+            null,
+            null,
+            null
         ).use { cursor ->
             if (cursor.moveToFirst()) return cursor.toContact()
         }
@@ -104,8 +125,10 @@ class ChatRepository(context: Context) {
     fun updateContactName(address: String, name: String) {
         val cv = ContentValues().apply { put(COL_NAME, name.trim()) }
         db.writableDatabase.update(
-            TABLE_CONTACTS, cv,
-            "$COL_ADDRESS = ?", arrayOf(address.trim().lowercase())
+            TABLE_CONTACTS,
+            cv,
+            "$COL_ADDRESS = ?",
+            arrayOf(address.trim().lowercase())
         )
     }
 
@@ -116,7 +139,12 @@ class ChatRepository(context: Context) {
         // (isContactDeclined() is checked before contactExists()). Without this, a post-backup
         // delete followed by a poll fetching old UIDs would re-create the contact via addPendingContact().
         val cv = ContentValues().apply { put(COL_IS_DECLINED, 1) }
-        val updated = db.writableDatabase.update(TABLE_CONTACTS, cv, "$COL_ADDRESS = ?", arrayOf(addr))
+        val updated = db.writableDatabase.update(
+            TABLE_CONTACTS,
+            cv,
+            "$COL_ADDRESS = ?",
+            arrayOf(addr)
+        )
         if (updated == 0) {
             // Contact row didn't exist (e.g. deleted from outside normal flow) — insert a block placeholder
             // so messages from this address are still suppressed on the next poll.
@@ -128,7 +156,10 @@ class ChatRepository(context: Context) {
                 put(COL_IS_DECLINED, 1)
             }
             db.writableDatabase.insertWithOnConflict(
-                TABLE_CONTACTS, null, insert, android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE
+                TABLE_CONTACTS,
+                null,
+                insert,
+                android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE
             )
         }
         db.writableDatabase.delete(
@@ -156,17 +187,20 @@ class ChatRepository(context: Context) {
 
     fun isContactDeclined(address: String): Boolean {
         db.readableDatabase.query(
-            TABLE_CONTACTS, arrayOf(COL_IS_DECLINED),
-            "$COL_ADDRESS = ?", arrayOf(address.trim().lowercase()),
-            null, null, null
+            TABLE_CONTACTS,
+            arrayOf(COL_IS_DECLINED),
+            "$COL_ADDRESS = ?",
+            arrayOf(address.trim().lowercase()),
+            null,
+            null,
+            null
         ).use { cursor ->
             if (cursor.moveToFirst()) return cursor.getInt(0) == 1
         }
         return false
     }
 
-    fun contactExists(address: String): Boolean =
-        getContact(address) != null
+    fun contactExists(address: String): Boolean = getContact(address) != null
 
     // ---- Messages ----
 
@@ -205,7 +239,12 @@ class ChatRepository(context: Context) {
     fun updateMessageStatusByImapUid(imapUid: Long, status: Int) {
         if (imapUid < 0) return
         val cv = ContentValues().apply { put(COL_STATUS, status) }
-        db.writableDatabase.update(TABLE_MESSAGES, cv, "$COL_IMAP_UID = ?", arrayOf(imapUid.toString()))
+        db.writableDatabase.update(
+            TABLE_MESSAGES,
+            cv,
+            "$COL_IMAP_UID = ?",
+            arrayOf(imapUid.toString())
+        )
     }
 
     /**
@@ -218,13 +257,22 @@ class ChatRepository(context: Context) {
      * Pass ChatMessage.STATUS_SENDING for delivery receipts (don't downgrade STATUS_SENT).
      */
     fun updateSentMessageStatusNearTimestamp(
-        myAddr: String, peerAddr: String, timestamp: Long, status: Int,
+        myAddr: String,
+        peerAddr: String,
+        timestamp: Long,
+        status: Int,
         maxCurrentStatus: Int = Int.MAX_VALUE
     ) {
         val my = myAddr.trim().lowercase()
         val peer = peerAddr.trim().lowercase()
         val toleranceMs = 5_000L
-        val statusClause = if (maxCurrentStatus < Int.MAX_VALUE) " AND $COL_STATUS <= $maxCurrentStatus" else ""
+        val statusClause = if (maxCurrentStatus <
+            Int.MAX_VALUE
+        ) {
+            " AND $COL_STATUS <= $maxCurrentStatus"
+        } else {
+            ""
+        }
         // Update only the single nearest row to avoid tagging the wrong message when two
         // outgoing messages have timestamps within the tolerance window.
         val sql = "UPDATE $TABLE_MESSAGES SET $COL_STATUS = ? " +
@@ -241,10 +289,13 @@ class ChatRepository(context: Context) {
         val my = myAddress.trim().lowercase()
         val peer = peerAddress.trim().lowercase()
         db.readableDatabase.query(
-            TABLE_MESSAGES, null,
+            TABLE_MESSAGES,
+            null,
             "($COL_FROM_ADDR = ? AND $COL_TO_ADDR = ?) OR ($COL_FROM_ADDR = ? AND $COL_TO_ADDR = ?)",
             arrayOf(my, peer, peer, my),
-            null, null, "$COL_TIMESTAMP ASC"
+            null,
+            null,
+            "$COL_TIMESTAMP ASC"
         ).use { cursor ->
             while (cursor.moveToNext()) result.add(cursor.toMessage())
         }
@@ -255,10 +306,14 @@ class ChatRepository(context: Context) {
         val my = myAddress.trim().lowercase()
         val peer = peerAddress.trim().lowercase()
         db.readableDatabase.query(
-            TABLE_MESSAGES, null,
+            TABLE_MESSAGES,
+            null,
             "($COL_FROM_ADDR = ? AND $COL_TO_ADDR = ?) OR ($COL_FROM_ADDR = ? AND $COL_TO_ADDR = ?)",
             arrayOf(my, peer, peer, my),
-            null, null, "$COL_TIMESTAMP DESC", "1"
+            null,
+            null,
+            "$COL_TIMESTAMP DESC",
+            "1"
         ).use { cursor ->
             if (cursor.moveToFirst()) return cursor.toMessage()
         }
@@ -269,10 +324,13 @@ class ChatRepository(context: Context) {
         val peer = peerAddress.trim().lowercase()
         val my = myAddress.trim().lowercase()
         db.readableDatabase.query(
-            TABLE_MESSAGES, arrayOf("COUNT(*)"),
+            TABLE_MESSAGES,
+            arrayOf("COUNT(*)"),
             "$COL_FROM_ADDR = ? AND $COL_TO_ADDR = ? AND $COL_IS_READ = 0",
             arrayOf(peer, my),
-            null, null, null
+            null,
+            null,
+            null
         ).use { cursor ->
             if (cursor.moveToFirst()) return cursor.getInt(0)
         }
@@ -284,7 +342,8 @@ class ChatRepository(context: Context) {
         val my = myAddress.trim().lowercase()
         val cv = ContentValues().apply { put(COL_IS_READ, 1) }
         db.writableDatabase.update(
-            TABLE_MESSAGES, cv,
+            TABLE_MESSAGES,
+            cv,
             "$COL_FROM_ADDR = ? AND $COL_TO_ADDR = ? AND $COL_IS_READ = 0",
             arrayOf(peer, my)
         )
@@ -293,9 +352,13 @@ class ChatRepository(context: Context) {
     fun imapUidExists(uid: Long): Boolean {
         if (uid < 0) return false
         db.readableDatabase.query(
-            TABLE_MESSAGES, arrayOf("COUNT(*)"),
-            "$COL_IMAP_UID = ?", arrayOf(uid.toString()),
-            null, null, null
+            TABLE_MESSAGES,
+            arrayOf("COUNT(*)"),
+            "$COL_IMAP_UID = ?",
+            arrayOf(uid.toString()),
+            null,
+            null,
+            null
         ).use { cursor ->
             if (cursor.moveToFirst()) return cursor.getInt(0) > 0
         }
@@ -313,7 +376,9 @@ class ChatRepository(context: Context) {
             arrayOf("COUNT(DISTINCT $COL_FROM_ADDR)"),
             "$COL_TO_ADDR = ? AND $COL_IS_READ = 0 AND $COL_IS_SENT = 0",
             arrayOf(my),
-            null, null, null
+            null,
+            null,
+            null
         ).use { cursor ->
             if (cursor.moveToFirst()) return cursor.getInt(0)
         }
@@ -322,8 +387,13 @@ class ChatRepository(context: Context) {
 
     fun getMaxImapUid(): Long {
         db.readableDatabase.query(
-            TABLE_MESSAGES, arrayOf("MAX($COL_IMAP_UID)"),
-            "$COL_IMAP_UID >= 0", null, null, null, null
+            TABLE_MESSAGES,
+            arrayOf("MAX($COL_IMAP_UID)"),
+            "$COL_IMAP_UID >= 0",
+            null,
+            null,
+            null,
+            null
         ).use { cursor ->
             if (cursor.moveToFirst()) return cursor.getLong(0)
         }

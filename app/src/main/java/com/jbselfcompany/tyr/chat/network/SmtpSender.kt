@@ -18,21 +18,14 @@ import java.util.UUID
  * Adds X-Tyr-Read-Receipt: <uid> header for read receipts.
  * Supports MIME multipart/mixed for file attachments.
  */
-class SmtpSender(
-    private val host: String = "127.0.0.1",
-    private val port: Int = 1025
-) {
+class SmtpSender(private val host: String = "127.0.0.1", private val port: Int = 1025) {
     companion object {
         private const val TAG = "SmtpSender"
         const val CHAT_HEADER = "X-Tyr-Chat: 1"
-        private const val CHUNK_SIZE = 57  // 57 bytes → 76 base64 chars (standard line length)
+        private const val CHUNK_SIZE = 57 // 57 bytes → 76 base64 chars (standard line length)
     }
 
-    data class AttachmentData(
-        val file: File,
-        val name: String,
-        val mimeType: String
-    )
+    data class AttachmentData(val file: File, val name: String, val mimeType: String)
 
     sealed class Result {
         /** @param dateHeaderTimestamp epoch-ms of the Date: header written into the message,
@@ -53,9 +46,13 @@ class SmtpSender(
         senderNickname: String = "",
         attachment: AttachmentData? = null
     ): Result {
-        val isReceipt = readReceiptForUid > 0 || readReceiptTimestamp > 0 || deliveryReceiptTimestamp > 0
-        TyrLogger.d(TAG, "Sending ${if (isReceipt) "receipt" else "message"} to $toAddress" +
-            if (attachment != null) " with attachment ${attachment.name}" else "")
+        val isReceipt =
+            readReceiptForUid > 0 || readReceiptTimestamp > 0 || deliveryReceiptTimestamp > 0
+        TyrLogger.d(
+            TAG,
+            "Sending ${if (isReceipt) "receipt" else "message"} to $toAddress" +
+                if (attachment != null) " with attachment ${attachment.name}" else ""
+        )
         return try {
             Socket(host, port).use { socket ->
                 // Extended timeout: go-smtp goroutine scheduling on Android (via gomobile)
@@ -66,7 +63,9 @@ class SmtpSender(
 
                 fun readLine(): String = reader.readLine() ?: ""
 
-                fun writeLine(line: String) { writer.println(line) }
+                fun writeLine(line: String) {
+                    writer.println(line)
+                }
 
                 fun expectCode(code: String): Boolean {
                     var line = readLine()
@@ -116,7 +115,10 @@ class SmtpSender(
                 // due to gomobile goroutine scheduling, causing a > 5 s drift from any
                 // timestamp captured by the caller before the send starts).
                 val dateHeaderTs = Date()
-                val dateStr = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", Locale.US).format(dateHeaderTs)
+                val dateStr = SimpleDateFormat(
+                    "EEE, dd MMM yyyy HH:mm:ss Z",
+                    Locale.US
+                ).format(dateHeaderTs)
                 writeLine("From: <$fromAddress>")
                 writeLine("To: <$toAddress>")
                 writeLine("Subject: Tyr Chat")
@@ -129,7 +131,8 @@ class SmtpSender(
                     // receiving side because IMAP is read back as ISO-8859-1.
                     val encodedNickname = if (senderNickname.any { it.code > 127 }) {
                         val b64 = Base64.encodeToString(
-                            senderNickname.toByteArray(Charsets.UTF_8), Base64.NO_WRAP
+                            senderNickname.toByteArray(Charsets.UTF_8),
+                            Base64.NO_WRAP
                         )
                         "=?UTF-8?B?$b64?="
                     } else {
@@ -190,12 +193,15 @@ class SmtpSender(
 
                 writeLine(".")
                 if (!expectCode("250")) return Result.Error("Message DATA failed")
-                socket.soTimeout = 30_000  // reset for QUIT
+                socket.soTimeout = 30_000 // reset for QUIT
 
                 writeLine("QUIT")
                 readLine() // 221 Bye
 
-                TyrLogger.i(TAG, "Sent ${if (isReceipt) "receipt" else "message"} to $toAddress successfully")
+                TyrLogger.i(
+                    TAG,
+                    "Sent ${if (isReceipt) "receipt" else "message"} to $toAddress successfully"
+                )
                 Result.Success(dateHeaderTimestamp = dateHeaderTs.time)
             }
         } catch (e: Exception) {

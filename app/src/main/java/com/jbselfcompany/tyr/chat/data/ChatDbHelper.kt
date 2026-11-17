@@ -27,6 +27,7 @@ class ChatDbHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, 
         const val COL_IS_READ = "is_read"
         const val COL_IS_SENT = "is_sent"
         const val COL_STATUS = "status"
+
         // Attachment columns
         const val COL_ATTACHMENT_PATH = "attachment_path"
         const val COL_ATTACHMENT_NAME = "attachment_name"
@@ -35,7 +36,8 @@ class ChatDbHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, 
     }
 
     override fun onCreate(db: SQLiteDatabase) {
-        db.execSQL("""
+        db.execSQL(
+            """
             CREATE TABLE $TABLE_CONTACTS (
                 $COL_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 $COL_ADDRESS TEXT UNIQUE NOT NULL,
@@ -44,9 +46,11 @@ class ChatDbHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, 
                 $COL_IS_PENDING INTEGER NOT NULL DEFAULT 0,
                 $COL_IS_DECLINED INTEGER NOT NULL DEFAULT 0
             )
-        """.trimIndent())
+            """.trimIndent()
+        )
 
-        db.execSQL("""
+        db.execSQL(
+            """
             CREATE TABLE $TABLE_MESSAGES (
                 $COL_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 $COL_IMAP_UID INTEGER NOT NULL DEFAULT -1,
@@ -62,10 +66,13 @@ class ChatDbHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, 
                 $COL_ATTACHMENT_MIME TEXT,
                 $COL_ATTACHMENT_SIZE INTEGER NOT NULL DEFAULT 0
             )
-        """.trimIndent())
+            """.trimIndent()
+        )
 
         // Indexes for frequent conversation and unread-count queries
-        db.execSQL("CREATE INDEX idx_msg_conversation ON $TABLE_MESSAGES ($COL_FROM_ADDR, $COL_TO_ADDR)")
+        db.execSQL(
+            "CREATE INDEX idx_msg_conversation ON $TABLE_MESSAGES ($COL_FROM_ADDR, $COL_TO_ADDR)"
+        )
         db.execSQL("CREATE INDEX idx_msg_timestamp ON $TABLE_MESSAGES ($COL_TIMESTAMP DESC)")
         db.execSQL("CREATE INDEX idx_msg_imap_uid ON $TABLE_MESSAGES ($COL_IMAP_UID)")
         db.execSQL("CREATE INDEX idx_msg_is_read ON $TABLE_MESSAGES ($COL_IS_READ)")
@@ -73,25 +80,41 @@ class ChatDbHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, 
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 2) {
-            db.execSQL("ALTER TABLE $TABLE_MESSAGES ADD COLUMN $COL_STATUS INTEGER NOT NULL DEFAULT ${ChatMessage.STATUS_SENT}")
+            db.execSQL(
+                "ALTER TABLE $TABLE_MESSAGES ADD COLUMN $COL_STATUS INTEGER NOT NULL DEFAULT ${ChatMessage.STATUS_SENT}"
+            )
         }
         if (oldVersion < 3) {
-            db.execSQL("ALTER TABLE $TABLE_CONTACTS ADD COLUMN $COL_IS_PENDING INTEGER NOT NULL DEFAULT 0")
+            db.execSQL(
+                "ALTER TABLE $TABLE_CONTACTS ADD COLUMN $COL_IS_PENDING INTEGER NOT NULL DEFAULT 0"
+            )
         }
         if (oldVersion < 4) {
-            db.execSQL("ALTER TABLE $TABLE_CONTACTS ADD COLUMN $COL_IS_DECLINED INTEGER NOT NULL DEFAULT 0")
+            db.execSQL(
+                "ALTER TABLE $TABLE_CONTACTS ADD COLUMN $COL_IS_DECLINED INTEGER NOT NULL DEFAULT 0"
+            )
         }
         if (oldVersion < 5) {
             db.execSQL("ALTER TABLE $TABLE_MESSAGES ADD COLUMN $COL_ATTACHMENT_PATH TEXT")
             db.execSQL("ALTER TABLE $TABLE_MESSAGES ADD COLUMN $COL_ATTACHMENT_NAME TEXT")
             db.execSQL("ALTER TABLE $TABLE_MESSAGES ADD COLUMN $COL_ATTACHMENT_MIME TEXT")
-            db.execSQL("ALTER TABLE $TABLE_MESSAGES ADD COLUMN $COL_ATTACHMENT_SIZE INTEGER NOT NULL DEFAULT 0")
+            db.execSQL(
+                "ALTER TABLE $TABLE_MESSAGES ADD COLUMN $COL_ATTACHMENT_SIZE INTEGER NOT NULL DEFAULT 0"
+            )
         }
         if (oldVersion < 6) {
-            db.execSQL("CREATE INDEX IF NOT EXISTS idx_msg_conversation ON $TABLE_MESSAGES ($COL_FROM_ADDR, $COL_TO_ADDR)")
-            db.execSQL("CREATE INDEX IF NOT EXISTS idx_msg_timestamp ON $TABLE_MESSAGES ($COL_TIMESTAMP DESC)")
-            db.execSQL("CREATE INDEX IF NOT EXISTS idx_msg_imap_uid ON $TABLE_MESSAGES ($COL_IMAP_UID)")
-            db.execSQL("CREATE INDEX IF NOT EXISTS idx_msg_is_read ON $TABLE_MESSAGES ($COL_IS_READ)")
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS idx_msg_conversation ON $TABLE_MESSAGES ($COL_FROM_ADDR, $COL_TO_ADDR)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS idx_msg_timestamp ON $TABLE_MESSAGES ($COL_TIMESTAMP DESC)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS idx_msg_imap_uid ON $TABLE_MESSAGES ($COL_IMAP_UID)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS idx_msg_is_read ON $TABLE_MESSAGES ($COL_IS_READ)"
+            )
         }
     }
 }

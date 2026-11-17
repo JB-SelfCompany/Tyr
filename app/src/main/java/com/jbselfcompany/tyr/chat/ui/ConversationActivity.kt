@@ -122,7 +122,11 @@ class ConversationActivity : BaseActivity() {
         if (grants.values.any { it }) {
             launchPhotoPicker()
         } else {
-            Snackbar.make(binding.root, R.string.chat_attachment_error, Snackbar.LENGTH_SHORT).show()
+            Snackbar.make(
+                binding.root,
+                R.string.chat_attachment_error,
+                Snackbar.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -181,7 +185,9 @@ class ConversationActivity : BaseActivity() {
             if (actionId == EditorInfo.IME_ACTION_SEND) {
                 sendMessage()
                 true
-            } else false
+            } else {
+                false
+            }
         }
 
         val isPending = chatRepository.isPendingContact(contactAddress)
@@ -202,12 +208,16 @@ class ConversationActivity : BaseActivity() {
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            android.R.id.home -> { finish(); true }
-            R.id.action_contact_profile -> { showContactProfile(); true }
-            else -> super.onOptionsItemSelected(item)
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        android.R.id.home -> {
+            finish()
+            true
         }
+        R.id.action_contact_profile -> {
+            showContactProfile()
+            true
+        }
+        else -> super.onOptionsItemSelected(item)
     }
 
     private fun showContactProfile() {
@@ -266,7 +276,9 @@ class ConversationActivity : BaseActivity() {
         super.onPause()
         activeChatAddress = null
         pollHandler.removeCallbacks(pollRunnable)
-        try { unregisterReceiver(newMessageReceiver) } catch (_: Exception) {}
+        try {
+            unregisterReceiver(newMessageReceiver)
+        } catch (_: Exception) {}
     }
 
     override fun onDestroy() {
@@ -280,7 +292,9 @@ class ConversationActivity : BaseActivity() {
         } else {
             android.Manifest.permission.READ_EXTERNAL_STORAGE
         }
-        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, permission) ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
             launchPhotoPicker()
         } else {
             requestMediaPermission.launch(arrayOf(permission))
@@ -324,7 +338,11 @@ class ConversationActivity : BaseActivity() {
         try {
             val inputStream = contentResolver.openInputStream(uri)
             if (inputStream == null) {
-                Snackbar.make(binding.root, R.string.chat_attachment_error, Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(
+                    binding.root,
+                    R.string.chat_attachment_error,
+                    Snackbar.LENGTH_SHORT
+                ).show()
                 return
             }
             inputStream.use { input ->
@@ -333,25 +351,33 @@ class ConversationActivity : BaseActivity() {
                 }
             }
         } catch (e: Exception) {
-            Snackbar.make(binding.root, R.string.chat_attachment_error, Snackbar.LENGTH_SHORT).show()
+            Snackbar.make(
+                binding.root,
+                R.string.chat_attachment_error,
+                Snackbar.LENGTH_SHORT
+            ).show()
             return
         }
         // Verify the file was actually written before attempting to send it.
         if (!destFile.exists() || destFile.length() == 0L) {
-            Snackbar.make(binding.root, R.string.chat_attachment_error, Snackbar.LENGTH_SHORT).show()
+            Snackbar.make(
+                binding.root,
+                R.string.chat_attachment_error,
+                Snackbar.LENGTH_SHORT
+            ).show()
             return
         }
 
         sendMessageWithAttachment(destFile, displayName, mimeType, fileSize)
     }
 
-    private fun getFileDisplayName(uri: Uri): String? {
-        return try {
-            contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                val nameIdx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-                if (nameIdx >= 0 && cursor.moveToFirst()) cursor.getString(nameIdx) else null
-            }
-        } catch (_: Exception) { null }
+    private fun getFileDisplayName(uri: Uri): String? = try {
+        contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            val nameIdx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+            if (nameIdx >= 0 && cursor.moveToFirst()) cursor.getString(nameIdx) else null
+        }
+    } catch (_: Exception) {
+        null
     }
 
     private fun sendMessageWithAttachment(
@@ -361,7 +387,11 @@ class ConversationActivity : BaseActivity() {
         sizeBytes: Long
     ) {
         if (!YggmailService.isRunning) {
-            Snackbar.make(binding.root, R.string.error_service_not_running, Snackbar.LENGTH_SHORT).show()
+            Snackbar.make(
+                binding.root,
+                R.string.error_service_not_running,
+                Snackbar.LENGTH_SHORT
+            ).show()
             return
         }
 
@@ -449,21 +479,29 @@ class ConversationActivity : BaseActivity() {
         val path = msg.attachmentPath ?: return
         val file = File(path)
         if (!file.exists()) {
-            Snackbar.make(binding.root, R.string.chat_attachment_error, Snackbar.LENGTH_SHORT).show()
+            Snackbar.make(
+                binding.root,
+                R.string.chat_attachment_error,
+                Snackbar.LENGTH_SHORT
+            ).show()
             return
         }
         if (msg.attachmentMimeType?.startsWith("image/") == true) {
             showImagePreview(file)
         } else {
             try {
-                val uri = FileProvider.getUriForFile(this, "${packageName}.fileprovider", file)
+                val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
                 val intent = Intent(Intent.ACTION_VIEW).apply {
                     setDataAndType(uri, msg.attachmentMimeType ?: "*/*")
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
                 startActivity(Intent.createChooser(intent, msg.attachmentName))
             } catch (e: Exception) {
-                Snackbar.make(binding.root, R.string.chat_attachment_error, Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(
+                    binding.root,
+                    R.string.chat_attachment_error,
+                    Snackbar.LENGTH_SHORT
+                ).show()
             }
         }
     }
@@ -498,31 +536,48 @@ class ConversationActivity : BaseActivity() {
         val sampleOpts = android.graphics.BitmapFactory.Options().apply {
             inSampleSize = calculateInSampleSize(opts, targetPx, targetPx)
         }
-        val bitmap = android.graphics.BitmapFactory.decodeFile(file.absolutePath, sampleOpts) ?: return null
+        val bitmap =
+            android.graphics.BitmapFactory.decodeFile(file.absolutePath, sampleOpts) ?: return null
 
         val rotation = try {
             val exif = androidx.exifinterface.media.ExifInterface(file.absolutePath)
-            when (exif.getAttributeInt(
-                androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION,
-                androidx.exifinterface.media.ExifInterface.ORIENTATION_NORMAL
-            )) {
+            when (
+                exif.getAttributeInt(
+                    androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION,
+                    androidx.exifinterface.media.ExifInterface.ORIENTATION_NORMAL
+                )
+            ) {
                 androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_90 -> 90f
                 androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_180 -> 180f
                 androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_270 -> 270f
                 else -> 0f
             }
-        } catch (_: Exception) { 0f }
+        } catch (_: Exception) {
+            0f
+        }
 
         return if (rotation != 0f) {
             val matrix = android.graphics.Matrix().apply { postRotate(rotation) }
-            android.graphics.Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+            android.graphics.Bitmap.createBitmap(
+                bitmap,
+                0,
+                0,
+                bitmap.width,
+                bitmap.height,
+                matrix,
+                true
+            )
                 .also { if (it !== bitmap) bitmap.recycle() }
         } else {
             bitmap
         }
     }
 
-    private fun calculateInSampleSize(opts: android.graphics.BitmapFactory.Options, reqW: Int, reqH: Int): Int {
+    private fun calculateInSampleSize(
+        opts: android.graphics.BitmapFactory.Options,
+        reqW: Int,
+        reqH: Int
+    ): Int {
         var inSampleSize = 1
         val h = opts.outHeight
         val w = opts.outWidth
@@ -542,11 +597,12 @@ class ConversationActivity : BaseActivity() {
             override fun getSwipeDirs(
                 recyclerView: RecyclerView,
                 viewHolder: RecyclerView.ViewHolder
-            ): Int {
-                return if (viewHolder is ChatMessageAdapter.SentViewHolder ||
-                           viewHolder is ChatMessageAdapter.ReceivedViewHolder) {
-                    ItemTouchHelper.RIGHT
-                } else 0
+            ): Int = if (viewHolder is ChatMessageAdapter.SentViewHolder ||
+                viewHolder is ChatMessageAdapter.ReceivedViewHolder
+            ) {
+                ItemTouchHelper.RIGHT
+            } else {
+                0
             }
 
             override fun onMove(
@@ -583,7 +639,8 @@ class ConversationActivity : BaseActivity() {
                     val swipeFraction = (dX / itemView.width).coerceIn(0f, 1f)
 
                     val replyIcon = ContextCompat.getDrawable(
-                        recyclerView.context, R.drawable.ic_reply
+                        recyclerView.context,
+                        R.drawable.ic_reply
                     )
                     if (replyIcon != null) {
                         val iconSize = (24 * recyclerView.context.resources.displayMetrics.density).toInt()
@@ -599,14 +656,25 @@ class ConversationActivity : BaseActivity() {
 
                         val tv = TypedValue()
                         itemView.context.theme.resolveAttribute(
-                            android.R.attr.colorPrimary, tv, true
+                            android.R.attr.colorPrimary,
+                            tv,
+                            true
                         )
-                        replyIcon.colorFilter = PorterDuffColorFilter(tv.data, PorterDuff.Mode.SRC_IN)
+                        replyIcon.colorFilter =
+                            PorterDuffColorFilter(tv.data, PorterDuff.Mode.SRC_IN)
                         replyIcon.draw(c)
                     }
                 }
 
-                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+                super.onChildDraw(
+                    c,
+                    recyclerView,
+                    viewHolder,
+                    dX,
+                    dY,
+                    actionState,
+                    isCurrentlyActive
+                )
             }
         }
 
@@ -674,7 +742,11 @@ class ConversationActivity : BaseActivity() {
 
     private fun sendMessage() {
         if (!YggmailService.isRunning) {
-            Snackbar.make(binding.root, R.string.error_service_not_running, Snackbar.LENGTH_SHORT).show()
+            Snackbar.make(
+                binding.root,
+                R.string.error_service_not_running,
+                Snackbar.LENGTH_SHORT
+            ).show()
             return
         }
 
@@ -715,7 +787,11 @@ class ConversationActivity : BaseActivity() {
             val password = configRepository.getPassword()
             if (password == null) {
                 runOnUiThread {
-                    Snackbar.make(binding.root, R.string.error_service_not_running, Snackbar.LENGTH_SHORT).show()
+                    Snackbar.make(
+                        binding.root,
+                        R.string.error_service_not_running,
+                        Snackbar.LENGTH_SHORT
+                    ).show()
                 }
                 return@Thread
             }
@@ -754,79 +830,95 @@ class ConversationActivity : BaseActivity() {
         if (!isFetchInProgress.compareAndSet(false, true)) {
             return
         }
-        val password = configRepository.getPassword() ?: run { isFetchInProgress.set(false); return }
+        val password =
+            configRepository.getPassword() ?: run {
+                isFetchInProgress.set(false)
+                return
+            }
 
         Thread {
             try {
-            val sinceUid = chatRepository.getMaxImapUid()
-            val result = ImapFetcher(cacheDir = cacheDir).fetchNewMessages(
-                address = myAddress,
-                password = password,
-                sinceUid = sinceUid,
-                attachmentsDir = attachmentsDir
-            )
-            if (result is ImapFetcher.Result.Success) {
-                var changed = false
+                val sinceUid = chatRepository.getMaxImapUid()
+                val result = ImapFetcher(cacheDir = cacheDir).fetchNewMessages(
+                    address = myAddress,
+                    password = password,
+                    sinceUid = sinceUid,
+                    attachmentsDir = attachmentsDir
+                )
+                if (result is ImapFetcher.Result.Success) {
+                    var changed = false
 
-                for (receipt in result.data.deliveryReceiptTimestamps) {
-                    chatRepository.updateSentMessageStatusNearTimestamp(
-                        myAddress, receipt.senderAddr, receipt.originalTimestamp,
-                        ChatMessage.STATUS_SENT, ChatMessage.STATUS_SENDING
-                    )
-                    changed = true
-                }
-                val newlyReceived = mutableListOf<ChatMessage>()
-                val acceptFromNonContacts = configRepository.getAcceptMessagesFromNonContacts()
-                val nicknameMap = result.data.nicknameUpdates.associate { it.senderAddr to it.nickname }
-
-                for (msg in result.data.messages) {
-                    if (msg.isSent) continue
-                    if (chatRepository.imapUidExists(msg.imapUid)) continue
-                    if (chatRepository.isContactDeclined(msg.fromAddr)) continue
-
-                    val senderInContacts = chatRepository.contactExists(msg.fromAddr)
-                    when {
-                        senderInContacts -> {
-                            chatRepository.insertMessage(msg)
-                            newlyReceived.add(msg)
-                            changed = true
-                        }
-                        acceptFromNonContacts -> {
-                            chatRepository.addPendingContact(ChatContact(address = msg.fromAddr, name = nicknameMap[msg.fromAddr] ?: ""))
-                            chatRepository.insertMessage(msg.copy(isRead = false))
-                            newlyReceived.add(msg)
-                            changed = true
-                        }
-                        // else: setting off — drop silently
-                    }
-                }
-
-                for (update in result.data.nicknameUpdates) {
-                    val contact = chatRepository.getContact(update.senderAddr)
-                    if (contact != null && contact.name.isBlank()) {
-                        chatRepository.updateContactName(update.senderAddr, update.nickname)
-                        if (update.senderAddr.equals(contactAddress, ignoreCase = true)) {
-                            runOnUiThread {
-                                supportActionBar?.title = update.nickname
-                            }
-                        }
+                    for (receipt in result.data.deliveryReceiptTimestamps) {
+                        chatRepository.updateSentMessageStatusNearTimestamp(
+                            myAddress,
+                            receipt.senderAddr,
+                            receipt.originalTimestamp,
+                            ChatMessage.STATUS_SENT,
+                            ChatMessage.STATUS_SENDING
+                        )
                         changed = true
                     }
-                }
+                    val newlyReceived = mutableListOf<ChatMessage>()
+                    val acceptFromNonContacts = configRepository.getAcceptMessagesFromNonContacts()
+                    val nicknameMap = result.data.nicknameUpdates.associate {
+                        it.senderAddr to
+                            it.nickname
+                    }
 
-                // Always reload from DB after a successful fetch.  The service may
-                // have inserted rows (including photo attachments) before this fetch
-                // started, so changed=false doesn't mean the view is up to date.
-                val isPending = chatRepository.isPendingContact(contactAddress)
-                if (!isPending) {
-                    chatRepository.markConversationRead(myAddress, contactAddress)
-                }
-                runOnUiThread { loadMessages() }
+                    for (msg in result.data.messages) {
+                        if (msg.isSent) continue
+                        if (chatRepository.imapUidExists(msg.imapUid)) continue
+                        if (chatRepository.isContactDeclined(msg.fromAddr)) continue
 
-                if (newlyReceived.isNotEmpty()) {
-                    sendDeliveryReceipts(newlyReceived, password)
+                        val senderInContacts = chatRepository.contactExists(msg.fromAddr)
+                        when {
+                            senderInContacts -> {
+                                chatRepository.insertMessage(msg)
+                                newlyReceived.add(msg)
+                                changed = true
+                            }
+                            acceptFromNonContacts -> {
+                                chatRepository.addPendingContact(
+                                    ChatContact(
+                                        address = msg.fromAddr,
+                                        name =
+                                        nicknameMap[msg.fromAddr] ?: ""
+                                    )
+                                )
+                                chatRepository.insertMessage(msg.copy(isRead = false))
+                                newlyReceived.add(msg)
+                                changed = true
+                            }
+                            // else: setting off — drop silently
+                        }
+                    }
+
+                    for (update in result.data.nicknameUpdates) {
+                        val contact = chatRepository.getContact(update.senderAddr)
+                        if (contact != null && contact.name.isBlank()) {
+                            chatRepository.updateContactName(update.senderAddr, update.nickname)
+                            if (update.senderAddr.equals(contactAddress, ignoreCase = true)) {
+                                runOnUiThread {
+                                    supportActionBar?.title = update.nickname
+                                }
+                            }
+                            changed = true
+                        }
+                    }
+
+                    // Always reload from DB after a successful fetch.  The service may
+                    // have inserted rows (including photo attachments) before this fetch
+                    // started, so changed=false doesn't mean the view is up to date.
+                    val isPending = chatRepository.isPendingContact(contactAddress)
+                    if (!isPending) {
+                        chatRepository.markConversationRead(myAddress, contactAddress)
+                    }
+                    runOnUiThread { loadMessages() }
+
+                    if (newlyReceived.isNotEmpty()) {
+                        sendDeliveryReceipts(newlyReceived, password)
+                    }
                 }
-            }
             } finally {
                 isFetchInProgress.set(false)
             }

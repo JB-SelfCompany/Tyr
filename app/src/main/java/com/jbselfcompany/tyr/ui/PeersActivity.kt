@@ -12,14 +12,13 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.PopupMenu
 import android.widget.Toast
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.jbselfcompany.tyr.R
 import com.jbselfcompany.tyr.TyrApplication
-import com.jbselfcompany.tyr.data.ConfigRepository
 import com.jbselfcompany.tyr.data.PeerInfo
 import com.jbselfcompany.tyr.databinding.ActivityPeersBinding
 import com.jbselfcompany.tyr.service.ServiceStatus
@@ -27,14 +26,15 @@ import com.jbselfcompany.tyr.service.ServiceStatusListener
 import com.jbselfcompany.tyr.service.YggmailService
 import com.jbselfcompany.tyr.utils.PeerCatalog
 
-class PeersActivity : BaseActivity(), ServiceStatusListener {
+class PeersActivity :
+    BaseActivity(),
+    ServiceStatusListener {
 
     private lateinit var binding: ActivityPeersBinding
     private val configRepository by lazy { TyrApplication.instance.configRepository }
     private val peers = mutableListOf<PeerInfo>()
     private lateinit var adapter: PeerAdapter
     private val mainHandler = Handler(Looper.getMainLooper())
-
 
     private var yggmailService: YggmailService? = null
     private var serviceBound = false
@@ -110,7 +110,6 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
         }
     }
 
-
     private fun setupRecyclerView() {
         adapter = PeerAdapter(
             peers = peers,
@@ -167,7 +166,16 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
                 loading.dismiss()
                 result.fold(
                     onSuccess = ::showCatalogCountries,
-                    onFailure = { Toast.makeText(this, getString(R.string.peer_list_failed, it.message ?: ""), Toast.LENGTH_LONG).show() }
+                    onFailure = {
+                        Toast.makeText(
+                            this,
+                            getString(
+                                R.string.peer_list_failed,
+                                it.message ?: ""
+                            ),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 )
             }
         }, "peer-catalog").start()
@@ -177,15 +185,28 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
         val all = PeerCatalog.sorted(byCountry.values.flatten())
         val names = listOf(getString(R.string.peer_list_all_countries)) + byCountry.keys
         val lists = listOf(all) + byCountry.values
-        val labels = names.zip(lists) { name, list -> "$name (${list.count { it.up }}/${list.size})" }
+        val labels = names.zip(lists) { name, list ->
+            "$name (${list.count { it.up }}/${list.size})"
+        }
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.peer_list_title)
-            .setItems(labels.toTypedArray()) { _, i -> showCatalogPeers(names[i], lists[i], showCountry = i == 0) }
+            .setItems(labels.toTypedArray()) { _, i ->
+                showCatalogPeers(
+                    names[i],
+                    lists[i],
+                    showCountry =
+                    i == 0
+                )
+            }
             .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
-    private fun showCatalogPeers(title: String, entries: List<PeerCatalog.Entry>, showCountry: Boolean) {
+    private fun showCatalogPeers(
+        title: String,
+        entries: List<PeerCatalog.Entry>,
+        showCountry: Boolean
+    ) {
         // Already in the list: nothing to add, so not offered.
         val offer = entries.filter { e -> peers.none { it.uri == e.uri } }
         if (offer.isEmpty()) {
@@ -193,8 +214,19 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
             return
         }
         val labels = offer.map { e ->
-            val state = if (!e.up) getString(R.string.peer_list_offline) else e.ms?.let { "$it ms" } ?: ""
-            listOfNotNull(e.uri, e.country.takeIf { showCountry }, state.ifEmpty { null }).joinToString(" · ")
+            val state = if (!e.up) {
+                getString(R.string.peer_list_offline)
+            } else {
+                e.ms?.let { "$it ms" }
+                    ?: ""
+            }
+            listOfNotNull(
+                e.uri,
+                e.country.takeIf {
+                    showCountry
+                },
+                state.ifEmpty { null }
+            ).joinToString(" · ")
         }
         val checked = BooleanArray(offer.size)
         MaterialAlertDialogBuilder(this)
@@ -232,7 +264,10 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
             .setCancelable(false)
             .setNegativeButton(android.R.string.cancel) { _, _ -> service.cancelPeerPick() }
             .setPositiveButton(R.string.peer_pick_apply) { _, _ ->
-                result?.let { service.applyPeerPick(it); loadPeers() }
+                result?.let {
+                    service.applyPeerPick(it)
+                    loadPeers()
+                }
             }
             .show()
         val apply = dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE)
@@ -240,7 +275,15 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
         Thread({
             val text = try {
                 val r = service.runPeerPick { stage, done, total ->
-                    val label = getString(if (stage == "provider") R.string.peer_pick_stage_provider else R.string.peer_pick_stage_yggdrasil)
+                    val label = getString(
+                        if (stage ==
+                            "provider"
+                        ) {
+                            R.string.peer_pick_stage_provider
+                        } else {
+                            R.string.peer_pick_stage_yggdrasil
+                        }
+                    )
                     mainHandler.post { dialog.setMessage("$label $done/$total") }
                 }
                 result = r
@@ -250,8 +293,11 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
             }
             mainHandler.post {
                 dialog.setMessage(text)
-                dialog.getButton(android.content.DialogInterface.BUTTON_NEGATIVE).setText(R.string.close)
-                apply.visibility = if (result?.optString("switch").isNullOrEmpty()) View.GONE else View.VISIBLE
+                dialog.getButton(
+                    android.content.DialogInterface.BUTTON_NEGATIVE
+                ).setText(R.string.close)
+                apply.visibility =
+                    if (result?.optString("switch").isNullOrEmpty()) View.GONE else View.VISIBLE
             }
         }, "peer-pick").start()
     }
@@ -259,15 +305,32 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
     private fun describePick(r: org.json.JSONObject): String {
         val verdict = when (r.optString("verdict")) {
             "switch" -> r.optInt("gain", -1).let {
-                if (it >= 0) getString(R.string.peer_pick_switch_gain, it) else getString(R.string.peer_pick_switch)
+                if (it >=
+                    0
+                ) {
+                    getString(R.string.peer_pick_switch_gain, it)
+                } else {
+                    getString(R.string.peer_pick_switch)
+                }
             }
             "current_best", "small_gain" -> getString(R.string.peer_pick_keep)
             else -> getString(R.string.peer_pick_none)
         }
         val rows = r.optJSONArray("rows") ?: org.json.JSONArray()
-        val top = (0 until rows.length()).map { rows.getJSONObject(it) }.filter { it.optBoolean("usable") }.take(5)
-            .joinToString("\n") { "• ${it.optString("host")} (${it.optString("country")}) — ${it.optDouble("latencyMs").toLong()} ms" }
-        val backup = r.optString("backup").ifEmpty { null }?.let { "\n" + getString(R.string.peer_pick_backup, it) } ?: ""
+        val top = (0 until rows.length()).map {
+            rows.getJSONObject(it)
+        }.filter { it.optBoolean("usable") }.take(5)
+            .joinToString("\n") {
+                "• ${it.optString(
+                    "host"
+                )} (${it.optString("country")}) — ${it.optDouble("latencyMs").toLong()} ms"
+            }
+        val backup =
+            r.optString("backup").ifEmpty { null }?.let {
+                "\n" +
+                    getString(R.string.peer_pick_backup, it)
+            }
+                ?: ""
         return "$verdict\n\n$top$backup"
     }
 
@@ -318,7 +381,11 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
         )
     }
 
-    private fun showPeerDialog(title: String, existingPeer: PeerInfo?, onSave: ((String) -> Unit)? = null) {
+    private fun showPeerDialog(
+        title: String,
+        existingPeer: PeerInfo?,
+        onSave: ((String) -> Unit)? = null
+    ) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_add_peer, null)
         val editPeerUrl = dialogView.findViewById<TextInputEditText>(R.id.edit_peer_url)
 
@@ -339,7 +406,11 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
                 }
 
                 if (peerUrl.contains("\n")) {
-                    Toast.makeText(this, R.string.error_peer_url_newlines, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this,
+                        R.string.error_peer_url_newlines,
+                        Toast.LENGTH_SHORT
+                    ).show()
                     return@setPositiveButton
                 }
 
@@ -353,7 +424,11 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
 
                 // Validate protocol and URL structure using shared validator
                 if (!PeerInfo.isValidPeerUrl(peerUrl)) {
-                    Toast.makeText(this, getString(R.string.error_invalid_peer_url), Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this,
+                        getString(R.string.error_invalid_peer_url),
+                        Toast.LENGTH_LONG
+                    ).show()
                     return@setPositiveButton
                 }
 
@@ -422,7 +497,11 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
         hasUnsavedChanges = true
         updateApplyButtonVisibility()
 
-        Toast.makeText(this, if (enabled) R.string.peer_enabled else R.string.peer_disabled, Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            this,
+            if (enabled) R.string.peer_enabled else R.string.peer_disabled,
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
     private fun applyPeerChanges() {
@@ -470,15 +549,11 @@ class PeersActivity : BaseActivity(), ServiceStatusListener {
         }
     }
 
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            android.R.id.home -> {
-                finish()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        android.R.id.home -> {
+            finish()
+            true
         }
+        else -> super.onOptionsItemSelected(item)
     }
-
 }

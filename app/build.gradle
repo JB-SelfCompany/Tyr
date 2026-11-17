@@ -1,6 +1,12 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'org.jlleitschuh.gradle.ktlint'
+}
+
+ktlint {
+    baseline = file('ktlint-baseline.xml') // pre-existing violations ktlintFormat can't fix
+    filter { exclude { it.file.path.contains('uniffi') } } // generated UniFFI bindings
 }
 
 // ── Version control ───────────────────────────────────────────────────────────

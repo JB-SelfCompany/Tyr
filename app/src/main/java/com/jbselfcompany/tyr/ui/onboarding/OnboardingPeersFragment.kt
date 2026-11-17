@@ -52,5 +52,6 @@ class OnboardingPeersFragment : Fragment() {
     fun isAutoPick(): Boolean = binding.switchAutoPick.isChecked
 
     /** A valid selection: auto-pick, the default-peers toggle or a manually entered peer. */
-    fun hasValidSelection(): Boolean = isAutoPick() || useDefaultPeers || !getManualPeerUrl().isNullOrBlank()
+    fun hasValidSelection(): Boolean =
+        isAutoPick() || useDefaultPeers || !getManualPeerUrl().isNullOrBlank()
 }

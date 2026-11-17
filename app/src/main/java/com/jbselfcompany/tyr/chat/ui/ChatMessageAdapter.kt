@@ -4,10 +4,10 @@ import android.content.ClipData
 import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
-import android.os.Build
-import android.os.PersistableBundle
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import android.os.Build
+import android.os.PersistableBundle
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -77,10 +77,10 @@ class ChatMessageAdapter(
         val todayCal = Calendar.getInstance()
         return when {
             msgCal.get(Calendar.YEAR) == todayCal.get(Calendar.YEAR) &&
-            msgCal.get(Calendar.DAY_OF_YEAR) == todayCal.get(Calendar.DAY_OF_YEAR) ->
+                msgCal.get(Calendar.DAY_OF_YEAR) == todayCal.get(Calendar.DAY_OF_YEAR) ->
                 context.getString(R.string.chat_date_today)
             msgCal.get(Calendar.YEAR) == todayCal.get(Calendar.YEAR) &&
-            msgCal.get(Calendar.DAY_OF_YEAR) == todayCal.get(Calendar.DAY_OF_YEAR) - 1 ->
+                msgCal.get(Calendar.DAY_OF_YEAR) == todayCal.get(Calendar.DAY_OF_YEAR) - 1 ->
                 context.getString(R.string.chat_date_yesterday)
             else ->
                 SimpleDateFormat("d MMMM yyyy", Locale.getDefault()).format(Date(ts))
@@ -158,8 +158,7 @@ class ChatMessageAdapter(
         applyItems()
     }
 
-    fun getItem(position: Int): ChatMessage =
-        (items[position] as ChatListItem.MessageItem).msg
+    fun getItem(position: Int): ChatMessage = (items[position] as ChatListItem.MessageItem).msg
 
     override fun getItemViewType(position: Int) = when (val item = items[position]) {
         is ChatListItem.MessageItem -> if (item.msg.isSent) VIEW_SENT else VIEW_RECEIVED
@@ -172,10 +171,16 @@ class ChatMessageAdapter(
                 ItemMessageSentBinding.inflate(LayoutInflater.from(parent.context), parent, false)
             )
             VIEW_RECEIVED -> ReceivedViewHolder(
-                ItemMessageReceivedBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+                ItemMessageReceivedBinding.inflate(
+                    LayoutInflater.from(parent.context),
+                    parent,
+                    false
+                )
             )
             else -> DateSeparatorViewHolder(
-                LayoutInflater.from(parent.context).inflate(R.layout.item_date_separator, parent, false)
+                LayoutInflater.from(
+                    parent.context
+                ).inflate(R.layout.item_date_separator, parent, false)
             )
         }
 
@@ -304,9 +309,16 @@ class ChatMessageAdapter(
         val content = LayoutInflater.from(ctx).inflate(R.layout.popup_message_actions, null)
 
         val elevationPx = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP, 8f, ctx.resources.displayMetrics
+            TypedValue.COMPLEX_UNIT_DIP,
+            8f,
+            ctx.resources.displayMetrics
         )
-        val popup = PopupWindow(content, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true).apply {
+        val popup = PopupWindow(
+            content,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            true
+        ).apply {
             elevation = elevationPx
             isOutsideTouchable = true
         }
@@ -405,17 +417,32 @@ class ChatMessageAdapter(
 
         val rotation = try {
             val exif = ExifInterface(file.absolutePath)
-            when (exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+            when (
+                exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL
+                )
+            ) {
                 ExifInterface.ORIENTATION_ROTATE_90 -> 90f
                 ExifInterface.ORIENTATION_ROTATE_180 -> 180f
                 ExifInterface.ORIENTATION_ROTATE_270 -> 270f
                 else -> 0f
             }
-        } catch (_: Exception) { 0f }
+        } catch (_: Exception) {
+            0f
+        }
 
         return if (rotation != 0f) {
             val matrix = Matrix().apply { postRotate(rotation) }
-            android.graphics.Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+            android.graphics.Bitmap.createBitmap(
+                bitmap,
+                0,
+                0,
+                bitmap.width,
+                bitmap.height,
+                matrix,
+                true
+            )
                 .also { if (it !== bitmap) bitmap.recycle() }
         } else {
             bitmap
@@ -438,11 +465,9 @@ class ChatMessageAdapter(
         return inSampleSize
     }
 
-    private fun formatFileSize(bytes: Long): String {
-        return if (bytes >= 1024 * 1024) {
-            context.getString(R.string.chat_attachment_size_mb, bytes / (1024.0 * 1024.0))
-        } else {
-            context.getString(R.string.chat_attachment_size_kb, bytes / 1024)
-        }
+    private fun formatFileSize(bytes: Long): String = if (bytes >= 1024 * 1024) {
+        context.getString(R.string.chat_attachment_size_mb, bytes / (1024.0 * 1024.0))
+    } else {
+        context.getString(R.string.chat_attachment_size_kb, bytes / 1024)
     }
 }

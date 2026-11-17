@@ -6,8 +6,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import com.jbselfcompany.tyr.utils.TyrLogger
 import com.jbselfcompany.tyr.service.YggmailService
+import com.jbselfcompany.tyr.utils.TyrLogger
 
 /**
  * Broadcast receiver for periodic maintenance tasks.
@@ -52,14 +52,17 @@ class MaintenanceReceiver : BroadcastReceiver() {
                 }
 
                 if (!canScheduleExactAlarms) {
-                    TyrLogger.w(TAG,"Cannot schedule exact alarms - permission not granted. Using inexact alarm.")
+                    TyrLogger.w(
+                        TAG,
+                        "Cannot schedule exact alarms - permission not granted. Using inexact alarm."
+                    )
                     // Fallback to inexact alarm (will work but less precise)
                     alarmManager.setAndAllowWhileIdle(
                         AlarmManager.RTC_WAKEUP,
                         triggerTime,
                         pendingIntent
                     )
-                    TyrLogger.d(TAG,"Scheduled maintenance in ~15 minutes (inexact)")
+                    TyrLogger.d(TAG, "Scheduled maintenance in ~15 minutes (inexact)")
                     return
                 }
 
@@ -71,21 +74,25 @@ class MaintenanceReceiver : BroadcastReceiver() {
                         triggerTime,
                         pendingIntent
                     )
-                    TyrLogger.d(TAG,"Scheduled maintenance in 15 minutes (Doze-compatible)")
+                    TyrLogger.d(TAG, "Scheduled maintenance in 15 minutes (Doze-compatible)")
                 } else {
                     alarmManager.setExact(
                         AlarmManager.RTC_WAKEUP,
                         triggerTime,
                         pendingIntent
                     )
-                    TyrLogger.d(TAG,"Scheduled maintenance in 15 minutes")
+                    TyrLogger.d(TAG, "Scheduled maintenance in 15 minutes")
                 }
             } catch (e: SecurityException) {
                 // Android 12+ may throw SecurityException if SCHEDULE_EXACT_ALARM not granted
-                TyrLogger.e(TAG,"SecurityException scheduling maintenance - exact alarm permission not granted", e)
+                TyrLogger.e(
+                    TAG,
+                    "SecurityException scheduling maintenance - exact alarm permission not granted",
+                    e
+                )
                 // Service will continue to work, just without precise maintenance scheduling
             } catch (e: Exception) {
-                TyrLogger.e(TAG,"Error scheduling maintenance", e)
+                TyrLogger.e(TAG, "Error scheduling maintenance", e)
             }
         }
 
@@ -105,9 +112,9 @@ class MaintenanceReceiver : BroadcastReceiver() {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
                 alarmManager.cancel(pendingIntent)
-                TyrLogger.d(TAG,"Maintenance scheduling cancelled")
+                TyrLogger.d(TAG, "Maintenance scheduling cancelled")
             } catch (e: Exception) {
-                TyrLogger.e(TAG,"Error cancelling maintenance", e)
+                TyrLogger.e(TAG, "Error cancelling maintenance", e)
             }
         }
     }
@@ -117,10 +124,10 @@ class MaintenanceReceiver : BroadcastReceiver() {
             return
         }
 
-        TyrLogger.d(TAG,"Maintenance task triggered")
+        TyrLogger.d(TAG, "Maintenance task triggered")
 
         if (!YggmailService.isRunning) {
-            TyrLogger.d(TAG,"Service not running, skipping maintenance")
+            TyrLogger.d(TAG, "Service not running, skipping maintenance")
             scheduleMaintenance(context)
             return
         }
@@ -136,9 +143,9 @@ class MaintenanceReceiver : BroadcastReceiver() {
                 action = YggmailService.ACTION_MAINTENANCE_CHECK
             }
             context.startService(serviceIntent)
-            TyrLogger.d(TAG,"Maintenance check delegated to service")
+            TyrLogger.d(TAG, "Maintenance check delegated to service")
         } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error sending maintenance intent to service", e)
+            TyrLogger.e(TAG, "Error sending maintenance intent to service", e)
         }
 
         // Reschedule next maintenance

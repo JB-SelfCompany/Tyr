@@ -7,7 +7,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
@@ -75,7 +74,8 @@ class LogsActivity : BaseActivity() {
                     // Filter for Tyr and Yggmail related logs
                     if (line?.contains("Tyr") == true ||
                         line?.contains("Yggmail") == true ||
-                        line?.contains("com.jbselfcompany.tyr") == true) {
+                        line?.contains("com.jbselfcompany.tyr") == true
+                    ) {
                         logLines.add(line!!)
                     }
                 }
@@ -98,7 +98,6 @@ class LogsActivity : BaseActivity() {
                         text
                     }
                 }
-
             } catch (e: Exception) {
                 runOnUiThread {
                     binding.textLogs.text = getString(R.string.error_loading_logs, e.message)
@@ -195,7 +194,6 @@ class LogsActivity : BaseActivity() {
                     Toast.makeText(this, R.string.logs_exported, Toast.LENGTH_SHORT).show()
                     shareZipFile(zipFile)
                 }
-
             } catch (e: Exception) {
                 runOnUiThread {
                     Toast.makeText(
@@ -229,7 +227,8 @@ class LogsActivity : BaseActivity() {
             // Filter for Tyr and Yggmail related logs
             if (!currentLine.contains("Tyr") &&
                 !currentLine.contains("Yggmail") &&
-                !currentLine.contains("com.jbselfcompany.tyr")) {
+                !currentLine.contains("com.jbselfcompany.tyr")
+            ) {
                 continue
             }
 
@@ -291,14 +290,12 @@ class LogsActivity : BaseActivity() {
         }
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            android.R.id.home -> {
-                finish()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        android.R.id.home -> {
+            finish()
+            true
         }
+        else -> super.onOptionsItemSelected(item)
     }
 
     @Suppress("UNUSED")

@@ -1,9 +1,8 @@
 package com.jbselfcompany.tyr.utils
 
 import android.content.Context
-import com.jbselfcompany.tyr.utils.TyrLogger
 import com.jbselfcompany.tyr.TyrApplication
-import org.json.JSONObject
+import com.jbselfcompany.tyr.utils.TyrLogger
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
@@ -14,6 +13,7 @@ import java.nio.charset.StandardCharsets
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
+import org.json.JSONObject
 
 /**
  * Simple HTTP server for DeltaChat autoconfig endpoint.
@@ -39,7 +39,7 @@ class AutoconfigServer(private val context: Context) {
 
     fun start() {
         if (running) {
-            TyrLogger.w(TAG,"Server already running")
+            TyrLogger.w(TAG, "Server already running")
             return
         }
 
@@ -50,7 +50,7 @@ class AutoconfigServer(private val context: Context) {
             running = true
 
             serverThread = Thread({
-                TyrLogger.i(TAG,"Autoconfig server started on port $PORT")
+                TyrLogger.i(TAG, "Autoconfig server started on port $PORT")
 
                 while (running) {
                     try {
@@ -58,13 +58,13 @@ class AutoconfigServer(private val context: Context) {
                         socket?.let { clientExecutor.execute { handleClient(it) } }
                     } catch (e: Exception) {
                         if (running) {
-                            TyrLogger.e(TAG,"Error accepting connection", e)
+                            TyrLogger.e(TAG, "Error accepting connection", e)
                         }
                     }
                 }
             }, "AutoconfigServer").also { it.start() }
         } catch (e: Exception) {
-            TyrLogger.e(TAG,"Failed to start server", e)
+            TyrLogger.e(TAG, "Failed to start server", e)
             running = false
         }
     }
@@ -77,9 +77,9 @@ class AutoconfigServer(private val context: Context) {
             serverThread?.interrupt()
             serverThread = null
             clientExecutor.shutdown()
-            TyrLogger.i(TAG,"Autoconfig server stopped")
+            TyrLogger.i(TAG, "Autoconfig server stopped")
         } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error stopping server", e)
+            TyrLogger.e(TAG, "Error stopping server", e)
         }
     }
 
@@ -120,11 +120,11 @@ class AutoconfigServer(private val context: Context) {
             // IMAP configuration
             append("&ih=127.0.0.1")
             append("&ip=1143")
-            append("&is=plain")  // No encryption for localhost
+            append("&is=plain") // No encryption for localhost
             // SMTP configuration
             append("&sh=127.0.0.1")
             append("&sp=1025")
-            append("&ss=plain")  // No encryption for localhost
+            append("&ss=plain") // No encryption for localhost
             // Certificate checks: 0 = automatic
             append("&ic=0")
         }
@@ -153,7 +153,7 @@ class AutoconfigServer(private val context: Context) {
             val writer = OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8)
 
             val requestLine = reader.readLine() ?: ""
-            TyrLogger.d(TAG,"Request: $requestLine")
+            TyrLogger.d(TAG, "Request: $requestLine")
 
             // Read headers (we don't need them, but we must consume them)
             var line: String?
@@ -178,7 +178,7 @@ class AutoconfigServer(private val context: Context) {
             writer.flush()
             socket.close()
         } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error handling client", e)
+            TyrLogger.e(TAG, "Error handling client", e)
         }
     }
 
@@ -208,16 +208,18 @@ class AutoconfigServer(private val context: Context) {
 
             writer.write("HTTP/1.1 200 OK\r\n")
             writer.write("Content-Type: application/json\r\n")
-            writer.write("Content-Length: ${responseBody.toByteArray(StandardCharsets.UTF_8).size}\r\n")
+            writer.write(
+                "Content-Length: ${responseBody.toByteArray(StandardCharsets.UTF_8).size}\r\n"
+            )
             writer.write("Connection: close\r\n")
             writer.write("\r\n")
             writer.write(responseBody)
 
             tokens.remove(token)
 
-            TyrLogger.i(TAG,"Served autoconfig for $email")
+            TyrLogger.i(TAG, "Served autoconfig for $email")
         } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error handling /new_email", e)
+            TyrLogger.e(TAG, "Error handling /new_email", e)
             send500(writer, "Internal server error")
         }
     }

@@ -10,9 +10,8 @@ import android.view.ScaleGestureDetector
 import androidx.appcompat.widget.AppCompatImageView
 import kotlin.math.min
 
-class ZoomableImageView @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null
-) : AppCompatImageView(context, attrs) {
+class ZoomableImageView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) :
+    AppCompatImageView(context, attrs) {
 
     companion object {
         private const val MAX_SCALE = 8f
@@ -30,7 +29,8 @@ class ZoomableImageView @JvmOverloads constructor(
     private var lastY = 0f
 
     private val scaleDetector = ScaleGestureDetector(
-        context, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+        context,
+        object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
             override fun onScale(detector: ScaleGestureDetector): Boolean {
                 val factor = detector.scaleFactor
                 val newScale = (currentScale * factor).coerceIn(minScale * 0.5f, MAX_SCALE)
@@ -52,7 +52,8 @@ class ZoomableImageView @JvmOverloads constructor(
     )
 
     private val gestureDetector = GestureDetector(
-        context, object : GestureDetector.SimpleOnGestureListener() {
+        context,
+        object : GestureDetector.SimpleOnGestureListener() {
             override fun onDoubleTap(e: MotionEvent): Boolean {
                 animateToFit()
                 return true
@@ -63,8 +64,6 @@ class ZoomableImageView @JvmOverloads constructor(
     init {
         scaleType = ScaleType.MATRIX
     }
-
-
 
     fun resetMatrix() {
         val bmp = (drawable as? BitmapDrawable)?.bitmap ?: return
@@ -99,7 +98,9 @@ class ZoomableImageView @JvmOverloads constructor(
             }
 
             MotionEvent.ACTION_MOVE -> {
-                if (!scaleDetector.isInProgress && activePointerId != MotionEvent.INVALID_POINTER_ID) {
+                if (!scaleDetector.isInProgress &&
+                    activePointerId != MotionEvent.INVALID_POINTER_ID
+                ) {
                     val idx = event.findPointerIndex(activePointerId)
                     if (idx != -1) {
                         val dx = event.getX(idx) - lastX

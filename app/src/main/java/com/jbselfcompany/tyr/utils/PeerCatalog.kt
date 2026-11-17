@@ -19,10 +19,19 @@ object PeerCatalog {
         return root.keys().asSequence().associate { file ->
             val country = countryName(file)
             val peers = root.getJSONObject(file)
-            country to sorted(peers.keys().asSequence().map { uri ->
-                val p = peers.getJSONObject(uri)
-                Entry(uri, country, p.optBoolean("up"), p.optInt("response_ms", -1).takeIf { it >= 0 })
-            }.toList())
+            country to sorted(
+                peers.keys().asSequence().map { uri ->
+                    val p = peers.getJSONObject(uri)
+                    Entry(
+                        uri,
+                        country,
+                        p.optBoolean("up"),
+                        p.optInt("response_ms", -1).takeIf {
+                            it >= 0
+                        }
+                    )
+                }.toList()
+            )
         }.toSortedMap()
     }
 
@@ -52,8 +61,13 @@ object PeerCatalog {
                 conn.disconnect()
             }
         } catch (e: Exception) {
-            if (cache.exists() && System.currentTimeMillis() - cache.lastModified() < CACHE_MAX_AGE_MS) {
-                TyrLogger.w("PeerCatalog", "Peer list download failed (${e.message}), using the cache")
+            if (cache.exists() &&
+                System.currentTimeMillis() - cache.lastModified() < CACHE_MAX_AGE_MS
+            ) {
+                TyrLogger.w(
+                    "PeerCatalog",
+                    "Peer list download failed (${e.message}), using the cache"
+                )
                 cache.readText()
             } else {
                 throw e

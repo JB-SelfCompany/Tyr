@@ -9,10 +9,8 @@ import androidx.appcompat.widget.SwitchCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.jbselfcompany.tyr.R
 
-class SettingsAdapter(
-    private val items: List<Item>,
-    private val listener: Listener
-) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class SettingsAdapter(private val items: List<Item>, private val listener: Listener) :
+    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
         private const val TYPE_HEADER = 0
@@ -39,12 +37,10 @@ class SettingsAdapter(
         fun onItemClicked(id: Int)
     }
 
-    override fun getItemViewType(position: Int): Int {
-        return when (items[position].type) {
-            ItemType.HEADER -> TYPE_HEADER
-            ItemType.SWITCH -> TYPE_SWITCH
-            ItemType.PLAIN -> TYPE_PLAIN
-        }
+    override fun getItemViewType(position: Int): Int = when (items[position].type) {
+        ItemType.HEADER -> TYPE_HEADER
+        ItemType.SWITCH -> TYPE_SWITCH
+        ItemType.PLAIN -> TYPE_PLAIN
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {

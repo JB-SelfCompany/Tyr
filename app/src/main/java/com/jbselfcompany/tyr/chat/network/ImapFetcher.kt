@@ -35,7 +35,7 @@ class ImapFetcher(
         private const val NICKNAME_HEADER_KEY = "x-tyr-nickname"
 
         /** Literals larger than this are written to a temp file rather than kept in a String. */
-        private const val LARGE_LITERAL_THRESHOLD = 512L * 1024L  // 512 KB (Long to avoid Int overflow on size comparison)
+        private const val LARGE_LITERAL_THRESHOLD = 512L * 1024L // 512 KB (Long to avoid Int overflow on size comparison)
 
         /** Sentinel prefix in fetchLines for a large literal stored on disk. */
         private const val LITERAL_FILE_PREFIX = "LITERAL_FILE:"
@@ -48,7 +48,7 @@ class ImapFetcher(
          * 4 lines × 76 chars/line = 304 chars → 228 decoded bytes.
          * Must be a multiple of 4 so each chunk is self-contained (no padding issues).
          */
-        private const val BASE64_CHUNK_LINES = 4096  // ~300 KB decoded per chunk
+        private const val BASE64_CHUNK_LINES = 4096 // ~300 KB decoded per chunk
     }
 
     data class ReadReceiptByTimestamp(val senderAddr: String, val originalTimestamp: Long)
@@ -83,7 +83,11 @@ class ImapFetcher(
                 // IMAP socket.  120 s gives room for a 4–5 MB attachment at even very
                 // low throughput.
                 socket.soTimeout = 120_000
-                val reader = BufferedReader(InputStreamReader(socket.getInputStream(), Charsets.ISO_8859_1), 256 * 1024)
+                val reader =
+                    BufferedReader(
+                        InputStreamReader(socket.getInputStream(), Charsets.ISO_8859_1),
+                        256 * 1024
+                    )
                 val writer = PrintWriter(socket.getOutputStream(), true)
                 tagCounter = 1
 
@@ -106,7 +110,13 @@ class ImapFetcher(
                     var read = 0
                     while (read < n) {
                         val got = reader.read(buf, read, n - read)
-                        if (got < 0) throw java.io.IOException("IMAP stream closed inside literal (wanted $n bytes, got $read)")
+                        if (got <
+                            0
+                        ) {
+                            throw java.io.IOException(
+                                "IMAP stream closed inside literal (wanted $n bytes, got $read)"
+                            )
+                        }
                         read += got
                     }
                     return String(buf)
@@ -126,15 +136,17 @@ class ImapFetcher(
                     val tempFile = File.createTempFile("imap_literal_", ".tmp", tempDir)
                     tempFiles.add(tempFile)
                     TyrLogger.d(TAG, "Large literal $n bytes → temp file ${tempFile.name}")
-                    val charBuf = CharArray(64 * 1024)  // 64 KB read buffer
+                    val charBuf = CharArray(64 * 1024) // 64 KB read buffer
                     var remaining = n
                     FileOutputStream(tempFile).use { fos ->
                         while (remaining > 0) {
                             val toRead = minOf(charBuf.size.toLong(), remaining).toInt()
                             val got = reader.read(charBuf, 0, toRead)
-                            if (got < 0) throw java.io.IOException(
-                                "IMAP stream closed inside large literal (wanted $n bytes, remaining $remaining)"
-                            )
+                            if (got < 0) {
+                                throw java.io.IOException(
+                                    "IMAP stream closed inside large literal (wanted $n bytes, remaining $remaining)"
+                                )
+                            }
                             // Write each char as one byte (ISO-8859-1: all values 0–255 map 1:1)
                             for (ci in 0 until got) {
                                 fos.write(charBuf[ci].code and 0xFF)
@@ -142,7 +154,10 @@ class ImapFetcher(
                             remaining -= got
                         }
                     }
-                    TyrLogger.d(TAG, "Large literal written: size=${tempFile.length()} path=${tempFile.absolutePath}")
+                    TyrLogger.d(
+                        TAG,
+                        "Large literal written: size=${tempFile.length()} path=${tempFile.absolutePath}"
+                    )
                     return tempFile
                 }
 
@@ -154,10 +169,16 @@ class ImapFetcher(
                     val lines = mutableListOf<String>()
                     while (true) {
                         val line = readLine()
-                            ?: throw java.io.IOException("IMAP connection closed unexpectedly reading response to: $command")
+                            ?: throw java.io.IOException(
+                                "IMAP connection closed unexpectedly reading response to: $command"
+                            )
                         lines.add(line)
-                        if (line.startsWith("$tag OK") || line.startsWith("$tag NO") ||
-                            line.startsWith("$tag BAD")) break
+                        if (line.startsWith("$tag OK") ||
+                            line.startsWith("$tag NO") ||
+                            line.startsWith("$tag BAD")
+                        ) {
+                            break
+                        }
                     }
                     return lines
                 }
@@ -165,36 +186,52 @@ class ImapFetcher(
                 readLine() ?: throw java.io.IOException("IMAP connection closed before greeting")
 
                 val loginTag = nextTag()
-                writer.println("$loginTag LOGIN \"${address.escapeImap()}\" \"${password.escapeImap()}\"")
+                writer.println(
+                    "$loginTag LOGIN \"${address.escapeImap()}\" \"${password.escapeImap()}\""
+                )
                 val loginLines = mutableListOf<String>()
                 while (true) {
                     val l = readLine()
                         ?: throw java.io.IOException("IMAP connection closed during LOGIN")
                     loginLines.add(l)
-                    if (l.startsWith("$loginTag OK") || l.startsWith("$loginTag NO") || l.startsWith("$loginTag BAD")) break
+                    if (l.startsWith("$loginTag OK") ||
+                        l.startsWith("$loginTag NO") ||
+                        l.startsWith("$loginTag BAD")
+                    ) {
+                        break
+                    }
                 }
                 if (loginLines.last().startsWith("$loginTag NO") ||
                     loginLines.last().startsWith("$loginTag BAD") ||
-                    loginLines.none { it.contains("OK", ignoreCase = true) }) {
-                    try { cmd("LOGOUT") } catch (_: Exception) {}
+                    loginLines.none { it.contains("OK", ignoreCase = true) }
+                ) {
+                    try {
+                        cmd("LOGOUT")
+                    } catch (_: Exception) {}
                     TyrLogger.w(TAG, "IMAP LOGIN failed for $address")
                     return Result.Error("IMAP LOGIN failed")
                 }
 
                 val selectResp = cmd("SELECT TyrChat")
                 if (selectResp.none { it.contains("OK", ignoreCase = true) }) {
-                    try { cmd("LOGOUT") } catch (_: Exception) {}
+                    try {
+                        cmd("LOGOUT")
+                    } catch (_: Exception) {}
                     TyrLogger.d(TAG, "TyrChat mailbox not yet available, no messages to fetch")
                     return Result.Success(FetchResult(emptyList(), emptyList()))
                 }
 
                 val existsLine = selectResp.firstOrNull { it.contains("EXISTS") }
                 val existsCount = existsLine
-                    ?.let { Regex("""(\d+)\s+EXISTS""").find(it)?.groupValues?.get(1)?.toIntOrNull() }
+                    ?.let {
+                        Regex("""(\d+)\s+EXISTS""").find(it)?.groupValues?.get(1)?.toIntOrNull()
+                    }
                     ?: 0
                 TyrLogger.i(TAG, "TyrChat EXISTS=$existsCount sinceUid=$sinceUid")
                 if (existsCount == 0) {
-                    try { cmd("LOGOUT") } catch (_: Exception) {}
+                    try {
+                        cmd("LOGOUT")
+                    } catch (_: Exception) {}
                     TyrLogger.d(TAG, "TyrChat mailbox empty, nothing to fetch")
                     return Result.Success(FetchResult(emptyList(), emptyList()))
                 }
@@ -205,9 +242,9 @@ class ImapFetcher(
                 val fetchTag = nextTag()
                 writer.println(
                     "$fetchTag UID FETCH $uidRange (UID FLAGS " +
-                    "BODY.PEEK[HEADER.FIELDS (FROM TO DATE X-TYR-CHAT X-TYR-READ-RECEIPT " +
-                    "X-TYR-READ-RECEIPT-TIMESTAMP X-TYR-DELIVERY-TIMESTAMP X-TYR-NICKNAME CONTENT-TYPE)] " +
-                    "BODY.PEEK[TEXT])"
+                        "BODY.PEEK[HEADER.FIELDS (FROM TO DATE X-TYR-CHAT X-TYR-READ-RECEIPT " +
+                        "X-TYR-READ-RECEIPT-TIMESTAMP X-TYR-DELIVERY-TIMESTAMP X-TYR-NICKNAME CONTENT-TYPE)] " +
+                        "BODY.PEEK[TEXT])"
                 )
 
                 // Literal-aware line reader: if a line ends with {N} the next N bytes
@@ -222,9 +259,13 @@ class ImapFetcher(
                 var fetchDone = false
                 while (!fetchDone) {
                     val line = readLine()
-                        ?: throw java.io.IOException("IMAP connection closed while reading FETCH response")
-                    if (line.startsWith("$fetchTag OK") || line.startsWith("$fetchTag NO") ||
-                        line.startsWith("$fetchTag BAD")) {
+                        ?: throw java.io.IOException(
+                            "IMAP connection closed while reading FETCH response"
+                        )
+                    if (line.startsWith("$fetchTag OK") ||
+                        line.startsWith("$fetchTag NO") ||
+                        line.startsWith("$fetchTag BAD")
+                    ) {
                         TyrLogger.d(TAG, "FETCH complete: $line (lines=${fetchLines.size})")
                         fetchDone = true
                         break
@@ -235,12 +276,18 @@ class ImapFetcher(
                         // Parse as Long to avoid Int overflow for very large literals (>2 GB).
                         val literalSize = literalMatch.groupValues[1].toLongOrNull() ?: 0L
                         fetchLines.add(line)
-                        TyrLogger.d(TAG, "IMAP literal: $literalSize bytes announced on: ${line.take(80)}")
+                        TyrLogger.d(
+                            TAG,
+                            "IMAP literal: $literalSize bytes announced on: ${line.take(80)}"
+                        )
                         if (literalSize > LARGE_LITERAL_THRESHOLD) {
                             // Stream to temp file — avoid building a huge String in memory.
                             val tempFile = readLiteralToFile(literalSize)
                             fetchLines.add("$LITERAL_FILE_PREFIX${tempFile.absolutePath}")
-                            TyrLogger.d(TAG, "Large literal streamed: size=$literalSize path=${tempFile.absolutePath}")
+                            TyrLogger.d(
+                                TAG,
+                                "Large literal streamed: size=$literalSize path=${tempFile.absolutePath}"
+                            )
                         } else {
                             // Small literal — keep in memory as before.
                             val literalContent = readLiteralBytes(literalSize.toInt())
@@ -264,11 +311,16 @@ class ImapFetcher(
                     }
                 }
 
-                try { cmd("LOGOUT") } catch (_: Exception) {}
+                try {
+                    cmd("LOGOUT")
+                } catch (_: Exception) {}
 
-                TyrLogger.i(TAG, "Fetch complete: ${fetchResult.messages.size} messages, " +
-                    "${fetchResult.readReceiptUids.size} read receipts, " +
-                    "${fetchResult.deliveryReceiptTimestamps.size} delivery receipts")
+                TyrLogger.i(
+                    TAG,
+                    "Fetch complete: ${fetchResult.messages.size} messages, " +
+                        "${fetchResult.readReceiptUids.size} read receipts, " +
+                        "${fetchResult.deliveryReceiptTimestamps.size} delivery receipts"
+                )
                 Result.Success(fetchResult)
             }
         } catch (e: Exception) {
@@ -295,10 +347,14 @@ class ImapFetcher(
         senderAddress: String
     ): Boolean {
         return try {
-            TyrLogger.d(TAG, "IMAP purge: connecting to $host:$port to delete messages from $senderAddress")
+            TyrLogger.d(
+                TAG,
+                "IMAP purge: connecting to $host:$port to delete messages from $senderAddress"
+            )
             Socket(host, port).use { socket ->
                 socket.soTimeout = 30_000
-                val reader = BufferedReader(InputStreamReader(socket.getInputStream(), Charsets.ISO_8859_1))
+                val reader =
+                    BufferedReader(InputStreamReader(socket.getInputStream(), Charsets.ISO_8859_1))
                 val writer = PrintWriter(socket.getOutputStream(), true)
                 var tc = 1
                 fun nextTag() = "t${tc++}"
@@ -311,8 +367,12 @@ class ImapFetcher(
                         val line = readLine()
                             ?: throw java.io.IOException("IMAP connection closed during: $command")
                         lines.add(line)
-                        if (line.startsWith("$tag OK") || line.startsWith("$tag NO") ||
-                            line.startsWith("$tag BAD")) break
+                        if (line.startsWith("$tag OK") ||
+                            line.startsWith("$tag NO") ||
+                            line.startsWith("$tag BAD")
+                        ) {
+                            break
+                        }
                     }
                     return lines
                 }
@@ -320,13 +380,19 @@ class ImapFetcher(
                 readLine() ?: return@use false
 
                 val loginTag = nextTag()
-                writer.println("$loginTag LOGIN \"${myAddress.escapeImap()}\" \"${password.escapeImap()}\"")
+                writer.println(
+                    "$loginTag LOGIN \"${myAddress.escapeImap()}\" \"${password.escapeImap()}\""
+                )
                 val loginLines = mutableListOf<String>()
                 while (true) {
                     val l = readLine() ?: break
                     loginLines.add(l)
-                    if (l.startsWith("$loginTag OK") || l.startsWith("$loginTag NO") ||
-                        l.startsWith("$loginTag BAD")) break
+                    if (l.startsWith("$loginTag OK") ||
+                        l.startsWith("$loginTag NO") ||
+                        l.startsWith("$loginTag BAD")
+                    ) {
+                        break
+                    }
                 }
                 if (loginLines.none { it.contains("OK", ignoreCase = true) }) {
                     TyrLogger.w(TAG, "IMAP purge: LOGIN failed for $myAddress")
@@ -335,8 +401,13 @@ class ImapFetcher(
 
                 val selectResp = cmd("SELECT TyrChat")
                 if (selectResp.none { it.contains("OK", ignoreCase = true) }) {
-                    try { cmd("LOGOUT") } catch (_: Exception) {}
-                    TyrLogger.d(TAG, "IMAP purge: TyrChat mailbox not yet present, nothing to delete")
+                    try {
+                        cmd("LOGOUT")
+                    } catch (_: Exception) {}
+                    TyrLogger.d(
+                        TAG,
+                        "IMAP purge: TyrChat mailbox not yet present, nothing to delete"
+                    )
                     return@use true
                 }
 
@@ -355,10 +426,15 @@ class ImapFetcher(
                     val uidSet = uids.joinToString(",")
                     cmd("UID STORE $uidSet +FLAGS (\\Deleted)")
                     cmd("EXPUNGE")
-                    TyrLogger.i(TAG, "IMAP purge: deleted ${uids.size} message(s) from $senderAddress")
+                    TyrLogger.i(
+                        TAG,
+                        "IMAP purge: deleted ${uids.size} message(s) from $senderAddress"
+                    )
                 }
 
-                try { cmd("LOGOUT") } catch (_: Exception) {}
+                try {
+                    cmd("LOGOUT")
+                } catch (_: Exception) {}
                 true
             }
         } catch (e: Exception) {
@@ -407,7 +483,12 @@ class ImapFetcher(
 
             // Whether we are currently accumulating lines from a BODY[HEADER.FIELDS] section.
             // Reset to false by an empty line (end-of-headers) or a new BODY section announcement.
-            var collectingHeader = (line.contains("BODY[HEADER", ignoreCase = true) || line.contains("BODY.PEEK[HEADER", ignoreCase = true)) && line.contains("{")
+            var collectingHeader =
+                (
+                    line.contains("BODY[HEADER", ignoreCase = true) ||
+                        line.contains("BODY.PEEK[HEADER", ignoreCase = true)
+                    ) &&
+                    line.contains("{")
             var collectingBody = false
 
             // Applies one header line to the current message fields.
@@ -419,25 +500,29 @@ class ImapFetcher(
                     if (contentType.isNotEmpty() && !lower.trimStart().startsWith("x-tyr")) {
                         contentType += " " + l.trim()
                     }
-                } else when {
-                    lower.startsWith("from:") ->
-                        from = extractEmailAddr(l.substringAfter(":").trim())
-                    lower.startsWith("to:") ->
-                        to = extractEmailAddr(l.substringAfter(":").trim())
-                    lower.startsWith("date:") ->
-                        timestamp = parseImapDate(l.substringAfter(":").trim())
-                    lower.startsWith("$CHAT_HEADER_KEY:") ->
-                        isTyrChat = l.substringAfter(":").trim() == CHAT_HEADER_VALUE
-                    lower.startsWith("$READ_RECEIPT_HEADER_KEY:") ->
-                        readReceiptForUid = l.substringAfter(":").trim().toLongOrNull() ?: -1L
-                    lower.startsWith("$READ_RECEIPT_TIMESTAMP_KEY:") ->
-                        readReceiptForTimestamp = l.substringAfter(":").trim().toLongOrNull() ?: -1L
-                    lower.startsWith("$DELIVERY_RECEIPT_TIMESTAMP_KEY:") ->
-                        deliveryReceiptForTimestamp = l.substringAfter(":").trim().toLongOrNull() ?: -1L
-                    lower.startsWith("$NICKNAME_HEADER_KEY:") ->
-                        senderNickname = decodeHeaderValue(l.substringAfter(":").trim())
-                    lower.startsWith("content-type:") ->
-                        contentType = l.substringAfter(":").trim()
+                } else {
+                    when {
+                        lower.startsWith("from:") ->
+                            from = extractEmailAddr(l.substringAfter(":").trim())
+                        lower.startsWith("to:") ->
+                            to = extractEmailAddr(l.substringAfter(":").trim())
+                        lower.startsWith("date:") ->
+                            timestamp = parseImapDate(l.substringAfter(":").trim())
+                        lower.startsWith("$CHAT_HEADER_KEY:") ->
+                            isTyrChat = l.substringAfter(":").trim() == CHAT_HEADER_VALUE
+                        lower.startsWith("$READ_RECEIPT_HEADER_KEY:") ->
+                            readReceiptForUid = l.substringAfter(":").trim().toLongOrNull() ?: -1L
+                        lower.startsWith("$READ_RECEIPT_TIMESTAMP_KEY:") ->
+                            readReceiptForTimestamp =
+                                l.substringAfter(":").trim().toLongOrNull() ?: -1L
+                        lower.startsWith("$DELIVERY_RECEIPT_TIMESTAMP_KEY:") ->
+                            deliveryReceiptForTimestamp =
+                                l.substringAfter(":").trim().toLongOrNull() ?: -1L
+                        lower.startsWith("$NICKNAME_HEADER_KEY:") ->
+                            senderNickname = decodeHeaderValue(l.substringAfter(":").trim())
+                        lower.startsWith("content-type:") ->
+                            contentType = l.substringAfter(":").trim()
+                    }
                 }
             }
 
@@ -472,10 +557,16 @@ class ImapFetcher(
                             collectingBody -> {
                                 // Body stored in file — remember it for streaming MIME parse.
                                 bodyLiteralFile = literalFile
-                                TyrLogger.d(TAG, "uid=$uid: body literal file set: ${literalFile.name} size=${literalFile.length()}")
+                                TyrLogger.d(
+                                    TAG,
+                                    "uid=$uid: body literal file set: ${literalFile.name} size=${literalFile.length()}"
+                                )
                             }
                             else -> {
-                                TyrLogger.w(TAG, "Unexpected LITERAL_FILE before section announcement for uid=$uid")
+                                TyrLogger.w(
+                                    TAG,
+                                    "Unexpected LITERAL_FILE before section announcement for uid=$uid"
+                                )
                             }
                         }
                         i++
@@ -506,7 +597,10 @@ class ImapFetcher(
                                 }
                             }
                             else -> {
-                                TyrLogger.w(TAG, "Unexpected LITERAL before section announcement for uid=$uid")
+                                TyrLogger.w(
+                                    TAG,
+                                    "Unexpected LITERAL before section announcement for uid=$uid"
+                                )
                             }
                         }
                         i++
@@ -518,11 +612,19 @@ class ImapFetcher(
                     uid < 0 && l.trim().matches(Regex("UID\\s+\\d+", RegexOption.IGNORE_CASE)) -> {
                         uid = l.trim().removePrefix("UID ").trim().toLongOrNull() ?: -1L
                     }
-                    (l.contains("BODY[HEADER", ignoreCase = true) || l.contains("BODY.PEEK[HEADER", ignoreCase = true)) && l.contains("{") -> {
+                    (
+                        l.contains("BODY[HEADER", ignoreCase = true) ||
+                            l.contains("BODY.PEEK[HEADER", ignoreCase = true)
+                        ) &&
+                        l.contains("{") -> {
                         collectingHeader = true
                         collectingBody = false
                     }
-                    (l.contains("BODY[TEXT]", ignoreCase = true) || l.contains("BODY.PEEK[TEXT]", ignoreCase = true)) && l.contains("{") -> {
+                    (
+                        l.contains("BODY[TEXT]", ignoreCase = true) ||
+                            l.contains("BODY.PEEK[TEXT]", ignoreCase = true)
+                        ) &&
+                        l.contains("{") -> {
                         collectingBody = true
                         collectingHeader = false
                     }
@@ -540,52 +642,88 @@ class ImapFetcher(
             // Process receipts
             if (readReceiptForUid > 0) readReceiptUids.add(readReceiptForUid)
             if (readReceiptForTimestamp > 0 && from.isNotEmpty()) {
-                readReceiptTimestamps.add(ReadReceiptByTimestamp(from.lowercase(), readReceiptForTimestamp))
+                readReceiptTimestamps.add(
+                    ReadReceiptByTimestamp(from.lowercase(), readReceiptForTimestamp)
+                )
             }
             if (deliveryReceiptForTimestamp > 0 && from.isNotEmpty()) {
-                deliveryReceiptTimestamps.add(ReadReceiptByTimestamp(from.lowercase(), deliveryReceiptForTimestamp))
+                deliveryReceiptTimestamps.add(
+                    ReadReceiptByTimestamp(from.lowercase(), deliveryReceiptForTimestamp)
+                )
             }
 
-            val isSignalingMessage = readReceiptForUid > 0 || readReceiptForTimestamp > 0 || deliveryReceiptForTimestamp > 0
-            TyrLogger.d(TAG, "Parsed FETCH record: uid=$uid from=$from isTyrChat=$isTyrChat " +
-                "isSignaling=$isSignalingMessage contentType='$contentType' bodyLines=${bodyLines.size} " +
-                "bodyLiteralFile=${bodyLiteralFile?.name}")
+            val isSignalingMessage =
+                readReceiptForUid > 0 ||
+                    readReceiptForTimestamp > 0 ||
+                    deliveryReceiptForTimestamp > 0
+            TyrLogger.d(
+                TAG,
+                "Parsed FETCH record: uid=$uid from=$from isTyrChat=$isTyrChat " +
+                    "isSignaling=$isSignalingMessage contentType='$contentType' bodyLines=${bodyLines.size} " +
+                    "bodyLiteralFile=${bodyLiteralFile?.name}"
+            )
             if (!isTyrChat) {
-                TyrLogger.d(TAG, "uid=$uid: not a TyrChat message (missing X-Tyr-Chat: 1 header), skipping")
+                TyrLogger.d(
+                    TAG,
+                    "uid=$uid: not a TyrChat message (missing X-Tyr-Chat: 1 header), skipping"
+                )
             }
             if (isTyrChat && uid > 0 && from.isNotEmpty() && !isSignalingMessage) {
                 val isSent = from.equals(myAddress.trim(), ignoreCase = true)
 
                 val lowerCT = contentType.lowercase()
-                TyrLogger.i(TAG, "uid=$uid: processing TyrChat message from=$from isSent=$isSent " +
-                    "contentType='$contentType' bodyLines=${bodyLines.size} bodyFile=${bodyLiteralFile?.name}")
+                TyrLogger.i(
+                    TAG,
+                    "uid=$uid: processing TyrChat message from=$from isSent=$isSent " +
+                        "contentType='$contentType' bodyLines=${bodyLines.size} bodyFile=${bodyLiteralFile?.name}"
+                )
 
                 val (textBody, attachPath, attachName, attachMime, attachSize) = when {
                     lowerCT.startsWith("multipart/") && bodyLiteralFile != null -> {
                         // Large multipart body: stream-parse from file — never load whole file into memory.
-                        TyrLogger.i(TAG, "uid=$uid: streaming MIME multipart from file, size=${bodyLiteralFile!!.length()}")
-                        parseMimeMultipartFromFile(bodyLiteralFile!!, contentType, uid, attachmentsDir)
+                        TyrLogger.i(
+                            TAG,
+                            "uid=$uid: streaming MIME multipart from file, size=${bodyLiteralFile!!.length()}"
+                        )
+                        parseMimeMultipartFromFile(
+                            bodyLiteralFile!!,
+                            contentType,
+                            uid,
+                            attachmentsDir
+                        )
                     }
                     lowerCT.startsWith("multipart/") -> {
-                        TyrLogger.i(TAG, "uid=$uid: parsing MIME multipart in memory, bodyLines=${bodyLines.size}")
+                        TyrLogger.i(
+                            TAG,
+                            "uid=$uid: parsing MIME multipart in memory, bodyLines=${bodyLines.size}"
+                        )
                         parseMimeMultipart(bodyLines, contentType, uid, attachmentsDir)
                     }
                     bodyLiteralFile != null -> {
                         // Plain text stored in file (unlikely but handle gracefully).
                         val raw = bodyLiteralFile!!.readText(Charsets.ISO_8859_1).trim()
-                        val body = if (lowerCT.contains("utf-8") || lowerCT.contains("utf8"))
-                            reinterpretAsUtf8(raw) else raw
+                        val body = if (lowerCT.contains("utf-8") || lowerCT.contains("utf8")) {
+                            reinterpretAsUtf8(raw)
+                        } else {
+                            raw
+                        }
                         MimeParsed(body, null, null, null, 0L)
                     }
                     else -> {
                         val raw = bodyLines.joinToString("\n").trim()
-                        val body = if (lowerCT.contains("utf-8") || lowerCT.contains("utf8"))
-                            reinterpretAsUtf8(raw) else raw
+                        val body = if (lowerCT.contains("utf-8") || lowerCT.contains("utf8")) {
+                            reinterpretAsUtf8(raw)
+                        } else {
+                            raw
+                        }
                         MimeParsed(body, null, null, null, 0L)
                     }
                 }
-                TyrLogger.i(TAG, "uid=$uid: parsed — textBody.len=${textBody.length} " +
-                    "attachPath=$attachPath attachName=$attachName attachMime=$attachMime attachSize=$attachSize")
+                TyrLogger.i(
+                    TAG,
+                    "uid=$uid: parsed — textBody.len=${textBody.length} " +
+                        "attachPath=$attachPath attachName=$attachName attachMime=$attachMime attachSize=$attachSize"
+                )
 
                 messages.add(
                     ChatMessage(
@@ -609,7 +747,13 @@ class ImapFetcher(
             }
         }
 
-        return FetchResult(messages, readReceiptUids, readReceiptTimestamps, deliveryReceiptTimestamps, nicknameUpdates)
+        return FetchResult(
+            messages,
+            readReceiptUids,
+            readReceiptTimestamps,
+            deliveryReceiptTimestamps,
+            nicknameUpdates
+        )
     }
 
     /**
@@ -636,12 +780,20 @@ class ImapFetcher(
                             var i = 0
                             while (i < encoded.length) {
                                 when {
-                                    encoded[i] == '_' -> { qpBytes.add(0x20); i++ }
+                                    encoded[i] == '_' -> {
+                                        qpBytes.add(0x20)
+                                        i++
+                                    }
                                     encoded[i] == '=' && i + 2 < encoded.length -> {
-                                        qpBytes.add(encoded.substring(i + 1, i + 3).toInt(16).toByte())
+                                        qpBytes.add(
+                                            encoded.substring(i + 1, i + 3).toInt(16).toByte()
+                                        )
                                         i += 3
                                     }
-                                    else -> { qpBytes.add(encoded[i].code.toByte()); i++ }
+                                    else -> {
+                                        qpBytes.add(encoded[i].code.toByte())
+                                        i++
+                                    }
                                 }
                             }
                             String(qpBytes.toByteArray(), charset)
@@ -691,7 +843,10 @@ class ImapFetcher(
         val boundaryMatch = Regex("""boundary=["]?([^";]+)["]?""", RegexOption.IGNORE_CASE)
             .find(contentType)
         val boundary = boundaryMatch?.groupValues?.get(1)?.trim() ?: run {
-            TyrLogger.e(TAG, "uid=$uid: no boundary found in contentType='$contentType' (file path)")
+            TyrLogger.e(
+                TAG,
+                "uid=$uid: no boundary found in contentType='$contentType' (file path)"
+            )
             return MimeParsed("", null, null, null, 0L)
         }
         TyrLogger.d(TAG, "uid=$uid: streaming MIME boundary='$boundary' from file ${bodyFile.name}")
@@ -719,7 +874,7 @@ class ImapFetcher(
         var collectingBase64 = false
         var outFile: File? = null
         var outStream: FileOutputStream? = null
-        var b64LineBuffer = mutableListOf<String>()  // accumulate BASE64_CHUNK_LINES lines then flush
+        var b64LineBuffer = mutableListOf<String>() // accumulate BASE64_CHUNK_LINES lines then flush
 
         fun flushBase64Chunk() {
             if (b64LineBuffer.isEmpty() || outStream == null) return
@@ -738,7 +893,10 @@ class ImapFetcher(
             if (outFile != null) {
                 attachSize = outFile!!.length()
                 attachPath = outFile!!.absolutePath
-                TyrLogger.i(TAG, "uid=$uid: saved attachment '$attachName' $attachSize bytes → $attachPath")
+                TyrLogger.i(
+                    TAG,
+                    "uid=$uid: saved attachment '$attachName' $attachSize bytes → $attachPath"
+                )
             }
         }
 
@@ -749,7 +907,10 @@ class ImapFetcher(
             collectingBase64 = false
             textLines.clear()
             // Reset part headers.
-            partCT = ""; partCTE = ""; partCD = ""; lastPartHeader = ""
+            partCT = ""
+            partCTE = ""
+            partCD = ""
+            lastPartHeader = ""
             headersDone = false
             inPart = true
             partIdx++
@@ -767,8 +928,16 @@ class ImapFetcher(
                         if (collectingBase64) finishBase64Part()
                         if (collectingText) {
                             val raw = textLines.joinToString("\n").trim()
-                            textBody = if (partCT.lowercase().let { it.contains("utf-8") || it.contains("utf8") })
-                                reinterpretAsUtf8(raw) else raw
+                            textBody =
+                                if (partCT.lowercase().let {
+                                        it.contains("utf-8") ||
+                                            it.contains("utf8")
+                                    }
+                                ) {
+                                    reinterpretAsUtf8(raw)
+                                } else {
+                                    raw
+                                }
                         }
                         break
                     }
@@ -780,19 +949,27 @@ class ImapFetcher(
                                 headersDone = true
                                 lastPartHeader = ""
                                 val partCTLower = partCT.lowercase()
-                                TyrLogger.d(TAG, "uid=$uid part[$partIdx]: CT='$partCT' CTE='$partCTE' CD='$partCD'")
+                                TyrLogger.d(
+                                    TAG,
+                                    "uid=$uid part[$partIdx]: CT='$partCT' CTE='$partCTE' CD='$partCD'"
+                                )
                                 when {
                                     partCTLower.startsWith("text/plain") -> {
                                         collectingText = true
                                     }
-                                    attachmentsDir != null && (
-                                        partCTLower.startsWith("image/") ||
-                                        partCTLower.startsWith("application/") ||
-                                        partCTLower.startsWith("video/") ||
-                                        partCD.lowercase().startsWith("attachment")
-                                    ) && partCTE.equals("base64", ignoreCase = true) -> {
+                                    attachmentsDir != null &&
+                                        (
+                                            partCTLower.startsWith("image/") ||
+                                                partCTLower.startsWith("application/") ||
+                                                partCTLower.startsWith("video/") ||
+                                                partCD.lowercase().startsWith("attachment")
+                                            ) &&
+                                        partCTE.equals("base64", ignoreCase = true) -> {
                                         // Extract filename
-                                        val nameMatch = Regex("""filename=["]?([^";]+)["]?""", RegexOption.IGNORE_CASE)
+                                        val nameMatch = Regex(
+                                            """filename=["]?([^";]+)["]?""",
+                                            RegexOption.IGNORE_CASE
+                                        )
                                             .find(partCD.ifBlank { partCT })
                                         val fileName = nameMatch?.groupValues?.get(1)?.trim()
                                             ?: "attachment_$uid"
@@ -803,10 +980,16 @@ class ImapFetcher(
                                         outStream = FileOutputStream(outFile!!)
                                         collectingBase64 = true
                                         b64LineBuffer = mutableListOf()
-                                        TyrLogger.i(TAG, "uid=$uid part[$partIdx]: streaming base64 attachment '$fileName' → ${outFile!!.name}")
+                                        TyrLogger.i(
+                                            TAG,
+                                            "uid=$uid part[$partIdx]: streaming base64 attachment '$fileName' → ${outFile!!.name}"
+                                        )
                                     }
                                     else -> {
-                                        TyrLogger.d(TAG, "uid=$uid part[$partIdx]: unhandled CT='$partCT' CTE='$partCTE' attachmentsDir=${attachmentsDir != null}")
+                                        TyrLogger.d(
+                                            TAG,
+                                            "uid=$uid part[$partIdx]: unhandled CT='$partCT' CTE='$partCTE' attachmentsDir=${attachmentsDir != null}"
+                                        )
                                     }
                                 }
                             }
@@ -814,9 +997,9 @@ class ImapFetcher(
                             lineStr.isNotEmpty() && (lineStr[0] == ' ' || lineStr[0] == '\t') -> {
                                 val continuation = lineStr.trim()
                                 when (lastPartHeader) {
-                                    "ct"  -> partCT  += " $continuation"
+                                    "ct" -> partCT += " $continuation"
                                     "cte" -> partCTE += " $continuation"
-                                    "cd"  -> partCD  += " $continuation"
+                                    "cd" -> partCD += " $continuation"
                                 }
                             }
                             lower.startsWith("content-type:") -> {
@@ -857,8 +1040,11 @@ class ImapFetcher(
         if (collectingBase64) finishBase64Part()
         if (collectingText && textBody.isEmpty()) {
             val raw = textLines.joinToString("\n").trim()
-            textBody = if (partCT.lowercase().let { it.contains("utf-8") || it.contains("utf8") })
-                reinterpretAsUtf8(raw) else raw
+            textBody = if (partCT.lowercase().let { it.contains("utf-8") || it.contains("utf8") }) {
+                reinterpretAsUtf8(raw)
+            } else {
+                raw
+            }
         }
 
         return MimeParsed(textBody, attachPath, attachName, attachMime, attachSize)
@@ -913,8 +1099,13 @@ class ImapFetcher(
         }
         TyrLogger.i(TAG, "uid=$uid: found ${parts.size} MIME parts (boundary='$boundary')")
         if (parts.isEmpty()) {
-            TyrLogger.e(TAG, "uid=$uid: ZERO parts found — boundary mismatch? " +
-                "Expected '--$boundary' as first body line but got: '${bodyLines.firstOrNull()?.take(80)}'")
+            TyrLogger.e(
+                TAG,
+                "uid=$uid: ZERO parts found — boundary mismatch? " +
+                    "Expected '--$boundary' as first body line but got: '${bodyLines.firstOrNull()?.take(
+                        80
+                    )}'"
+            )
         }
 
         var textBody = ""
@@ -926,8 +1117,8 @@ class ImapFetcher(
         for ((partIdx, part) in parts.withIndex()) {
             // Parse part headers
             var partCT = ""
-            var partCTE = ""  // Content-Transfer-Encoding
-            var partCD = ""   // Content-Disposition
+            var partCTE = "" // Content-Transfer-Encoding
+            var partCD = "" // Content-Disposition
             var headersDone = false
             val partBodyLines = mutableListOf<String>()
 
@@ -946,9 +1137,9 @@ class ImapFetcher(
                         line.isNotEmpty() && (line[0] == ' ' || line[0] == '\t') -> {
                             val continuation = line.trim()
                             when (lastPartHeader) {
-                                "ct"  -> partCT  += " $continuation"
+                                "ct" -> partCT += " $continuation"
                                 "cte" -> partCTE += " $continuation"
-                                "cd"  -> partCD  += " $continuation"
+                                "cd" -> partCD += " $continuation"
                             }
                         }
                         lower.startsWith("content-type:") -> {
@@ -971,8 +1162,11 @@ class ImapFetcher(
             }
 
             val partCTLower = partCT.lowercase()
-            TyrLogger.d(TAG, "uid=$uid part[$partIdx]: CT='$partCT' CTE='$partCTE' " +
-                "CD='$partCD' bodyLines=${partBodyLines.size}")
+            TyrLogger.d(
+                TAG,
+                "uid=$uid part[$partIdx]: CT='$partCT' CTE='$partCTE' " +
+                    "CD='$partCD' bodyLines=${partBodyLines.size}"
+            )
             when {
                 partCTLower.startsWith("text/plain") -> {
                     // Determine whether the part declares UTF-8 (or compatible) so we can
@@ -985,27 +1179,37 @@ class ImapFetcher(
                     } else {
                         partBodyLines.joinToString("\n").trim()
                     }
-                    TyrLogger.d(TAG, "uid=$uid part[$partIdx]: text/plain decoded, len=${textBody.length}")
+                    TyrLogger.d(
+                        TAG,
+                        "uid=$uid part[$partIdx]: text/plain decoded, len=${textBody.length}"
+                    )
                 }
-                attachmentsDir != null && (
-                    partCTLower.startsWith("image/") ||
-                    partCTLower.startsWith("application/") ||
-                    partCTLower.startsWith("video/") ||
-                    partCD.lowercase().startsWith("attachment")
-                ) -> {
+                attachmentsDir != null &&
+                    (
+                        partCTLower.startsWith("image/") ||
+                            partCTLower.startsWith("application/") ||
+                            partCTLower.startsWith("video/") ||
+                            partCD.lowercase().startsWith("attachment")
+                        ) -> {
                     // Extract filename
                     val nameMatch = Regex("""filename=["]?([^";]+)["]?""", RegexOption.IGNORE_CASE)
                         .find(partCD.ifBlank { partCT })
                     val fileName = nameMatch?.groupValues?.get(1)?.trim()
                         ?: "attachment_$uid"
-                    TyrLogger.i(TAG, "uid=$uid part[$partIdx]: attachment '$fileName' " +
-                        "CTE='$partCTE' b64Lines=${partBodyLines.size} attachmentsDir=$attachmentsDir")
+                    TyrLogger.i(
+                        TAG,
+                        "uid=$uid part[$partIdx]: attachment '$fileName' " +
+                            "CTE='$partCTE' b64Lines=${partBodyLines.size} attachmentsDir=$attachmentsDir"
+                    )
 
                     // Decode base64 attachment
                     if (partCTE.equals("base64", ignoreCase = true) && partBodyLines.isNotEmpty()) {
                         try {
                             val b64 = partBodyLines.joinToString("").trim()
-                            TyrLogger.d(TAG, "uid=$uid: decoding base64, total b64 chars=${b64.length}")
+                            TyrLogger.d(
+                                TAG,
+                                "uid=$uid: decoding base64, total b64 chars=${b64.length}"
+                            )
                             val bytes = Base64.decode(b64, Base64.DEFAULT)
                             attachmentsDir.mkdirs()
                             val outFile = File(attachmentsDir, "${uid}_$fileName")
@@ -1014,19 +1218,28 @@ class ImapFetcher(
                             attachName = fileName
                             attachMime = partCT.substringBefore(";").trim()
                             attachSize = bytes.size.toLong()
-                            TyrLogger.i(TAG, "uid=$uid: saved attachment '$fileName' " +
-                                "${bytes.size} bytes → $attachPath")
+                            TyrLogger.i(
+                                TAG,
+                                "uid=$uid: saved attachment '$fileName' " +
+                                    "${bytes.size} bytes → $attachPath"
+                            )
                         } catch (e: Exception) {
                             TyrLogger.e(TAG, "uid=$uid: failed to decode attachment '$fileName'", e)
                         }
                     } else {
-                        TyrLogger.w(TAG, "uid=$uid part[$partIdx]: attachment skipped — " +
-                            "CTE='$partCTE' (expected base64) or partBodyLines empty=${partBodyLines.isEmpty()}")
+                        TyrLogger.w(
+                            TAG,
+                            "uid=$uid part[$partIdx]: attachment skipped — " +
+                                "CTE='$partCTE' (expected base64) or partBodyLines empty=${partBodyLines.isEmpty()}"
+                        )
                     }
                 }
                 else -> {
-                    TyrLogger.d(TAG, "uid=$uid part[$partIdx]: unhandled part CT='$partCT' " +
-                        "(attachmentsDir=${attachmentsDir != null})")
+                    TyrLogger.d(
+                        TAG,
+                        "uid=$uid part[$partIdx]: unhandled part CT='$partCT' " +
+                            "(attachmentsDir=${attachmentsDir != null})"
+                    )
                 }
             }
         }

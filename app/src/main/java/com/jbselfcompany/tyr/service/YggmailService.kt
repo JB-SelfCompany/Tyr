@@ -8,9 +8,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
-import android.net.wifi.WifiManager
 import android.os.BatteryManager
 import android.os.Binder
 import android.os.Build
@@ -19,25 +16,17 @@ import android.os.HandlerThread
 import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
-import com.jbselfcompany.tyr.utils.TyrLogger
+import android.os.SystemClock
 import androidx.core.app.NotificationCompat
 import com.jbselfcompany.tyr.R
 import com.jbselfcompany.tyr.TyrApplication
-import com.jbselfcompany.tyr.receiver.MaintenanceReceiver
-import com.jbselfcompany.tyr.ui.MainActivity
 import com.jbselfcompany.tyr.chat.data.ChatRepository
 import com.jbselfcompany.tyr.chat.network.ImapFetcher
 import com.jbselfcompany.tyr.chat.network.SmtpSender
-import android.os.SystemClock
+import com.jbselfcompany.tyr.receiver.MaintenanceReceiver
+import com.jbselfcompany.tyr.ui.MainActivity
 import com.jbselfcompany.tyr.utils.PeerCatalog
-import uniffi.yggmail_mobile.PickListener
-import uniffi.yggmail_mobile.YggmailMobile
-import uniffi.yggmail_mobile.YggmailConfig
-import uniffi.yggmail_mobile.YggmailState
-
-import uniffi.yggmail_mobile.YggmailException
-import org.json.JSONArray
-import org.json.JSONObject
+import com.jbselfcompany.tyr.utils.TyrLogger
 import java.io.File
 import java.security.MessageDigest
 import java.util.concurrent.CountDownLatch
@@ -47,6 +36,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import org.json.JSONArray
+import org.json.JSONObject
+import uniffi.yggmail_mobile.PickListener
+import uniffi.yggmail_mobile.YggmailConfig
+import uniffi.yggmail_mobile.YggmailException
+import uniffi.yggmail_mobile.YggmailMobile
 
 /**
  * Foreground service that runs Yggmail server.
@@ -67,20 +62,25 @@ class YggmailService : Service() {
         const val ACTION_RECONNECT_PEERS = "com.jbselfcompany.tyr.RECONNECT_PEERS"
         const val ACTION_MAINTENANCE_CHECK = "com.jbselfcompany.tyr.MAINTENANCE_CHECK"
         const val ACTION_NEW_CHAT_MESSAGES = "com.jbselfcompany.tyr.NEW_CHAT_MESSAGES"
-        private const val CHAT_POLL_INTERVAL_MS = 2 * 60 * 1000L // 2 minutes
+        private const val CHAT_POLL_INTERVAL_MS = 2 * 60 * 1000L
+
+            // 2 minutes
+
         /** A peer pick is running: its probe links are not real peers, the UI hides them. */
         @Volatile
         var isPickingPeers = false
             private set
 
-        private const val FAILOVER_DOWN_MS = 2 * 60 * 1000L     // skip reconnect blips
+        private const val FAILOVER_DOWN_MS = 2 * 60 * 1000L // skip reconnect blips
         private const val FAILOVER_MIN_GAP_MS = 10 * 60 * 1000L // no flapping when our own network is gone
 
         /** Swap to the backup once the main peer has been down [FAILOVER_DOWN_MS], at most every [FAILOVER_MIN_GAP_MS]. */
         internal fun failoverDue(downSince: Long, now: Long, lastFailover: Long): Boolean =
-            downSince > 0 && now - downSince >= FAILOVER_DOWN_MS &&
+            downSince > 0 &&
+                now - downSince >= FAILOVER_DOWN_MS &&
                 (lastFailover == 0L || now - lastFailover >= FAILOVER_MIN_GAP_MS)
         private const val CHAT_NOTIFICATION_BASE_ID = 2000
+
         // ponytail: reduced from 10s to 5s — faster reconnection after startup, still enough for init
         private const val STARTUP_GRACE_PERIOD_MS = 5_000L
 
@@ -111,7 +111,7 @@ class YggmailService : Service() {
             } catch (e: Exception) {
                 // Android 12+ may throw ForegroundServiceStartNotAllowedException
                 // if app is in background or doesn't meet other foreground service requirements
-                TyrLogger.e(TAG,"Failed to start foreground service", e)
+                TyrLogger.e(TAG, "Failed to start foreground service", e)
                 // Service will not start, but we don't crash the app
             }
         }
@@ -185,6 +185,7 @@ class YggmailService : Service() {
 
     // Connection status tracking
     private var lastConnectionStatus: String? = null
+
     // Failover bookkeeping (elapsedRealtime ms; 0 = not set).
     private var mainPeerDownSince = 0L
     private var lastFailoverAt = 0L
@@ -192,6 +193,7 @@ class YggmailService : Service() {
 
     // Background chat polling (initialized on serviceThread in onCreate)
     private lateinit var chatPollHandler: Handler
+
     @Volatile private var chatPollRunnable: Runnable? = null
 
     // Battery optimization state
@@ -223,14 +225,17 @@ class YggmailService : Service() {
                     }
 
                     if (wasDozing != isDozing) {
-                        TyrLogger.d(TAG,"[Battery] Doze mode changed: $isDozing")
+                        TyrLogger.d(TAG, "[Battery] Doze mode changed: $isDozing")
                         updateNativeServicePowerState()
                         // When exiting Doze with app active, QUIC connections were closed
                         // during Doze (60s keepAlive → 5s keepAlive transition). Force
                         // immediate peer reconnection instead of waiting for yggdrasil's
                         // internal reconnect backoff timer.
                         if (!isDozing && isAppActive) {
-                            TyrLogger.d(TAG,"[Reconnect] Exiting Doze, forcing immediate peer reconnection")
+                            TyrLogger.d(
+                                TAG,
+                                "[Reconnect] Exiting Doze, forcing immediate peer reconnection"
+                            )
                             hotReloadPeers()
                         }
                     }
@@ -244,12 +249,12 @@ class YggmailService : Service() {
             when (intent.action) {
                 Intent.ACTION_POWER_CONNECTED -> {
                     isCharging = true
-                    TyrLogger.d(TAG,"[Battery] Device charging started")
+                    TyrLogger.d(TAG, "[Battery] Device charging started")
                     updateNativeServicePowerState()
                 }
                 Intent.ACTION_POWER_DISCONNECTED -> {
                     isCharging = false
-                    TyrLogger.d(TAG,"[Battery] Device on battery")
+                    TyrLogger.d(TAG, "[Battery] Device on battery")
                     updateNativeServicePowerState()
                 }
             }
@@ -272,7 +277,7 @@ class YggmailService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        TyrLogger.d(TAG,"Service onCreate")
+        TyrLogger.d(TAG, "Service onCreate")
         instance = this
 
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -295,7 +300,7 @@ class YggmailService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val dozeFilter = IntentFilter(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED)
             registerReceiver(dozeReceiver, dozeFilter)
-            TyrLogger.d(TAG,"[Battery] Doze Mode receiver registered")
+            TyrLogger.d(TAG, "[Battery] Doze Mode receiver registered")
         }
 
         // Register battery charging receiver
@@ -304,20 +309,20 @@ class YggmailService : Service() {
             addAction(Intent.ACTION_POWER_DISCONNECTED)
         }
         registerReceiver(batteryReceiver, batteryFilter)
-        TyrLogger.d(TAG,"[Battery] Battery receiver registered")
+        TyrLogger.d(TAG, "[Battery] Battery receiver registered")
 
         // Check initial charging state
         val batteryIntent = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         batteryIntent?.let {
             val status = it.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
             isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                        status == BatteryManager.BATTERY_STATUS_FULL
-            TyrLogger.d(TAG,"[Battery] Initial charging state: $isCharging")
+                status == BatteryManager.BATTERY_STATUS_FULL
+            TyrLogger.d(TAG, "[Battery] Initial charging state: $isCharging")
         }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        TyrLogger.d(TAG,"Service onStartCommand: ${intent?.action}")
+        TyrLogger.d(TAG, "Service onStartCommand: ${intent?.action}")
 
         when (intent?.action) {
             ACTION_START -> {
@@ -325,7 +330,7 @@ class YggmailService : Service() {
                     startForegroundWithNotification()
                     startYggmail()
                 } else {
-                    TyrLogger.w(TAG,"Service already running, ignoring START action")
+                    TyrLogger.w(TAG, "Service already running, ignoring START action")
                 }
             }
             ACTION_STOP -> {
@@ -354,9 +359,12 @@ class YggmailService : Service() {
                 if (isRunning) {
                     val timeSinceStart = System.currentTimeMillis() - serviceStartTime
                     if (serviceStartTime > 0 && timeSinceStart < STARTUP_GRACE_PERIOD_MS) {
-                        TyrLogger.d(TAG,"Ignoring reconnect request during startup grace period (${timeSinceStart}ms since start)")
+                        TyrLogger.d(
+                            TAG,
+                            "Ignoring reconnect request during startup grace period (${timeSinceStart}ms since start)"
+                        )
                     } else {
-                        TyrLogger.i(TAG,"Network changed - reconnecting peers")
+                        TyrLogger.i(TAG, "Network changed - reconnecting peers")
                         hotReloadPeers()
                     }
                 }
@@ -366,20 +374,31 @@ class YggmailService : Service() {
                 if (isRunning) {
                     val timeSinceStart = System.currentTimeMillis() - serviceStartTime
                     if (serviceStartTime > 0 && timeSinceStart < STARTUP_GRACE_PERIOD_MS) {
-                        TyrLogger.d(TAG,"Ignoring maintenance check during startup grace period (${timeSinceStart}ms since start)")
+                        TyrLogger.d(
+                            TAG,
+                            "Ignoring maintenance check during startup grace period (${timeSinceStart}ms since start)"
+                        )
                     } else {
                         serviceHandler.post {
                             try {
                                 val connections = getPeerConnections()
                                 val hasConnectedPeer = connections?.any { it.up } == true
                                 if (!hasConnectedPeer) {
-                                    TyrLogger.w(TAG,"Maintenance: no connected peers — triggering reconnection")
+                                    TyrLogger.w(
+                                        TAG,
+                                        "Maintenance: no connected peers — triggering reconnection"
+                                    )
                                     hotReloadPeers()
                                 } else {
-                                    TyrLogger.d(TAG,"Maintenance: peers OK (${connections?.count { it.up }} connected)")
+                                    TyrLogger.d(
+                                        TAG,
+                                        "Maintenance: peers OK (${connections?.count {
+                                            it.up
+                                        }} connected)"
+                                    )
                                 }
                             } catch (e: Exception) {
-                                TyrLogger.e(TAG,"Error during maintenance check", e)
+                                TyrLogger.e(TAG, "Error during maintenance check", e)
                             }
                         }
                     }
@@ -397,12 +416,10 @@ class YggmailService : Service() {
         return START_STICKY
     }
 
-    override fun onBind(intent: Intent?): IBinder {
-        return binder
-    }
+    override fun onBind(intent: Intent?): IBinder = binder
 
     override fun onDestroy() {
-        TyrLogger.d(TAG,"Service onDestroy")
+        TyrLogger.d(TAG, "Service onDestroy")
         instance = null
 
         // Cancel maintenance scheduling
@@ -412,22 +429,22 @@ class YggmailService : Service() {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 unregisterReceiver(dozeReceiver)
-                TyrLogger.d(TAG,"[Battery] Doze Mode receiver unregistered")
+                TyrLogger.d(TAG, "[Battery] Doze Mode receiver unregistered")
             }
         } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error unregistering doze receiver", e)
+            TyrLogger.e(TAG, "Error unregistering doze receiver", e)
         }
 
         try {
             unregisterReceiver(batteryReceiver)
-            TyrLogger.d(TAG,"[Battery] Battery receiver unregistered")
+            TyrLogger.d(TAG, "[Battery] Battery receiver unregistered")
         } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error unregistering battery receiver", e)
+            TyrLogger.e(TAG, "Error unregistering battery receiver", e)
         }
 
         // Only stop if not already stopped (prevent duplicate stop calls)
         if (isRunning) {
-            TyrLogger.w(TAG,"Service destroyed while still running - forcing cleanup")
+            TyrLogger.w(TAG, "Service destroyed while still running - forcing cleanup")
             // Post to handler and wait for completion to avoid race conditions
             val latch = java.util.concurrent.CountDownLatch(1)
             serviceHandler.post {
@@ -441,7 +458,7 @@ class YggmailService : Service() {
             try {
                 latch.await(5, java.util.concurrent.TimeUnit.SECONDS)
             } catch (e: InterruptedException) {
-                TyrLogger.e(TAG,"Interrupted while waiting for service cleanup", e)
+                TyrLogger.e(TAG, "Interrupted while waiting for service cleanup", e)
             }
         }
 
@@ -451,7 +468,7 @@ class YggmailService : Service() {
             // Wait for thread to actually terminate (max 2 seconds)
             serviceThread.join(2000)
         } catch (e: InterruptedException) {
-            TyrLogger.e(TAG,"Interrupted while waiting for service thread termination", e)
+            TyrLogger.e(TAG, "Interrupted while waiting for service thread termination", e)
         }
 
         releaseWakeLock()
@@ -481,7 +498,7 @@ class YggmailService : Service() {
         } catch (e: Exception) {
             // Handle potential exceptions from startForeground()
             // (e.g., on Android 12+ if foreground service type restrictions are violated)
-            TyrLogger.e(TAG,"Failed to start foreground with notification", e)
+            TyrLogger.e(TAG, "Failed to start foreground with notification", e)
             // Update status to ERROR and stop service
             lastError = "Failed to start foreground service: ${e.message}"
             updateStatus(ServiceStatus.ERROR)
@@ -513,7 +530,13 @@ class YggmailService : Service() {
             }
 
             val peersStr = configRepository.getPeersString() ?: ""
-            val peersList = if (peersStr.isBlank()) emptyList() else peersStr.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+            val peersList = if (peersStr.isBlank()) {
+                emptyList()
+            } else {
+                peersStr.split(",").map {
+                    it.trim()
+                }.filter { it.isNotEmpty() }
+            }
             val dbPath = File(filesDir, "yggmail.db").absolutePath
             TyrLogger.d(TAG, "Database path: $dbPath")
 
@@ -524,20 +547,20 @@ class YggmailService : Service() {
 
             // Create config with all parameters in one go
             val config = YggmailConfig(
-                privateKey = "",  // auto-generated by Rust when empty
+                privateKey = "", // auto-generated by Rust when empty
                 peers = peersList,
-                listen = emptyList(),  // use default
+                listen = emptyList(), // use default
                 groupPassword = "",
                 databasePath = dbPath,
                 smtpPort = 1025.toUShort(),
                 imapPort = 1143.toUShort(),
-                passwordHash = passwordHash  // SHA-256 hash for SMTP/IMAP auth
+                passwordHash = passwordHash // SHA-256 hash for SMTP/IMAP auth
             )
 
             // Create instance (auto-inits tracing)
             val mobile = YggmailMobile()
 
-            // Start with config 
+            // Start with config
             mobile.start(config)
 
             // Set password after start so the running instance picks it up
@@ -571,7 +594,10 @@ class YggmailService : Service() {
             if (configRepository.isAutoPickPending()) {
                 Thread({
                     try {
-                        val result = runPeerPick(fresh = true) { stage, done, total -> TyrLogger.d(TAG, "Auto-pick $stage $done/$total") }
+                        val result =
+                            runPeerPick(fresh = true) { stage, done, total ->
+                                TyrLogger.d(TAG, "Auto-pick $stage $done/$total")
+                            }
                         applyPeerPick(result, fresh = true)
                         configRepository.setAutoPickPending(false)
                     } catch (e: Exception) {
@@ -579,7 +605,6 @@ class YggmailService : Service() {
                     }
                 }, "peer-pick").start()
             }
-
         } catch (e: YggmailException) {
             TyrLogger.e(TAG, "Failed to start Yggmail service", e)
             lastError = e.message
@@ -649,11 +674,11 @@ class YggmailService : Service() {
             wakeLock?.let { lock ->
                 if (lock.isHeld) {
                     lock.release()
-                    TyrLogger.d(TAG,"WakeLock released")
+                    TyrLogger.d(TAG, "WakeLock released")
                 }
             }
         } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error releasing WakeLock", e)
+            TyrLogger.e(TAG, "Error releasing WakeLock", e)
         }
     }
 
@@ -669,7 +694,10 @@ class YggmailService : Service() {
                 yggmailMobile?.let { mobile ->
                     mobile.setActive(isAppActive && !isDozing)
                     mobile.setCharging(isCharging)
-                    TyrLogger.d(TAG, "[Battery] Power state updated - Active: ${isAppActive && !isDozing}, Charging: $isCharging")
+                    TyrLogger.d(
+                        TAG,
+                        "[Battery] Power state updated - Active: ${isAppActive && !isDozing}, Charging: $isCharging"
+                    )
                 }
             } catch (e: Exception) {
                 TyrLogger.e(TAG, "Error updating power state", e)
@@ -691,10 +719,10 @@ class YggmailService : Service() {
                     lock.release()
                 }
                 lock.acquire(durationMs)
-                TyrLogger.d(TAG,"[Battery] WakeLock acquired for $operation (${durationMs}ms)")
+                TyrLogger.d(TAG, "[Battery] WakeLock acquired for $operation (${durationMs}ms)")
             }
         } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error acquiring WakeLock", e)
+            TyrLogger.e(TAG, "Error acquiring WakeLock", e)
         }
     }
 
@@ -718,7 +746,10 @@ class YggmailService : Service() {
      */
     fun notifyMessageSendCompleted() {
         activeSendOperations.decrementAndGet()
-        TyrLogger.d(TAG,"[Battery] Message send completed, active operations: ${activeSendOperations.get()}")
+        TyrLogger.d(
+            TAG,
+            "[Battery] Message send completed, active operations: ${activeSendOperations.get()}"
+        )
     }
 
     /**
@@ -741,28 +772,30 @@ class YggmailService : Service() {
      * Get connection status based on peer connections.
      * When running, returns the number of connected peers for display in the notification.
      */
-    private fun getConnectionStatus(): String {
-        return when (serviceStatus) {
-            ServiceStatus.STARTING -> getString(R.string.connection_connecting)
-            ServiceStatus.STOPPING -> getString(R.string.service_stopping)
-            ServiceStatus.STOPPED -> getString(R.string.connection_offline)
-            ServiceStatus.ERROR -> lastError ?: getString(R.string.service_error)
-            ServiceStatus.RUNNING -> {
-                val connections = getPeerConnections()
-                val connected = connections?.filter { it.up } ?: emptyList()
-                val connectedCount = connected.size
-                if (connectedCount > 0) {
-                    val avgLatency = connected.map { it.latencyMs }.filter { it > 0 }.let {
-                        if (it.isNotEmpty()) it.average().toLong() else 0L
-                    }
-                    if (avgLatency > 0) {
-                        getString(R.string.notification_peers_connected_ping, connectedCount, avgLatency)
-                    } else {
-                        getString(R.string.notification_peers_connected, connectedCount)
-                    }
-                } else {
-                    getString(R.string.notification_no_connection)
+    private fun getConnectionStatus(): String = when (serviceStatus) {
+        ServiceStatus.STARTING -> getString(R.string.connection_connecting)
+        ServiceStatus.STOPPING -> getString(R.string.service_stopping)
+        ServiceStatus.STOPPED -> getString(R.string.connection_offline)
+        ServiceStatus.ERROR -> lastError ?: getString(R.string.service_error)
+        ServiceStatus.RUNNING -> {
+            val connections = getPeerConnections()
+            val connected = connections?.filter { it.up } ?: emptyList()
+            val connectedCount = connected.size
+            if (connectedCount > 0) {
+                val avgLatency = connected.map { it.latencyMs }.filter { it > 0 }.let {
+                    if (it.isNotEmpty()) it.average().toLong() else 0L
                 }
+                if (avgLatency > 0) {
+                    getString(
+                        R.string.notification_peers_connected_ping,
+                        connectedCount,
+                        avgLatency
+                    )
+                } else {
+                    getString(R.string.notification_peers_connected, connectedCount)
+                }
+            } else {
+                getString(R.string.notification_no_connection)
             }
         }
     }
@@ -788,7 +821,7 @@ class YggmailService : Service() {
                         }
                     }
                 } catch (e: Exception) {
-                    TyrLogger.e(TAG,"Error checking connection status", e)
+                    TyrLogger.e(TAG, "Error checking connection status", e)
                 }
 
                 // Schedule next check
@@ -823,7 +856,9 @@ class YggmailService : Service() {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
+            this,
+            0,
+            intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
@@ -839,7 +874,6 @@ class YggmailService : Service() {
             .setShowWhen(false) // Hide timestamp for cleaner notification
             .build()
     }
-
 
     /**
      * Add service status listener
@@ -875,7 +909,7 @@ class YggmailService : Service() {
             val jsonString = yggmailMobile?.getPeerConnectionsJson() ?: return null
             parsePeerConnectionsJSON(jsonString)
         } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error getting peer connections", e)
+            TyrLogger.e(TAG, "Error getting peer connections", e)
             null
         }
     }
@@ -891,19 +925,21 @@ class YggmailService : Service() {
             for (i in 0 until arr.length()) {
                 val obj = arr.getJSONObject(i)
                 if (obj.optString("uri").isNotEmpty()) {
-                    peers.add(PeerConnectionInfo(
-                        uri = obj.optString("uri"),
-                        up = obj.optBoolean("up"),
-                        inbound = obj.optBoolean("inbound"),
-                        lastError = obj.optString("lastError", ""),
-                        key = obj.optString("key", ""),
-                        uptime = obj.optLong("uptime", 0L),
-                        latencyMs = obj.optLong("latencyMs", 0L),
-                        rxBytes = obj.optLong("rxBytes", 0L),
-                        txBytes = obj.optLong("txBytes", 0L),
-                        rxRate = obj.optLong("rxRate", 0L),
-                        txRate = obj.optLong("txRate", 0L)
-                    ))
+                    peers.add(
+                        PeerConnectionInfo(
+                            uri = obj.optString("uri"),
+                            up = obj.optBoolean("up"),
+                            inbound = obj.optBoolean("inbound"),
+                            lastError = obj.optString("lastError", ""),
+                            key = obj.optString("key", ""),
+                            uptime = obj.optLong("uptime", 0L),
+                            latencyMs = obj.optLong("latencyMs", 0L),
+                            rxBytes = obj.optLong("rxBytes", 0L),
+                            txBytes = obj.optLong("txBytes", 0L),
+                            rxRate = obj.optLong("rxRate", 0L),
+                            txRate = obj.optLong("txRate", 0L)
+                        )
+                    )
                 }
             }
         } catch (e: Exception) {
@@ -916,17 +952,17 @@ class YggmailService : Service() {
      * Data class for peer connection information
      */
     data class PeerConnectionInfo(
-        val uri: String,           // Peer URI (e.g., "tls://1.2.3.4:7743")
-        val up: Boolean,           // Connection is active
-        val inbound: Boolean,      // True if peer initiated connection
-        val lastError: String,     // Last error message (empty if no error)
-        val key: String,           // Peer's public key (hex)
-        val uptime: Long,          // Connection uptime in seconds
-        val latencyMs: Long,       // Latency in milliseconds
-        val rxBytes: Long,         // Received bytes
-        val txBytes: Long,         // Transmitted bytes
-        val rxRate: Long,          // Receive rate (bytes/sec)
-        val txRate: Long           // Transmit rate (bytes/sec)
+        val uri: String, // Peer URI (e.g., "tls://1.2.3.4:7743")
+        val up: Boolean, // Connection is active
+        val inbound: Boolean, // True if peer initiated connection
+        val lastError: String, // Last error message (empty if no error)
+        val key: String, // Peer's public key (hex)
+        val uptime: Long, // Connection uptime in seconds
+        val latencyMs: Long, // Latency in milliseconds
+        val rxBytes: Long, // Received bytes
+        val txBytes: Long, // Transmitted bytes
+        val rxRate: Long, // Receive rate (bytes/sec)
+        val txRate: Long // Transmit rate (bytes/sec)
     ) {
         // Helper properties for backward compatibility
         val host: String
@@ -938,28 +974,24 @@ class YggmailService : Service() {
         val connected: Boolean
             get() = up
 
-        private fun extractHostFromUri(uri: String): String {
-            return try {
-                // Extract host from URI like "tls://1.2.3.4:7743" or "tcp://[::1]:7743"
-                val withoutScheme = uri.substringAfter("://")
-                if (withoutScheme.startsWith("[")) {
-                    // IPv6 address
-                    withoutScheme.substringAfter("[").substringBefore("]")
-                } else {
-                    // IPv4 address or hostname
-                    withoutScheme.substringBefore(":")
-                }
-            } catch (e: Exception) {
-                uri
+        private fun extractHostFromUri(uri: String): String = try {
+            // Extract host from URI like "tls://1.2.3.4:7743" or "tcp://[::1]:7743"
+            val withoutScheme = uri.substringAfter("://")
+            if (withoutScheme.startsWith("[")) {
+                // IPv6 address
+                withoutScheme.substringAfter("[").substringBefore("]")
+            } else {
+                // IPv4 address or hostname
+                withoutScheme.substringBefore(":")
             }
+        } catch (e: Exception) {
+            uri
         }
 
-        private fun extractPortFromUri(uri: String): Int {
-            return try {
-                uri.substringAfterLast(":").toIntOrNull() ?: 0
-            } catch (e: Exception) {
-                0
-            }
+        private fun extractPortFromUri(uri: String): Int = try {
+            uri.substringAfterLast(":").toIntOrNull() ?: 0
+        } catch (e: Exception) {
+            0
         }
     }
 
@@ -972,7 +1004,7 @@ class YggmailService : Service() {
         try {
             val wasEffectivelyActive = isAppActive && !isDozing
             isAppActive = active
-            TyrLogger.d(TAG,"[Battery] App activity state changed to: $active")
+            TyrLogger.d(TAG, "[Battery] App activity state changed to: $active")
 
             // Update native service with new power state
             updateNativeServicePowerState()
@@ -982,15 +1014,13 @@ class YggmailService : Service() {
             // Force immediate peer reconnection instead of waiting for internal backoff.
             val isNowEffectivelyActive = isAppActive && !isDozing
             if (isNowEffectivelyActive && !wasEffectivelyActive) {
-                TyrLogger.d(TAG,"[Reconnect] Became active, forcing immediate peer reconnection")
+                TyrLogger.d(TAG, "[Reconnect] Became active, forcing immediate peer reconnection")
                 hotReloadPeers()
             }
-
         } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error setting app activity state", e)
+            TyrLogger.e(TAG, "Error setting app activity state", e)
         }
     }
-
 
     /**
      * Attempt to retry sending all queued messages for [destination].
@@ -1008,13 +1038,13 @@ class YggmailService : Service() {
                 hotReloadPeers()
                 result = true
             } catch (e: Exception) {
-                TyrLogger.e(TAG,"retrySendMessage failed for $destination", e)
+                TyrLogger.e(TAG, "retrySendMessage failed for $destination", e)
             } finally {
                 latch.countDown()
             }
         }
         latch.await(5, TimeUnit.SECONDS)
-        TyrLogger.d(TAG,"retrySendMessage: dest=$destination id=$messageId triggered=$result")
+        TyrLogger.d(TAG, "retrySendMessage: dest=$destination id=$messageId triggered=$result")
         return result
     }
 
@@ -1042,19 +1072,25 @@ class YggmailService : Service() {
     fun hotReloadPeers() {
         serviceHandler.post {
             try {
-                TyrLogger.i(TAG,"Hot reloading peers...")
+                TyrLogger.i(TAG, "Hot reloading peers...")
 
                 // Get updated configuration and convert to JSON array
                 val peersStr = configRepository.getPeersString()
 
-                val peersJsonArray = if (peersStr.isNullOrBlank()) "[]"
-                    else JSONArray(peersStr.split(",").map { it.trim() }.filter { it.isNotEmpty() }).toString()
+                val peersJsonArray = if (peersStr.isNullOrBlank()) {
+                    "[]"
+                } else {
+                    JSONArray(
+                        peersStr.split(",").map {
+                            it.trim()
+                        }.filter { it.isNotEmpty() }
+                    ).toString()
+                }
                 yggmailMobile?.updatePeers(peersJsonArray)
 
-                TyrLogger.i(TAG,"Peers updated successfully using live configuration")
-
+                TyrLogger.i(TAG, "Peers updated successfully using live configuration")
             } catch (e: Exception) {
-                TyrLogger.e(TAG,"Error updating peers", e)
+                TyrLogger.e(TAG, "Error updating peers", e)
             }
         }
     }
@@ -1071,8 +1107,12 @@ class YggmailService : Service() {
             // Fresh (onboarding): the bootstrap defaults are not a choice to keep, so nothing counts as
             // current and they compete as plain candidates - the result is always one peer plus a backup.
             val enabled = if (fresh) emptyList() else configRepository.getEnabledPeers()
-            val disabled = if (fresh) emptyList() else configRepository.getAllPeersInfo().filter { !it.isEnabled }.map { it.uri } +
-                listOfNotNull(configRepository.getBackupPeer())
+            val disabled = if (fresh) {
+                emptyList()
+            } else {
+                configRepository.getAllPeersInfo().filter { !it.isEnabled }.map { it.uri } +
+                    listOfNotNull(configRepository.getBackupPeer())
+            }
             val listener = object : PickListener {
                 override fun onProgress(stage: String, done: UInt, total: UInt) =
                     onProgress(stage, done.toInt(), total.toInt())
@@ -1091,7 +1131,12 @@ class YggmailService : Service() {
     fun applyPeerPick(result: JSONObject, fresh: Boolean = false) {
         val winner = result.optString("switch").ifEmpty { null }
         configRepository.applyPickedPeer(winner, result.optString("backup").ifEmpty { null }, fresh)
-        TyrLogger.i(TAG, "Peer pick: ${result.optString("verdict")} winner=$winner backup=${configRepository.getBackupPeer()}")
+        TyrLogger.i(
+            TAG,
+            "Peer pick: ${result.optString(
+                "verdict"
+            )} winner=$winner backup=${configRepository.getBackupPeer()}"
+        )
         // Always: the picker may have dropped probe links that were also configured peers.
         hotReloadPeers()
     }
@@ -1103,8 +1148,13 @@ class YggmailService : Service() {
         val up = connections?.any { it.uri == main && it.up } ?: return
         val now = SystemClock.elapsedRealtime()
         mainPeerDownSince = if (up) 0L else mainPeerDownSince.takeIf { it > 0 } ?: now
-        if (failoverDue(mainPeerDownSince, now, lastFailoverAt) && configRepository.swapToBackup()) {
-            TyrLogger.w(TAG, "Failover: $main down, switching to ${configRepository.getEnabledPeers().firstOrNull()}")
+        if (failoverDue(mainPeerDownSince, now, lastFailoverAt) &&
+            configRepository.swapToBackup()
+        ) {
+            TyrLogger.w(
+                TAG,
+                "Failover: $main down, switching to ${configRepository.getEnabledPeers().firstOrNull()}"
+            )
             lastFailoverAt = now
             mainPeerDownSince = 0L
             hotReloadPeers()
@@ -1132,18 +1182,17 @@ class YggmailService : Service() {
      */
     private fun performSoftStopSync() {
         try {
-            TyrLogger.i(TAG,"Performing soft stop...")
+            TyrLogger.i(TAG, "Performing soft stop...")
             updateStatus(ServiceStatus.STOPPING)
 
             // First, gracefully disconnect all peers by updating to empty peer list
             yggmailMobile?.updatePeers("[]")
-            TyrLogger.i(TAG,"All peers disconnected gracefully")
+            TyrLogger.i(TAG, "All peers disconnected gracefully")
 
             // Now perform normal stop
             stopYggmailSync()
-
         } catch (e: Exception) {
-            TyrLogger.e(TAG,"Error during soft stop, falling back to normal stop", e)
+            TyrLogger.e(TAG, "Error during soft stop, falling back to normal stop", e)
             // Fallback to normal stop if soft stop fails
             stopYggmailSync()
         }
@@ -1195,8 +1244,16 @@ class YggmailService : Service() {
             TyrLogger.i(TAG, "Chat poll: fetch already in progress, skipping")
             return
         }
-        val address = configRepository.getMailAddress() ?: run { isFetchInProgress.set(false); return }
-        val password = configRepository.getPassword() ?: run { isFetchInProgress.set(false); return }
+        val address =
+            configRepository.getMailAddress() ?: run {
+                isFetchInProgress.set(false)
+                return
+            }
+        val password =
+            configRepository.getPassword() ?: run {
+                isFetchInProgress.set(false)
+                return
+            }
 
         serviceScope.launch {
             try {
@@ -1206,61 +1263,98 @@ class YggmailService : Service() {
                 val dbMaxUid = chatRepository.getMaxImapUid()
                 val watermark = configRepository.getLastSeenImapUid()
                 val sinceUid = maxOf(dbMaxUid, watermark)
-                TyrLogger.i(TAG, "Chat poll: starting fetch sinceUid=$sinceUid (db=$dbMaxUid watermark=$watermark) address=$address")
+                TyrLogger.i(
+                    TAG,
+                    "Chat poll: starting fetch sinceUid=$sinceUid (db=$dbMaxUid watermark=$watermark) address=$address"
+                )
                 val attachmentsDir = File(
-                    getExternalFilesDir(null) ?: filesDir, "attachments"
+                    getExternalFilesDir(null) ?: filesDir,
+                    "attachments"
                 ).also { it.mkdirs() }
-                val result = ImapFetcher(cacheDir = cacheDir).fetchNewMessages(address, password, sinceUid, attachmentsDir)
+                val result = ImapFetcher(
+                    cacheDir = cacheDir
+                ).fetchNewMessages(address, password, sinceUid, attachmentsDir)
                 when (result) {
                     is ImapFetcher.Result.Error -> {
                         TyrLogger.e(TAG, "Chat poll: IMAP fetch error: ${result.message}")
                     }
                     is ImapFetcher.Result.Success -> {
-                        TyrLogger.i(TAG, "Chat poll: fetch returned ${result.data.messages.size} messages, " +
-                            "${result.data.deliveryReceiptTimestamps.size} delivery receipts, " +
-                            "${result.data.readReceiptTimestamps.size} read receipts")
+                        TyrLogger.i(
+                            TAG,
+                            "Chat poll: fetch returned ${result.data.messages.size} messages, " +
+                                "${result.data.deliveryReceiptTimestamps.size} delivery receipts, " +
+                                "${result.data.readReceiptTimestamps.size} read receipts"
+                        )
 
                         // Advance the watermark to the highest UID seen in this batch so that
                         // deleting contacts/messages later cannot roll back the fetch position.
                         val maxFetchedUid = result.data.messages.maxOfOrNull { it.imapUid } ?: -1L
-                        if (maxFetchedUid > 0) configRepository.advanceLastSeenImapUid(maxFetchedUid)
+                        if (maxFetchedUid >
+                            0
+                        ) {
+                            configRepository.advanceLastSeenImapUid(maxFetchedUid)
+                        }
 
-                        val newMessages = mutableListOf<com.jbselfcompany.tyr.chat.data.ChatMessage>()
+                        val newMessages =
+                            mutableListOf<com.jbselfcompany.tyr.chat.data.ChatMessage>()
                         val acceptNonContacts = configRepository.getAcceptMessagesFromNonContacts()
-                        val nicknameMap = result.data.nicknameUpdates.associate { it.senderAddr to it.nickname }
+                        val nicknameMap = result.data.nicknameUpdates.associate {
+                            it.senderAddr to
+                                it.nickname
+                        }
 
                         // Insert incoming messages we haven't seen yet
                         for (msg in result.data.messages) {
-                            TyrLogger.d(TAG, "Chat poll: processing msg uid=${msg.imapUid} " +
-                                "from=${msg.fromAddr} isSent=${msg.isSent} " +
-                                "hasAttachment=${msg.hasAttachment} attachMime=${msg.attachmentMimeType} " +
-                                "attachSize=${msg.attachmentSizeBytes} attachPath=${msg.attachmentPath}")
+                            TyrLogger.d(
+                                TAG,
+                                "Chat poll: processing msg uid=${msg.imapUid} " +
+                                    "from=${msg.fromAddr} isSent=${msg.isSent} " +
+                                    "hasAttachment=${msg.hasAttachment} attachMime=${msg.attachmentMimeType} " +
+                                    "attachSize=${msg.attachmentSizeBytes} attachPath=${msg.attachmentPath}"
+                            )
                             if (msg.isSent) {
-                                TyrLogger.d(TAG, "Chat poll: skipping own sent msg uid=${msg.imapUid}")
+                                TyrLogger.d(
+                                    TAG,
+                                    "Chat poll: skipping own sent msg uid=${msg.imapUid}"
+                                )
                                 continue
                             }
                             if (chatRepository.imapUidExists(msg.imapUid)) {
-                                TyrLogger.d(TAG, "Chat poll: uid=${msg.imapUid} already in DB, skipping")
+                                TyrLogger.d(
+                                    TAG,
+                                    "Chat poll: uid=${msg.imapUid} already in DB, skipping"
+                                )
                                 continue
                             }
                             if (chatRepository.isContactDeclined(msg.fromAddr)) {
-                                TyrLogger.d(TAG, "Chat poll: from=${msg.fromAddr} is declined, skipping")
+                                TyrLogger.d(
+                                    TAG,
+                                    "Chat poll: from=${msg.fromAddr} is declined, skipping"
+                                )
                                 continue
                             }
                             when {
                                 chatRepository.contactExists(msg.fromAddr) -> {
-                                    TyrLogger.i(TAG, "Chat poll: inserting msg uid=${msg.imapUid} " +
-                                        "from=${msg.fromAddr} hasAttachment=${msg.hasAttachment}")
+                                    TyrLogger.i(
+                                        TAG,
+                                        "Chat poll: inserting msg uid=${msg.imapUid} " +
+                                            "from=${msg.fromAddr} hasAttachment=${msg.hasAttachment}"
+                                    )
                                     chatRepository.insertMessage(msg)
                                     newMessages.add(msg)
                                 }
                                 acceptNonContacts -> {
                                     // Store as pending contact with nickname if available
-                                    TyrLogger.i(TAG, "Chat poll: new contact from=${msg.fromAddr}, " +
-                                        "adding as pending and inserting msg uid=${msg.imapUid}")
+                                    TyrLogger.i(
+                                        TAG,
+                                        "Chat poll: new contact from=${msg.fromAddr}, " +
+                                            "adding as pending and inserting msg uid=${msg.imapUid}"
+                                    )
                                     chatRepository.addPendingContact(
                                         com.jbselfcompany.tyr.chat.data.ChatContact(
-                                            address = msg.fromAddr, name = nicknameMap[msg.fromAddr] ?: ""
+                                            address = msg.fromAddr,
+                                            name =
+                                            nicknameMap[msg.fromAddr] ?: ""
                                         )
                                     )
                                     chatRepository.insertMessage(msg.copy(isRead = false))
@@ -1269,10 +1363,13 @@ class YggmailService : Service() {
                                 else -> {
                                     // Sender not in contacts and acceptNonContacts=false.
                                     // Message is intentionally dropped per user settings.
-                                    TyrLogger.w(TAG, "Chat poll: DROPPED msg uid=${msg.imapUid} " +
-                                        "from=${msg.fromAddr} — sender not in contacts and " +
-                                        "acceptNonContacts=false. Go to Contacts and add this address, " +
-                                        "or enable 'Accept messages from unknown senders' in Settings.")
+                                    TyrLogger.w(
+                                        TAG,
+                                        "Chat poll: DROPPED msg uid=${msg.imapUid} " +
+                                            "from=${msg.fromAddr} — sender not in contacts and " +
+                                            "acceptNonContacts=false. Go to Contacts and add this address, " +
+                                            "or enable 'Accept messages from unknown senders' in Settings."
+                                    )
                                 }
                             }
                         }
@@ -1289,7 +1386,9 @@ class YggmailService : Service() {
                         var deliveryReceiptsApplied = false
                         for (receipt in result.data.deliveryReceiptTimestamps) {
                             chatRepository.updateSentMessageStatusNearTimestamp(
-                                address, receipt.senderAddr, receipt.originalTimestamp,
+                                address,
+                                receipt.senderAddr,
+                                receipt.originalTimestamp,
                                 com.jbselfcompany.tyr.chat.data.ChatMessage.STATUS_SENT,
                                 com.jbselfcompany.tyr.chat.data.ChatMessage.STATUS_SENDING
                             )
@@ -1306,7 +1405,10 @@ class YggmailService : Service() {
                         if (newMessages.isNotEmpty()) {
                             showChatNotifications(newMessages, chatRepository)
                             sendBroadcast(Intent(ACTION_NEW_CHAT_MESSAGES))
-                            TyrLogger.i(TAG, "Chat poll: ${newMessages.size} new message(s) inserted, broadcast sent")
+                            TyrLogger.i(
+                                TAG,
+                                "Chat poll: ${newMessages.size} new message(s) inserted, broadcast sent"
+                            )
 
                             // Send automatic delivery receipts so sender gets single checkmark
                             for (msg in newMessages) {
@@ -1319,10 +1421,16 @@ class YggmailService : Service() {
                                         deliveryReceiptTimestamp = msg.timestamp
                                     )
                                 } catch (e: Exception) {
-                                    TyrLogger.w(TAG, "Failed to send delivery receipt to ${msg.fromAddr}", e)
+                                    TyrLogger.w(
+                                        TAG,
+                                        "Failed to send delivery receipt to ${msg.fromAddr}",
+                                        e
+                                    )
                                 }
                             }
-                        } else if (result.data.messages.isEmpty() && result.data.deliveryReceiptTimestamps.isEmpty()) {
+                        } else if (result.data.messages.isEmpty() &&
+                            result.data.deliveryReceiptTimestamps.isEmpty()
+                        ) {
                             TyrLogger.d(TAG, "Chat poll: nothing new")
                         }
                     }
@@ -1350,7 +1458,10 @@ class YggmailService : Service() {
                 )
             ) {
                 chatRepository.markConversationRead(address, fromAddr)
-                TyrLogger.d(TAG, "Chat poll: suppressed notification for open conversation ($fromAddr)")
+                TyrLogger.d(
+                    TAG,
+                    "Chat poll: suppressed notification for open conversation ($fromAddr)"
+                )
                 continue
             }
             val contact = chatRepository.getContact(fromAddr)
@@ -1377,10 +1488,11 @@ class YggmailService : Service() {
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
 
-            val title = if (messages.size == 1)
+            val title = if (messages.size == 1) {
                 getString(R.string.notification_new_message_from, senderName)
-            else
+            } else {
                 getString(R.string.notification_new_messages_from, messages.size, senderName)
+            }
             val lastMsg = messages.last()
             val content = when {
                 lastMsg.body.isNotBlank() -> lastMsg.body.take(100)
@@ -1388,15 +1500,30 @@ class YggmailService : Service() {
                     val isImage = lastMsg.attachmentMimeType?.startsWith("image/") == true
                     val name = lastMsg.attachmentName
                     if (isImage) {
-                        if (!name.isNullOrBlank()) "\uD83D\uDDBC $name" else getString(R.string.chat_preview_photo)
+                        if (!name.isNullOrBlank()) {
+                            "\uD83D\uDDBC $name"
+                        } else {
+                            getString(
+                                R.string.chat_preview_photo
+                            )
+                        }
                     } else {
-                        if (!name.isNullOrBlank()) "\uD83D\uDCCE $name" else getString(R.string.chat_preview_file)
+                        if (!name.isNullOrBlank()) {
+                            "\uD83D\uDCCE $name"
+                        } else {
+                            getString(
+                                R.string.chat_preview_file
+                            )
+                        }
                     }
                 }
                 else -> "\u2026"
             }
 
-            val notification = androidx.core.app.NotificationCompat.Builder(this, TyrApplication.CHANNEL_ID_CHAT)
+            val notification = androidx.core.app.NotificationCompat.Builder(
+                this,
+                TyrApplication.CHANNEL_ID_CHAT
+            )
                 .setSmallIcon(R.drawable.ic_notification_icon)
                 .setContentTitle(title)
                 .setContentText(content)
@@ -1405,10 +1532,12 @@ class YggmailService : Service() {
                 .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
                 .build()
 
-            notificationManager.notify(CHAT_NOTIFICATION_BASE_ID + fromAddr.hashCode(), notification)
+            notificationManager.notify(
+                CHAT_NOTIFICATION_BASE_ID + fromAddr.hashCode(),
+                notification
+            )
         }
     }
-
 }
 
 /**

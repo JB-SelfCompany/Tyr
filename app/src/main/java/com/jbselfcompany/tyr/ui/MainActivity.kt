@@ -7,44 +7,42 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.ServiceConnection
+import android.graphics.Bitmap
+import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.provider.Settings
 import android.view.View
-import androidx.activity.result.contract.ActivityResultContracts
+import android.widget.ImageView
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.FileProvider
+import androidx.lifecycle.lifecycleScope
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.qrcode.QRCodeWriter
 import com.jbselfcompany.tyr.R
 import com.jbselfcompany.tyr.TyrApplication
+import com.jbselfcompany.tyr.chat.data.ChatContact
+import com.jbselfcompany.tyr.chat.data.ChatRepository
+import com.jbselfcompany.tyr.chat.ui.ChatFragment
+import com.jbselfcompany.tyr.data.PeerInfo
 import com.jbselfcompany.tyr.databinding.ActivityMainBinding
 import com.jbselfcompany.tyr.service.ServiceStatus
 import com.jbselfcompany.tyr.service.ServiceStatusListener
 import com.jbselfcompany.tyr.service.YggmailService
 import com.jbselfcompany.tyr.ui.onboarding.OnboardingActivity
-import com.jbselfcompany.tyr.chat.ui.ChatFragment
 import com.jbselfcompany.tyr.ui.settings.SettingsFragment
 import com.jbselfcompany.tyr.utils.AutoconfigServer
 import com.jbselfcompany.tyr.utils.NetworkStatsMonitor
-import com.jbselfcompany.tyr.utils.UpdateChecker
-import com.jbselfcompany.tyr.data.PeerInfo
-import com.jbselfcompany.tyr.utils.PermissionManager
-import com.jbselfcompany.tyr.chat.data.ChatContact
-import com.jbselfcompany.tyr.chat.data.ChatRepository
-import android.graphics.Bitmap
-import android.graphics.Color
-import android.widget.ImageView
-import androidx.core.content.FileProvider
-import com.google.android.material.button.MaterialButton
-import java.io.File
-import java.io.FileOutputStream
-import androidx.lifecycle.lifecycleScope
-import com.google.zxing.BarcodeFormat
-import com.google.zxing.qrcode.QRCodeWriter
 import com.jbselfcompany.tyr.utils.SecurePreferences
 import com.jbselfcompany.tyr.utils.TyrLogger
+import com.jbselfcompany.tyr.utils.UpdateChecker
+import java.io.File
+import java.io.FileOutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -53,7 +51,9 @@ import kotlinx.coroutines.withContext
  * Main activity displaying service status and mail configuration.
  * Shows SMTP/IMAP connection information for DeltaChat.
  */
-class MainActivity : BaseActivity(), ServiceStatusListener {
+class MainActivity :
+    BaseActivity(),
+    ServiceStatusListener {
 
     companion object {
         const val EXTRA_TAB = "extra_tab"
@@ -180,7 +180,8 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
     }
 
     private fun checkKeystoreRecovery() {
-        val recoveryPrefs = getSharedPreferences(SecurePreferences.RECOVERY_FLAG_PREFS, Context.MODE_PRIVATE)
+        val recoveryPrefs =
+            getSharedPreferences(SecurePreferences.RECOVERY_FLAG_PREFS, Context.MODE_PRIVATE)
         if (recoveryPrefs.getBoolean(SecurePreferences.RECOVERY_FLAG_KEY, false)) {
             recoveryPrefs.edit().remove(SecurePreferences.RECOVERY_FLAG_KEY).apply()
             MaterialAlertDialogBuilder(this)
@@ -198,7 +199,9 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
         // Active state is managed by the Doze Mode receiver in YggmailService.
         // Stop network monitoring to save battery
         stopNetworkMonitoring()
-        try { unregisterReceiver(newChatReceiver) } catch (_: Exception) {}
+        try {
+            unregisterReceiver(newChatReceiver)
+        } catch (_: Exception) {}
     }
 
     override fun onDestroy() {
@@ -229,7 +232,9 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
         binding.buttonCopyAddress.setOnClickListener {
             val address = configRepository.getMailAddress()
             if (!address.isNullOrEmpty()) {
-                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                val clipboard = getSystemService(
+                    Context.CLIPBOARD_SERVICE
+                ) as android.content.ClipboardManager
                 val clip = android.content.ClipData.newPlainText("Mail Address", address)
                 clipboard.setPrimaryClip(clip)
                 com.google.android.material.snackbar.Snackbar.make(
@@ -305,7 +310,6 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
             binding.buttonToggleService.text = getString(R.string.start_service)
             binding.buttonToggleService.setIconResource(R.drawable.ic_play_arrow)
         }
-
     }
 
     private fun setupDeltaChat() {
@@ -407,7 +411,11 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
                 Snackbar.LENGTH_SHORT
             ).show()
         } catch (e: Exception) {
-            TyrLogger.w("MainActivity", "Failed to open with package $packageName, trying without", e)
+            TyrLogger.w(
+                "MainActivity",
+                "Failed to open with package $packageName, trying without",
+                e
+            )
             // Try without package specification
             try {
                 val intent = Intent(Intent.ACTION_VIEW).apply {
@@ -430,7 +438,9 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
     }
 
     private fun copyDcloginToClipboard(dcloginUrl: String) {
-        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        val clipboard = getSystemService(
+            Context.CLIPBOARD_SERVICE
+        ) as android.content.ClipboardManager
         val clip = android.content.ClipData.newPlainText("DCLOGIN", dcloginUrl).apply {
             // Mark as sensitive so Android 13+ password managers/keyboards
             // do not preview or persist this clip
@@ -481,7 +491,9 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
     private fun shareTyrLink(mailAddress: String) {
         try {
             val pubkey = mailAddress.substringBefore("@")
-            val firstEnabledPeer = configRepository.getAllPeersInfo().firstOrNull { it.isEnabled }?.uri
+            val firstEnabledPeer = configRepository.getAllPeersInfo().firstOrNull {
+                it.isEnabled
+            }?.uri
             val tyrUrl = buildString {
                 append("tyr://open?pubkey=")
                 append(pubkey)
@@ -553,7 +565,8 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
     }
 
     private fun showDeltaChatInstructionsDialog() {
-        val mailAddress = configRepository.getMailAddress() ?: getString(R.string.your_email_address)
+        val mailAddress =
+            configRepository.getMailAddress() ?: getString(R.string.your_email_address)
 
         val instructions = getString(R.string.deltachat_instructions, mailAddress)
 
@@ -565,7 +578,8 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
     }
 
     private fun showEmailClientInstructionsDialog() {
-        val mailAddress = configRepository.getMailAddress() ?: getString(R.string.your_email_address)
+        val mailAddress =
+            configRepository.getMailAddress() ?: getString(R.string.your_email_address)
         val password = getString(R.string.your_password)
 
         val instructions = getString(R.string.email_client_instructions, mailAddress, password)
@@ -673,7 +687,11 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (!areNotificationsEnabled()) {
                 val root = findViewById<View>(android.R.id.content)
-                Snackbar.make(root, getString(R.string.allow_notifications_snack), Snackbar.LENGTH_INDEFINITE)
+                Snackbar.make(
+                    root,
+                    getString(R.string.allow_notifications_snack),
+                    Snackbar.LENGTH_INDEFINITE
+                )
                     .setAction(getString(R.string.allow)) {
                         try {
                             val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
@@ -692,7 +710,11 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
         // Check if app is battery optimized
         if (!isBatteryOptimizationDisabled()) {
             val root = findViewById<View>(android.R.id.content)
-            Snackbar.make(root, getString(R.string.add_to_power_exceptions), Snackbar.LENGTH_INDEFINITE)
+            Snackbar.make(
+                root,
+                getString(R.string.add_to_power_exceptions),
+                Snackbar.LENGTH_INDEFINITE
+            )
                 .setAction(getString(R.string.allow)) {
                     val action = Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
                     try {
@@ -716,21 +738,19 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
     /**
      * Check if notifications are enabled for this app
      */
-    private fun areNotificationsEnabled(): Boolean {
-        return NotificationManagerCompat.from(this).areNotificationsEnabled()
-    }
+    private fun areNotificationsEnabled(): Boolean =
+        NotificationManagerCompat.from(this).areNotificationsEnabled()
 
     /**
      * Check if battery optimization is disabled for this app
      */
-    private fun isBatteryOptimizationDisabled(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+    private fun isBatteryOptimizationDisabled(): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val pm = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
             pm.isIgnoringBatteryOptimizations(packageName)
         } else {
             true // Battery optimization doesn't exist on Android 5 and below
         }
-    }
 
     /**
      * Start network statistics monitoring
@@ -739,11 +759,14 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
      */
     private fun startNetworkMonitoring() {
         TyrLogger.d("MainActivity", "Starting network monitoring")
-        networkStatsMonitor.start(object : NetworkStatsMonitor.NetworkStatsListener {
-            override fun onStatsUpdated(stats: NetworkStatsMonitor.NetworkStats) {
-                updateNetworkStatsUI(stats)
-            }
-        }, enableLatencyMeasurement = true) // Parameter kept for API compatibility
+        networkStatsMonitor.start(
+            object : NetworkStatsMonitor.NetworkStatsListener {
+                override fun onStatsUpdated(stats: NetworkStatsMonitor.NetworkStats) {
+                    updateNetworkStatsUI(stats)
+                }
+            },
+            enableLatencyMeasurement = true
+        ) // Parameter kept for API compatibility
     }
 
     /**
@@ -776,8 +799,13 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
         if (peers.isEmpty() || picking) {
             // Show "no peers" message
             val noPeersText = android.widget.TextView(this).apply {
-                text = getString(if (picking) R.string.peer_pick_in_progress else R.string.no_active_peer)
-                setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall)
+                text =
+                    getString(
+                        if (picking) R.string.peer_pick_in_progress else R.string.no_active_peer
+                    )
+                setTextAppearance(
+                    com.google.android.material.R.style.TextAppearance_Material3_BodySmall
+                )
                 // Use Material3 color that adapts to light/dark theme
                 val typedValue = android.util.TypedValue()
                 context.theme.resolveAttribute(
@@ -821,21 +849,33 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
                         android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
                         1f
                     )
-                    setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium)
+                    setTextAppearance(
+                        com.google.android.material.R.style.TextAppearance_Material3_BodyMedium
+                    )
                     setTypeface(null, android.graphics.Typeface.BOLD)
                 }
 
                 // Connection status
                 val statusText = android.widget.TextView(this).apply {
-                    text = if (peer.connected) getString(R.string.peer_connected) else getString(R.string.peer_disconnected)
-                    setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall)
+                    text =
+                        if (peer.connected) {
+                            getString(
+                                R.string.peer_connected
+                            )
+                        } else {
+                            getString(R.string.peer_disconnected)
+                        }
+                    setTextAppearance(
+                        com.google.android.material.R.style.TextAppearance_Material3_BodySmall
+                    )
 
                     // Color code status
                     setTextColor(
-                        if (peer.connected)
+                        if (peer.connected) {
                             getColor(R.color.status_running)
-                        else
+                        } else {
                             getColor(R.color.status_error)
+                        }
                     )
                 }
 
@@ -855,7 +895,9 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
                     ).apply {
                         topMargin = 4.dpToPx()
                     }
-                    setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall)
+                    setTextAppearance(
+                        com.google.android.material.R.style.TextAppearance_Material3_BodySmall
+                    )
                     // Use Material3 color that adapts to light/dark theme
                     val typedValue = android.util.TypedValue()
                     context.theme.resolveAttribute(
@@ -901,26 +943,39 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
 
         if (!hasValidPeer && !hasValidPubkey) {
             if (!peerUrl.isNullOrBlank()) {
-                Snackbar.make(binding.root, R.string.deeplink_invalid_peer, Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(
+                    binding.root,
+                    R.string.deeplink_invalid_peer,
+                    Snackbar.LENGTH_SHORT
+                ).show()
             }
             return
         }
 
-        val peerAlreadyExists = hasValidPeer && configRepository.getAllPeersInfo().any { it.uri == peerUrl }
+        val peerAlreadyExists =
+            hasValidPeer && configRepository.getAllPeersInfo().any { it.uri == peerUrl }
         val contactAddress = if (hasValidPubkey) "$pubkey@yggmail" else null
 
         // Prevent adding own address as a contact (same guard as the manual AddContact flow).
         // Without this, opening your own tyr://open link adds yourself as a contact, and
         // deleting it wipes all messages (deleteContact deletes by address which matches every row).
-        val isSelfContact = contactAddress?.equals(configRepository.getMailAddress(), ignoreCase = true) == true
+        val isSelfContact =
+            contactAddress?.equals(configRepository.getMailAddress(), ignoreCase = true) == true
         val effectiveHasValidPubkey = hasValidPubkey && !isSelfContact
 
-        val contactAlreadyExists = contactAddress != null && !isSelfContact &&
+        val contactAlreadyExists = contactAddress != null &&
+            !isSelfContact &&
             ChatRepository(this).contactExists(contactAddress)
 
         // Nothing new to add
-        if ((!hasValidPeer || peerAlreadyExists) && (!effectiveHasValidPubkey || contactAlreadyExists)) {
-            Snackbar.make(binding.root, R.string.deeplink_already_configured, Snackbar.LENGTH_SHORT).show()
+        if ((!hasValidPeer || peerAlreadyExists) &&
+            (!effectiveHasValidPubkey || contactAlreadyExists)
+        ) {
+            Snackbar.make(
+                binding.root,
+                R.string.deeplink_already_configured,
+                Snackbar.LENGTH_SHORT
+            ).show()
             return
         }
 
@@ -951,9 +1006,15 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
                 }
                 if (effectiveHasValidPubkey && !contactAlreadyExists) {
                     val name = contactName?.takeIf { it.isNotBlank() } ?: pubkey!!.take(8)
-                    ChatRepository(this).addContact(ChatContact(address = contactAddress!!, name = name))
+                    ChatRepository(
+                        this
+                    ).addContact(ChatContact(address = contactAddress!!, name = name))
                 }
-                Snackbar.make(binding.root, R.string.deeplink_added_success, Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(
+                    binding.root,
+                    R.string.deeplink_added_success,
+                    Snackbar.LENGTH_SHORT
+                ).show()
             }
             .setNegativeButton(R.string.cancel, null)
             .show()
@@ -966,9 +1027,7 @@ class MainActivity : BaseActivity(), ServiceStatusListener {
     /**
      * Convert dp to pixels
      */
-    private fun Int.dpToPx(): Int {
-        return (this * resources.displayMetrics.density).toInt()
-    }
+    private fun Int.dpToPx(): Int = (this * resources.displayMetrics.density).toInt()
 
     /**
      * Check for updates in background — only if conditions are met.

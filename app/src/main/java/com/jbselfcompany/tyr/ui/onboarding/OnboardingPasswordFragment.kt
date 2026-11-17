@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import com.jbselfcompany.tyr.utils.TyrLogger
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,6 +17,7 @@ import com.google.android.material.textfield.TextInputLayout
 import com.jbselfcompany.tyr.R
 import com.jbselfcompany.tyr.databinding.FragmentOnboardingPasswordBinding
 import com.jbselfcompany.tyr.utils.BackupManager
+import com.jbselfcompany.tyr.utils.TyrLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -81,10 +81,13 @@ class OnboardingPasswordFragment : Fragment() {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "*/*"
-            putExtra(Intent.EXTRA_MIME_TYPES, arrayOf(
-                "application/octet-stream",
-                "*/*"
-            ))
+            putExtra(
+                Intent.EXTRA_MIME_TYPES,
+                arrayOf(
+                    "application/octet-stream",
+                    "*/*"
+                )
+            )
         }
         selectBackupFileLauncher.launch(intent)
     }
@@ -100,7 +103,8 @@ class OnboardingPasswordFragment : Fragment() {
         val passwordEdit = dialogView.findViewById<TextInputEditText>(R.id.edit_password)
 
         // Hide confirm password field for restore
-        dialogView.findViewById<TextInputLayout>(R.id.confirm_password_layout)?.visibility = View.GONE
+        dialogView.findViewById<TextInputLayout>(R.id.confirm_password_layout)?.visibility =
+            View.GONE
 
         AlertDialog.Builder(context)
             .setTitle(R.string.restore_backup)
@@ -161,7 +165,7 @@ class OnboardingPasswordFragment : Fragment() {
                     }
                 }
             } catch (e: Exception) {
-                TyrLogger.e(TAG,"Failed to restore backup", e)
+                TyrLogger.e(TAG, "Failed to restore backup", e)
                 withContext(Dispatchers.Main) {
                     progressDialog.dismiss()
                     Toast.makeText(
@@ -174,13 +178,9 @@ class OnboardingPasswordFragment : Fragment() {
         }
     }
 
-    fun getPassword(): String {
-        return binding.editPassword.text.toString()
-    }
+    fun getPassword(): String = binding.editPassword.text.toString()
 
-    fun getConfirmPassword(): String {
-        return binding.editConfirmPassword.text.toString()
-    }
+    fun getConfirmPassword(): String = binding.editConfirmPassword.text.toString()
 
     companion object {
         private const val TAG = "OnboardingPasswordFragment"
