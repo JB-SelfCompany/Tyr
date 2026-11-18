@@ -77,4 +77,16 @@ class ConfigRepositoryTest {
         repo.advanceLastSeenImapUid(3)
         assertEquals(10L, repo.getLastSeenImapUid())
     }
+
+    @Test
+    fun dropsRemovedUpdateCheckPrefs() {
+        val prefs = context.getSharedPreferences("tyr_config", Context.MODE_PRIVATE)
+        prefs.edit {
+            putBoolean("update_check_enabled", false)
+            putString("dismissed_update_version", "1.0")
+        }
+        repo
+        assertFalse(prefs.contains("update_check_enabled"))
+        assertFalse(prefs.contains("dismissed_update_version"))
+    }
 }

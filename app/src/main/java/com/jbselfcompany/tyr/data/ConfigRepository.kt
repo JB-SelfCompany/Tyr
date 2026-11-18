@@ -74,6 +74,15 @@ class ConfigRepository(private val context: Context) {
     init {
         migratePlaintextPassword()
         migratePeersToV2()
+        // Leftovers of the removed in-app update check; no-op once gone.
+        prefs.edit {
+            listOf(
+                "update_check_enabled",
+                "update_check_interval_hours",
+                "last_update_check_time",
+                "dismissed_update_version"
+            ).forEach(::remove)
+        }
     }
 
     /**
