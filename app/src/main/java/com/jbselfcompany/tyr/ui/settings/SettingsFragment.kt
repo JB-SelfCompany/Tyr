@@ -29,7 +29,6 @@ import com.jbselfcompany.tyr.ui.AboutActivity
 import com.jbselfcompany.tyr.ui.SettingsAdapter
 import com.jbselfcompany.tyr.ui.logs.LogsActivity
 import com.jbselfcompany.tyr.utils.BackupManager
-import com.jbselfcompany.tyr.utils.UpdateChecker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -69,10 +68,6 @@ class SettingsFragment :
         private const val ID_CLEAR_LOGS = 16
         private const val ID_HEADER_ABOUT = 17
         private const val ID_ABOUT_APP = 18
-        private const val ID_HEADER_UPDATES = 22
-        private const val ID_UPDATE_CHECK_ENABLED = 23
-        private const val ID_UPDATE_CHECK_INTERVAL = 24
-        private const val ID_UPDATE_CHECK_NOW = 25
 
         // Chat settings
         private const val ID_HEADER_CHAT = 26
@@ -281,40 +276,6 @@ class SettingsFragment :
             )
         )
 
-        // Updates Settings Section
-        settingsItems.add(
-            SettingsAdapter.Item(
-                id = ID_HEADER_UPDATES,
-                titleRes = R.string.updates_settings,
-                type = SettingsAdapter.ItemType.HEADER
-            )
-        )
-        settingsItems.add(
-            SettingsAdapter.Item(
-                id = ID_UPDATE_CHECK_ENABLED,
-                titleRes = R.string.update_check_enabled,
-                descriptionRes = R.string.update_check_enabled_description,
-                type = SettingsAdapter.ItemType.SWITCH,
-                checked = configRepository.isUpdateCheckEnabled()
-            )
-        )
-        settingsItems.add(
-            SettingsAdapter.Item(
-                id = ID_UPDATE_CHECK_INTERVAL,
-                titleRes = R.string.update_check_interval,
-                descriptionRes = R.string.update_check_interval_description,
-                type = SettingsAdapter.ItemType.PLAIN
-            )
-        )
-        settingsItems.add(
-            SettingsAdapter.Item(
-                id = ID_UPDATE_CHECK_NOW,
-                titleRes = R.string.update_check_now,
-                descriptionRes = R.string.update_check_now_description,
-                type = SettingsAdapter.ItemType.PLAIN
-            )
-        )
-
         // About Settings Section
         settingsItems.add(
             SettingsAdapter.Item(
@@ -344,12 +305,12 @@ class SettingsFragment :
 
             ID_ENABLE_LOG_COLLECTION -> {
                 configRepository.setLogCollectionEnabled(isChecked)
-                val msgRes = if (isChecked) R.string.log_collection_enabled else R.string.log_collection_disabled_snackbar
+                val msgRes = if (isChecked) {
+                    R.string.log_collection_enabled
+                } else {
+                    R.string.log_collection_disabled_snackbar
+                }
                 Snackbar.make(requireView(), msgRes, Snackbar.LENGTH_SHORT).show()
-            }
-
-            ID_UPDATE_CHECK_ENABLED -> {
-                configRepository.setUpdateCheckEnabled(isChecked)
             }
 
             ID_ACCEPT_NON_CONTACTS -> {
@@ -381,10 +342,6 @@ class SettingsFragment :
             ID_COLLECT_LOGS -> startActivity(Intent(requireContext(), LogsActivity::class.java))
 
             ID_CLEAR_LOGS -> showClearLogsDialog()
-
-            ID_UPDATE_CHECK_INTERVAL -> showUpdateIntervalDialog()
-
-            ID_UPDATE_CHECK_NOW -> checkForUpdatesNow()
 
             ID_ABOUT_APP -> startActivity(Intent(requireContext(), AboutActivity::class.java))
         }
@@ -502,7 +459,9 @@ class SettingsFragment :
                             ).show()
 
                             // Apply new password to running service without restart
-                            TyrApplication.instance.yggmailServiceBinder?.getService()?.hotReloadPassword()
+                            TyrApplication.instance.yggmailServiceBinder
+                                ?.getService()
+                                ?.hotReloadPassword()
                         } catch (e: Exception) {
                             Toast.makeText(
                                 requireContext(),
@@ -915,81 +874,5 @@ class SettingsFragment :
                 Toast.LENGTH_SHORT
             ).show()
         }
-    }
-
-    private fun showUpdateIntervalDialog() {
-        val intervals = intArrayOf(
-            ConfigRepository.UPDATE_INTERVAL_ON_START,
-            ConfigRepository.UPDATE_INTERVAL_DAILY,
-            ConfigRepository.UPDATE_INTERVAL_WEEKLY
-        )
-        val labels = arrayOf(
-            getString(R.string.update_interval_on_start),
-            getString(R.string.update_interval_daily),
-            getString(R.string.update_interval_weekly)
-        )
-        val current = configRepository.getUpdateCheckIntervalHours()
-        val selectedIndex = intervals.indexOfFirst { it == current }.takeIf { it >= 0 } ?: 1
-
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.select_update_interval)
-            .setSingleChoiceItems(labels, selectedIndex) { dialog, which ->
-                configRepository.setUpdateCheckIntervalHours(intervals[which])
-                dialog.dismiss()
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
-    }
-
-    private fun checkForUpdatesNow() {
-        showLoadingOverlay(true, getString(R.string.update_checking))
-
-        Thread {
-            val info = UpdateChecker(requireContext()).checkForUpdates()
-            configRepository.setLastUpdateCheckTime(System.currentTimeMillis())
-
-            requireActivity().runOnUiThread {
-                if (!isAdded) return@runOnUiThread
-                showLoadingOverlay(false)
-                if (info == null) {
-                    Toast.makeText(
-                        requireContext(),
-                        R.string.update_check_failed,
-                        Toast.LENGTH_LONG
-                    ).show()
-                    return@runOnUiThread
-                }
-                if (!info.hasUpdate) {
-                    Toast.makeText(
-                        requireContext(),
-                        getString(R.string.update_no_updates, info.currentVersion),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    return@runOnUiThread
-                }
-                showUpdateDialog(info)
-            }
-        }.start()
-    }
-
-    private fun showUpdateDialog(info: UpdateChecker.UpdateInfo) {
-        if (!isAdded) return
-        val message = if (info.isFdroidInstall) {
-            getString(R.string.update_available_fdroid, info.latestVersion, info.currentVersion)
-        } else {
-            getString(R.string.update_available_github, info.latestVersion, info.currentVersion)
-        }
-
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.update_available_title)
-            .setMessage(message)
-            .setPositiveButton(R.string.update_download) { _, _ ->
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(info.releaseUrl)))
-            }
-            .setNeutralButton(R.string.update_skip_version) { _, _ ->
-                configRepository.setDismissedUpdateVersion(info.latestVersion)
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
     }
 }

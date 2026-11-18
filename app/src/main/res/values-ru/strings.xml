@@ -412,26 +412,6 @@
     <string name="peer_enabled">Пир включён</string>
     <string name="peer_disabled">Пир отключён</string>
 
-    <!-- Update Check Settings -->
-    <string name="updates_settings">Обновления</string>
-    <string name="update_check_enabled">Проверка обновлений</string>
-    <string name="update_check_enabled_description">Автоматически проверять новые версии на GitHub</string>
-    <string name="update_check_interval">Частота проверки</string>
-    <string name="update_check_interval_description">Как часто проверять наличие новых версий</string>
-    <string name="update_check_now">Проверить сейчас</string>
-    <string name="update_check_now_description">Вручную проверить наличие новой версии</string>
-    <string name="update_interval_on_start">При каждом запуске</string>
-    <string name="update_interval_daily">Ежедневно</string>
-    <string name="update_interval_weekly">Еженедельно</string>
-    <string name="select_update_interval">Частота проверки</string>
-    <string name="update_checking">Проверка обновлений…</string>
-    <string name="update_no_updates">У вас последняя версия (%s)</string>
-    <string name="update_check_failed">Не удалось проверить обновления. Проверьте интернет-соединение.</string>
-    <string name="update_available_title">Доступно обновление</string>
-    <string name="update_available_github">На GitHub доступна версия %1$s.\n\nУ вас установлена версия %2$s.</string>
-    <string name="update_available_fdroid">На GitHub доступна версия %1$s.\n\nУ вас установлена версия %2$s.\n\nПоскольку вы установили приложение через F-Droid, обновление появится там через несколько дней. Вы также можете скачать его с GitHub прямо сейчас.</string>
-    <string name="update_download">Скачать</string>
-    <string name="update_skip_version">Пропустить эту версию</string>
 
     <!-- Bottom Navigation -->
     <string name="nav_home">Главная</string>

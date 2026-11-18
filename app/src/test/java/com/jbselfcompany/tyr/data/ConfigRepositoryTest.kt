@@ -77,18 +77,4 @@ class ConfigRepositoryTest {
         repo.advanceLastSeenImapUid(3)
         assertEquals(10L, repo.getLastSeenImapUid())
     }
-
-    @Test
-    fun updateCheckRespectsIntervalAndToggle() {
-        assertTrue("never checked", repo.shouldCheckForUpdates())
-
-        repo.setUpdateCheckIntervalHours(ConfigRepository.UPDATE_INTERVAL_DAILY)
-        repo.setLastUpdateCheckTime(System.currentTimeMillis() - 60 * 60_000L)
-        assertFalse("checked an hour ago", repo.shouldCheckForUpdates())
-        repo.setLastUpdateCheckTime(System.currentTimeMillis() - 25 * 60 * 60_000L)
-        assertTrue("checked 25h ago", repo.shouldCheckForUpdates())
-
-        repo.setUpdateCheckEnabled(false)
-        assertFalse(repo.shouldCheckForUpdates())
-    }
 }

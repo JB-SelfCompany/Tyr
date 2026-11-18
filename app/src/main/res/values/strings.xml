@@ -411,26 +411,6 @@
     <string name="peer_enabled">Peer enabled</string>
     <string name="peer_disabled">Peer disabled</string>
 
-    <!-- Update Check Settings -->
-    <string name="updates_settings">Updates</string>
-    <string name="update_check_enabled">Check for Updates</string>
-    <string name="update_check_enabled_description">Automatically check for new versions on GitHub</string>
-    <string name="update_check_interval">Check Frequency</string>
-    <string name="update_check_interval_description">How often to check for new versions</string>
-    <string name="update_check_now">Check Now</string>
-    <string name="update_check_now_description">Manually check for a new version</string>
-    <string name="update_interval_on_start">Every app start</string>
-    <string name="update_interval_daily">Daily</string>
-    <string name="update_interval_weekly">Weekly</string>
-    <string name="select_update_interval">Check Frequency</string>
-    <string name="update_checking">Checking for updates…</string>
-    <string name="update_no_updates">You have the latest version (%s)</string>
-    <string name="update_check_failed">Could not check for updates. Check your internet connection.</string>
-    <string name="update_available_title">Update Available</string>
-    <string name="update_available_github">Version %1$s is available on GitHub.\n\nYou have %2$s.</string>
-    <string name="update_available_fdroid">Version %1$s is available on GitHub.\n\nYou have %2$s.\n\nSince you installed via F-Droid, the update will appear there in a few days. You can also download it from GitHub now.</string>
-    <string name="update_download">Download</string>
-    <string name="update_skip_version">Skip This Version</string>
 
     <!-- Bottom Navigation -->
     <string name="nav_home">Home</string>

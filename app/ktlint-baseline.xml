@@ -18,13 +18,6 @@
         <error line="1320" column="101" source="standard:max-line-length" />
         <error line="1380" column="101" source="standard:max-line-length" />
     </file>
-    <file name="src/main/java/com/jbselfcompany/tyr/ui/MainActivity.kt">
-        <error line="991" column="100" source="standard:max-line-length" />
-    </file>
-    <file name="src/main/java/com/jbselfcompany/tyr/ui/settings/SettingsFragment.kt">
-        <error line="347" column="101" source="standard:max-line-length" />
-        <error line="505" column="101" source="standard:max-line-length" />
-    </file>
     <file name="src/main/java/com/jbselfcompany/tyr/utils/NetworkStatsMonitor.kt">
         <error line="20" column="101" source="standard:max-line-length" />
         <error line="35" column="34" source="standard:value-parameter-comment" />

@@ -18,7 +18,6 @@ import android.view.View
 import android.widget.ImageView
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.FileProvider
-import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -40,12 +39,9 @@ import com.jbselfcompany.tyr.utils.AutoconfigServer
 import com.jbselfcompany.tyr.utils.NetworkStatsMonitor
 import com.jbselfcompany.tyr.utils.SecurePreferences
 import com.jbselfcompany.tyr.utils.TyrLogger
-import com.jbselfcompany.tyr.utils.UpdateChecker
 import java.io.File
 import java.io.FileOutputStream
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
  * Main activity displaying service status and mail configuration.
@@ -67,7 +63,6 @@ class MainActivity :
 
     private var yggmailService: YggmailService? = null
     private var serviceBound = false
-    private var updateCheckDoneThisSession = false
 
     // Receives broadcast from YggmailService when new chat messages arrive
     private val newChatReceiver = object : BroadcastReceiver() {
@@ -169,11 +164,6 @@ class MainActivity :
             )
         } else {
             registerReceiver(newChatReceiver, IntentFilter(YggmailService.ACTION_NEW_CHAT_MESSAGES))
-        }
-        // Check for updates (once per session, background thread)
-        if (!updateCheckDoneThisSession) {
-            updateCheckDoneThisSession = true
-            checkForUpdatesInBackground()
         }
         // Warn user if Keystore recovery deleted their password
         checkKeystoreRecovery()
@@ -988,7 +978,11 @@ class MainActivity :
             return
         }
 
-        val title = if (effectiveHasValidPubkey) R.string.deeplink_add_peer_and_contact_title else R.string.deeplink_add_peer_title
+        val title = if (effectiveHasValidPubkey) {
+            R.string.deeplink_add_peer_and_contact_title
+        } else {
+            R.string.deeplink_add_peer_title
+        }
         val message = buildString {
             if (hasValidPeer && !peerAlreadyExists) {
                 append(getString(R.string.deeplink_peer_label))
@@ -1037,51 +1031,6 @@ class MainActivity :
      * Convert dp to pixels
      */
     private fun Int.dpToPx(): Int = (this * resources.displayMetrics.density).toInt()
-
-    /**
-     * Check for updates in background — only if conditions are met.
-     * Shows a dialog if a newer version is found and user hasn't dismissed it.
-     */
-    private fun checkForUpdatesInBackground() {
-        if (!configRepository.shouldCheckForUpdates()) return
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            val info = UpdateChecker(this@MainActivity).checkForUpdates()
-            configRepository.setLastUpdateCheckTime(System.currentTimeMillis())
-
-            if (info == null || !info.hasUpdate) return@launch
-            if (info.latestVersion == configRepository.getDismissedUpdateVersion()) return@launch
-
-            withContext(Dispatchers.Main) {
-                if (!isFinishing && !isDestroyed) showUpdateDialog(info)
-            }
-        }
-    }
-
-    private fun showUpdateDialog(info: UpdateChecker.UpdateInfo) {
-        val message = if (info.isFdroidInstall) {
-            getString(R.string.update_available_fdroid, info.latestVersion, info.currentVersion)
-        } else {
-            getString(R.string.update_available_github, info.latestVersion, info.currentVersion)
-        }
-
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.update_available_title)
-            .setMessage(message)
-            .setPositiveButton(R.string.update_download) { _, _ ->
-                startActivity(
-                    android.content.Intent(
-                        android.content.Intent.ACTION_VIEW,
-                        Uri.parse(info.releaseUrl)
-                    )
-                )
-            }
-            .setNeutralButton(R.string.update_skip_version) { _, _ ->
-                configRepository.setDismissedUpdateVersion(info.latestVersion)
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
-    }
 
     /** Called by ChatFragment after opening/closing conversations to keep badge in sync. */
     fun refreshChatBadge() = updateChatBadge()
