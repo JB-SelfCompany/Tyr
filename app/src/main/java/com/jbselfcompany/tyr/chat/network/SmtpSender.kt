@@ -64,7 +64,10 @@ class SmtpSender(private val host: String = "127.0.0.1", private val port: Int =
                 fun readLine(): String = reader.readLine() ?: ""
 
                 fun writeLine(line: String) {
-                    writer.println(line)
+                    // SMTP needs CRLF (RFC 5321); println is bare LF on Android, and
+                    // imap-rs then finds no CRLFCRLF and serves an empty BODY[TEXT] (#43).
+                    writer.print(line + "\r\n")
+                    writer.flush()
                 }
 
                 fun expectCode(code: String): Boolean {
