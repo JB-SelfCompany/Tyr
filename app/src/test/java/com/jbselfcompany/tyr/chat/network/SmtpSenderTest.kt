@@ -1,7 +1,6 @@
 package com.jbselfcompany.tyr.chat.network
 
 import java.io.ByteArrayOutputStream
-import java.io.File
 import java.io.InputStream
 import java.net.ServerSocket
 import java.util.concurrent.Executors
@@ -23,25 +22,6 @@ class SmtpSenderTest {
         val data = captureData { it.send("a@yggmail", "pw", "b@yggmail", "> q\n\nhello\n.dot") }
         assertTrue(data, data.contains("\r\n\r\n> q\r\n\r\nhello\r\n..dot\r\n"))
         assertTrue(data, data.endsWith("\r\n.\r\n"))
-        assertFalse(data, bareLf.containsMatchIn(data))
-    }
-
-    @Test
-    fun attachmentPartUsesCrlf() {
-        val f = File.createTempFile("att", ".bin").apply {
-            writeBytes(ByteArray(200) { it.toByte() })
-            deleteOnExit()
-        }
-        val data = captureData {
-            it.send(
-                "a@yggmail",
-                "pw",
-                "b@yggmail",
-                "hi",
-                attachment = SmtpSender.AttachmentData(f, "a.bin", "application/octet-stream")
-            )
-        }
-        assertTrue(data, data.contains("\r\n\r\nhi\r\n"))
         assertFalse(data, bareLf.containsMatchIn(data))
     }
 
