@@ -11,12 +11,12 @@ ktlint {
 
 // ── Version control ───────────────────────────────────────────────────────────
 // Release: bump for production releases (IzzyOnDroid / F-Droid)
-def RELEASE_VERSION_CODE = 34
-def RELEASE_VERSION_NAME = "1.9.2.3"
+def RELEASE_VERSION_CODE = 35
+def RELEASE_VERSION_NAME = "1.9.2.4"
 
 // Dev (signed debug): bump independently of release
-def DEV_VERSION_CODE = 34
-def DEV_VERSION_NAME = "1.9.2.3-dev"
+def DEV_VERSION_CODE = 35
+def DEV_VERSION_NAME = "1.9.2.4-dev"
 // ─────────────────────────────────────────────────────────────────────────────
 
 android {

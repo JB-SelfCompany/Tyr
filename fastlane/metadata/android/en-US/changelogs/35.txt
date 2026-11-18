@@ -1,0 +1,2 @@
+• Chat fixed: received messages arrived empty, showing only the time. Update on both phones
+• Removed the built-in update check
