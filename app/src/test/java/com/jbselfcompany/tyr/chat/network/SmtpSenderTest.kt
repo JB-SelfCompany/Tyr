@@ -25,6 +25,15 @@ class SmtpSenderTest {
         assertFalse(data, bareLf.containsMatchIn(data))
     }
 
+    @Test
+    fun headerValuesCannotInjectHeaders() {
+        val data = captureData {
+            it.send("a@yggmail", "pw", "b@yggmail", "hi", senderNickname = "Bob\r\nX-Evil: 1")
+        }
+        assertTrue(data, data.contains("\r\nX-Tyr-Nickname: BobX-Evil: 1\r\n"))
+        assertFalse(data, data.contains("\nX-Evil"))
+    }
+
     /** Runs [send] against a scripted one-shot SMTP server; returns the raw DATA payload. */
     private fun captureData(send: (SmtpSender) -> SmtpSender.Result): String {
         ServerSocket(0).use { server ->

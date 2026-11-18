@@ -25,6 +25,9 @@ class SmtpSender(private val host: String = "127.0.0.1", private val port: Int =
         private const val CHUNK_SIZE = 57 // 57 bytes → 76 base64 chars (standard line length)
     }
 
+    // Header values: a CR/LF here would start a new header (or end DATA early).
+    private fun String.oneLine() = replace("\r", "").replace("\n", "")
+
     data class AttachmentData(val file: File, val name: String, val mimeType: String)
 
     sealed class Result {
@@ -139,7 +142,7 @@ class SmtpSender(private val host: String = "127.0.0.1", private val port: Int =
                         )
                         "=?UTF-8?B?$b64?="
                     } else {
-                        senderNickname
+                        senderNickname.oneLine()
                     }
                     writeLine("X-Tyr-Nickname: $encodedNickname")
                 }
@@ -169,8 +172,8 @@ class SmtpSender(private val host: String = "127.0.0.1", private val port: Int =
                     writeLine("")
 
                     writeLine("--$boundary")
-                    val safeName = attachment.name.replace("\"", "'")
-                    writeLine("Content-Type: ${attachment.mimeType}; name=\"$safeName\"")
+                    val safeName = attachment.name.oneLine().replace("\"", "'")
+                    writeLine("Content-Type: ${attachment.mimeType.oneLine()}; name=\"$safeName\"")
                     writeLine("Content-Transfer-Encoding: base64")
                     writeLine("Content-Disposition: attachment; filename=\"$safeName\"")
                     writeLine("")
